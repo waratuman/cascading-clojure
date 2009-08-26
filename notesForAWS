@@ -1,0 +1,101 @@
+java.lang.IllegalArgumentException:
+AWS Access Key ID and Secret Access Key must be specified as the username or password (respectively) of a s3n URL,
+or by setting the fs.s3n.awsAccessKeyId or fs.s3n.awsSecretAccessKey properties (respectively).
+
+s3n://ontimedb/xip.gz s3n://research-env/out2/
+s3n://research-env/hadoop-clojure.jar
+s3n://research-env/logs
+
+correct key access for EC2:  chmod 600 infrastructure/deployment/deployment/ec2
+
+Running in EC2 once ssh'ed
+
+
+hadoop jar hadoop-clojure.jar s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@ontimedb/xaa.gz s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@research-env/turntime/ org.parsimonygroup.functions turntime
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/hadoop-clojure.jar file:///Users/Admin/projects/flightcaster/flightcaster-research/aws/mapreduce/clojure-hadoop/data/gz/ file:///Users/Admin/projects/flightcaster/flightcaster-research/research/infrastructure/cascading/out/
+
+
+hadoop jar hadoop-clojure1.jar s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@ontimedb/ s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@research-env/turntimeout/
+
+
+-----------------------------------------------------------------
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@flightstatsjson/05/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/transformedflightstats05/ -ns org.parsimonygroup.workflows -wf flightstats-transform
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@flightstatsjson/06/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/transformedflightstats06/ -ns org.parsimonygroup.workflows -wf flightstats-transform
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@flightstatsjson/07/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/transformedflightstats07/ -ns org.parsimonygroup.workflows -wf flightstats-transform
+
+
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/flightstats-faa-join-cutuplarge/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/collapsedjoin/ -ns org.parsimonygroup.workflows -wf final-join-collapsing
+
+
+
+
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@uncompressed-flightstats/flightstats.train -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@research-env/realtimetrainonly1/ -ns org.parsimonygroup.workflows -wf real-time-train
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@uncompressed-flightstats/flightstats.test -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@research-env/realtimetest/ -ns org.parsimonygroup.workflows -wf real-time-test
+
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@uncompressed-flightstats/flightstats.train -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@research-env/realtimetrainwithleadtime/ -ns org.parsimonygroup.workflows -wf real-time-train
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/transformedflightstatsall/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/tenfold-nofaa/ -ns org.parsimonygroup.workflows -wf tenfoldvalidation-nofaa
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/finaljoin/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/tenfold-faa/ -ns org.parsimonygroup.workflows -wf tenfoldvalidation-faa
+
+
+hadoop jar jobs.jar -in s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/transformedflightstatsall/,s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@faajson/ -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/flightstats-faa-join-cutuplarge/ -ns org.parsimonygroup.workflows -wf flightstats-faa-join -join true
+
+hadoop jar jobs.jar -in  s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@uncompressed-flightstats/flightstats.train,s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@uncompressed-flightstats/flightstats.test -out s3n://AKIAI6ABJKYGSW6KES6A:OZQnV2xFaQHwSRH2LFSZ+PVtARE5xirk3+AVZFbk@mldata/realtimeaftertestingsession/ -ns org.parsimonygroup.workflows -wf train-test-run -join true
+
+
+-----------------------------------------------------------------------------------
+local
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/joineddata/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf uber-delay-flightstats-and-faa
+
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/joineddata/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf real-time-flightstats-and-faa
+
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/somejson/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf flightstats-transform
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/somejson/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf missing-da
+
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf real-time-train
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf tenfoldvalidation-nofaa
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/joineddata/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf tenfoldvalidation-faa
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in  file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/transformedbigdata -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf pres-estimated-gate-arrival-workflow
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf uber-delay-flightstats-only
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/joineddata/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf uber-delay-flightstats-and-faa
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/newjoined/bigdata/gooddata -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf uber-delay-flightstats-and-faa
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/newjoined/bigdata/part-00000 -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf flightstats-faa-segregated
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/newjoined/bigdata/gooddata -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out2/ -ns org.parsimonygroup.workflows -wf flightstats-faa-distance
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/newjoined/bigdata/part-00000 -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf real-time-flightstats-and-faa
+ 
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf pres-estimated-runway-departure-workflow
+
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar file:///Users/Admin/projects/flightcaster/flightcaster-research/infrastructure/cascading-clojure/data/ file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ org.parsimonygroup.workflows
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/,file:///Users/Admin/Desktop/hadoop-data/faajson/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf flightstats-faa-join -join true
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out1/ -ns org.parsimonygroup.workflows -wf final-join-collapsing
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/,file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf train-test-run -join true
+
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf flightstats-key
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/faa/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf faa-key
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/Desktop/hadoop-data/transformed/ -out file:///Users/Admin/projects/flightcaster/flightcaster-research/jobs/out/ -ns org.parsimonygroup.workflows -wf real-time-test
+
+
+view jobs in amazon tracker
+
+http://<joburl>:50030
+
+logins as hadoop user
+su -s /bin/bash - hadoop
+
+
+
+scp `echo -i "$PRIVATE_KEY_PATH" -o StrictHostKeyChecking=no -o ServerAliveInterval=30` -r ./cloudera-unchanged/bin/hadoop-ec2-init-remote-cloudera-fedora.sh.slave "root@ec2-75-101-185-52.compute-1.amazonaws.com:"
+scp `echo -i "$PRIVATE_KEY_PATH" -o StrictHostKeyChecking=no -o ServerAliveInterval=30` -r ./cloudera-unchanged/bin/hadoop-ec2-init-remote-cloudera-fedora.sh.slave "root@ec2-67-202-17-237.compute-1.amazonaws.com:"
+scp `echo -i "$PRIVATE_KEY_PATH" -o StrictHostKeyChecking=no -o ServerAliveInterval=30` -r ./cloudera-unchanged/bin/hadoop-ec2-init-remote-cloudera-fedora.sh.slave "root@ec2-75-101-191-131.compute-1.amazonaws.com:"
+scp `echo -i "$PRIVATE_KEY_PATH" -o StrictHostKeyChecking=no -o ServerAliveInterval=30` -r ./cloudera-unchanged/bin/hadoop-ec2-init-remote-cloudera-fedora.sh.slave "root@ec2-67-202-27-83.compute-1.amazonaws.com:"

@@ -1,0 +1,1 @@
+java -Xmx2G -cp ./src:./target/dependency jline.ConsoleRunner clojure.lang.Repl
