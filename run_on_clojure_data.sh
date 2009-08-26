@@ -1,0 +1,1 @@
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/hadoop-clojure.jar file:///Users/Admin/projects/flightcaster/flightcaster-research/aws/mapreduce/clojure-hadoop/data/clojuredata.txt file:///Users/Admin/projects/flightcaster/flightcaster-research/aws/mapreduce/clojure-hadoop/out/ file:///Users/Admin/projects/flightcaster/flightcaster-research/aws/mapreduce/clojure-hadoop/tmp/
