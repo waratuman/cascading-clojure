@@ -23,7 +23,7 @@
 (defn configure-properties [mainCls]
   (let [prop (Properties.)
         jobConf (JobConf.)]
-    (. prop load (.. (class *ns*) getClassLoader (getResourceAsStream "config.properties")))
+    ;; (. prop load (.. (class *ns*) getClassLoader (getResourceAsStream "config.properties")))
     (Flow/setStopJobsOnExit prop false)
     (FlowConnector/setApplicationJarClass prop mainCls)
     (. jobConf set "mapred.task.timeout" "600000000")
