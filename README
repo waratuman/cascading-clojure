@@ -1,0 +1,154 @@
+HIGH LEVEL DESCRIPTION
+
+The goal of this wrapper is to be able to write as much application code in clojure as you can, and treat cascading as 
+almost like an HOF, and one of the restrictions is where you have to follow certain conventions in terms of arity of 
+fns.
+
+Right now, it works on lines of text, so each line of text can be thought of as an item in the "collection". (from an 
+HOF perspective)
+
+The "framework" allows you to define read and write functions. Examples are identity, read-string, fns for reading json, 
+etc.
+Mostly, this wrapper has been used to convert and persist data as clojure data structures.
+
+
+DEFINING WORKFLOWS
+
+there are currently a few supported cascading constructs...
+each, every, and groupby.
+
+Each of these take in functions that's called per line of text, or in everygroup's case, per group.
+Workflows are defined as functions that return maps, these are called by the internal wrapper code when you specify 
+which workflow/function to call in the commandline when you tell hadoop to run a job. (more on this later)
+
+These workflow maps in general have a function for the operation, a reader (which converts the line of text into 
+something meaningful for your program), and a writer, (usually just print-string/pr-str).
+There are defaults defined for each of these...
+Some of the cascading constructs take in additional fns. (for example, groupby takes in a function to extract a group 
+key out of the line of input)
+
+
+EACH
+
+Each is like map in clojure, it takes in a function with an arity of 1, and calls it over each line of text.
+
+Let's say your input file has
+{:a 1 :b 2 :c 3}
+{:a 2 :b 4 :c 6}
+
+and your function is
+(defn sum-of-vals [m] (apply + (vals m)))
+
+the result will be written out as
+6
+12
+
+The workflow for this example looks like this:
+(defn sum-of-maps []
+  {:operations {:each {:using sum-of-vals}}})
+
+The defaults are
+:using identity :reader read-string :writer pr-str 
+
+
+GROUPBY
+
+GroupBy groups lines of text together, it is typically followed by and everyGroup.
+The difference with each is that it takes in a groupkey extractor function. This function also has an arity of 1 and 
+takes the input line as the parameter.
+
+sample input
+{:airline "UNITED" :flight "abc"}
+{:airline "UNITED" :flight "abcd"}
+{:airline "SOUTHWEST" :flight "abc1"}
+
+workflow:
+(defn group-by-airline []
+  {:operations {:groupBy {:groupby (fn [flight] (:airline flight))}}})
+  
+output
+UNITED     {:airline "UNITED" :flight "abc"}
+UNITED     {:airline "UNITED" :flight "abcd"}
+SOUTHWEST  {:airline "SOUTHWEST" :flight "abc1"}
+
+defaults:
+:using identity :reader read-string :writer pr-str :groupby (fn [x] 1)
+
+
+
+EVERYGROUP
+
+This has to be preceded by a groupBy, as per cascading rules. 
+(http://www.cascading.org/javadoc/cascading/pipe/Every.html)
+EveryGroup is similar to reduce/fold, with an "init" function that will return the initial value.
+
+Continuing from before, let's say what you want is a list of all the flights for each airline.
+
+workflow:
+(defn group-by-airline []
+  {:operations {:groupBy {:groupby (fn [flight] (:airline flight))}
+          :everygroup {:using (fn [acc x] (concat acc (:flight x))) :init (fn [] [])}}})
+        
+output:
+UNITED     ["abc" "abcd"]
+SOUTHWEST   ["abc1"]
+
+
+defaults:
+:using identity :reader read-string :writer pr-str :init (fn [] {})
+
+
+A MORE FULL-FLEDGED EXAMPLE
+
+..........
+
+PACKAGING AND MAIN CLASS
+
+Packaging-wise, the final jar needs to have cascading and it's dependencies, and also clojure jars in the lib folder, 
+with the rest of your dependencies. (it's a hadoop thing)
+There should also be a main class, which should look like this:
+
+ (ns mycompany.filename
+  (:require [org.parsimonygroup.cascading :as c])
+  (:require [org.parsimonygroup.makemain-utils :as m])
+  (:gen-class))
+  
+(defn- -main [& args]
+  (let [opts (assoc (m/parseArgs args) :mainCls (class -main))]
+    (if (:join opts) 
+      (c/cascading-join opts)
+      (c/cascading opts))))
+
+
+Cascading-clojure uses apache commons cli to parse commandline arguments. A sample command looks like this:
+hadoop jar build/jobs.jar -in  file:///Users/Admin/projects/githubcontestcode/calcs/splitupusers/ -out 
+file:///Users/Admin/projects/githubcontestcode/out/ -ns timwee.remote-jobs -wf user-covisit-wf
+
+-in and -out are self-explanatory, -wf is the function that defines your workflow map, and -ns is the namespace of that 
+function.
+
+
+
+UNDOCUMENTED THAT I KNOW
+
+joins
+
+
+
+
+FUTURE
+
+monadic definition of workflow 
+The goal is to be able to hook up the steps in the pipeline using a monad.
+The advantage of this is that the monad holds all the "context" of the execution, and it is easy to swap out this 
+context if you want to write tests for your workflow, or if you don't want to run it using this cascading wrapper code.
+
+
+
+TODO
+
+first of all clean up of code, get rid of duplication and some unnecessary passing around of functions
+second, optimize cascading stuff, i'm pretty sure how it's starting up the clojure runtime and other things can be 
+optimized.
+
+then probably change the way the whole thing is structured if there is a better way, monads etc.
