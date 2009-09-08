@@ -30,27 +30,6 @@
           <target>1.6</target>
         </configuration>
       </plugin>
-
-
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>
-                ${project.build.directory}/lib
-              </outputDirectory>
-              <includeScope>runtime</includeScope>
-              <overWriteIfNewer>true</overWriteIfNewer>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
@@ -63,10 +42,6 @@
             <configuration>
               <tasks>
                 <path id="class.path">
-
-                  <fileset dir="lib">
-                    <include name="*.jar"/>
-                  </fileset>
                   <pathelement location="./src/main/clojure/"/>
                   <pathelement location="./target/classes/"/>
                   <pathelement location="${project.build.outputDirectory}"/>
@@ -82,49 +57,19 @@
               </tasks>
             </configuration>
           </execution>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
+<!--	  <execution>
+	    <id>test</id>
             <configuration>
-              <tasks>
-                <property name="clj.src" location="./src/main/clojure"/>
-                <property name="dir.cljclasses" location="./src/main/clojure"/>
-                <property name="artifacts.dir" location="${project.build.directory}"/>
-                <property name="build.classes" location="${project.build.directory}/classes"/>
-                <property name="output.dir" location="build"/>
-                <delete dir="${output.dir}"/>
-                <mkdir dir="${output.dir}"/>
-                <copy todir="${artifacts.dir}/lib">
-                  <fileset dir="lib">
-                    <include name="*.jar"/>
-                    ˜
-                    <exclude name="**/hadoop*.jar"/>
-                    <exclude name="**/analysis-1.0.jar"/>
-                  </fileset>
-                </copy>
-                <jar jarfile="${output.dir}/hadoop-clojure.jar" filesetmanifest="mergewithoutmain">
-                  <fileset dir="${artifacts.dir}" includes="lib/">
-                    <exclude name="**/hadoop*.jar"/>
-                  </fileset>
-                  <fileset dir="${build.classes}"/>
-                  <!--<fileset dir="${dir.cljclasses}"/>-->
-                  <fileset dir="./src/main">
-                    <exclude name="**/*.java"/>
-                  </fileset>
-                  <fileset dir="./src/main/clojure">
-                    <include name="**/*.clj"/>
-                  </fileset>
-                  <manifest>
-                    <attribute name="Class-Path" value="."/>
-                    <!-- <attribute name="Main-Class" value="${main.class}"/> -->
-                  </manifest>
-                </jar>
-
+              <tasks> 
+		</path>
+		<java classname="clojure.main" classpathref="maven.test.classpath">
+                  <arg value="-e"/>
+                  <arg value="(require '(org.parsimonygroup [tests :as main]))
+                              (main/run)"/>
+                </java>
               </tasks>
             </configuration>
-          </execution>
+          </execution>-->
         </executions>
       </plugin>
     </plugins>

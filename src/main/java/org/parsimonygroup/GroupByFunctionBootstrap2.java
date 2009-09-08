@@ -31,11 +31,6 @@ public class GroupByFunctionBootstrap2 extends BaseOperation implements Function
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
 
-  public GroupByFunctionBootstrap2(Fields fields, String fnNsName) {
-    super(1, fields);
-    this.clojureHelper = new ClojureCascadingHelper(fnNsName);
-  }
-
   public void operate(FlowProcess flowProcess, FunctionCall functionCall) {
     try {
       clojureHelper.bootClojure();

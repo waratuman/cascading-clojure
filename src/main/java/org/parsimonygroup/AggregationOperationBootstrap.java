@@ -12,14 +12,14 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
   private IFn initFn;
   private IFn aggregateFn;
   private ClojureCascadingHelper clojureHelper;
-  private IFn converter;
+  private IFn writer;
   private IFn cljCallback;
 
-  public AggregationOperationBootstrap(IFn reader, IFn converter, IFn aggregateFn, IFn initFn, IFn cljCallback, String fnNsName) {
+  public AggregationOperationBootstrap(IFn reader, IFn writer, IFn aggregateFn, IFn initFn, IFn cljCallback, String fnNsName) {
     this.reader = reader;
     this.initFn = initFn;
     this.aggregateFn = aggregateFn;
-    this.converter = converter;
+    this.writer = writer;
     this.cljCallback = cljCallback;
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
@@ -41,7 +41,7 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
   public void aggregate(FlowProcess flowProcess, AggregatorCall<Object[]> aggregatorCall) {
     try {
       clojureHelper.bootClojure();
-      aggregatorCall.getContext()[0] = clojureHelper.callClojure(aggregatorCall.getContext()[0], aggregatorCall.getArguments(), aggregateFn, cljCallback, reader, converter);
+      aggregatorCall.getContext()[0] = clojureHelper.callClojure(aggregatorCall.getContext()[0], aggregatorCall.getArguments(), aggregateFn, cljCallback, reader, writer);
     } catch (Exception e) {
       e.printStackTrace(); 
     }
@@ -50,7 +50,7 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
 
   public void complete(FlowProcess flowProcess, AggregatorCall<Object[]> aggregatorCall) {
     try {
-      aggregatorCall.getOutputCollector().add(new Tuple((Comparable) converter.invoke(aggregatorCall.getContext()[0].toString())));
+      aggregatorCall.getOutputCollector().add(new Tuple((Comparable) writer.invoke(aggregatorCall.getContext()[0].toString())));
     } catch (Exception e) {
       e.printStackTrace();  
     }

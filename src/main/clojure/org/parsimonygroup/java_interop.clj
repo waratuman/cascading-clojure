@@ -14,42 +14,36 @@
     m-plus   (fn m-plus-maybe [& mvs]
 	       (first (drop-while nil-or-empty? mvs)))])
 
-(defn default-clj-callback [reader writer f x] 
-  (with-monad maybe-nilempty-m
-     (def reader-m (m-lift 1 reader))
-     (def f-m (m-lift 1 f)))
-     (writer (f-m (reader-m x))))
+(defn default-clj-callback [reader writer f x]
+  (writer (apply f (map reader (seq x)))))
 
 (defn groupby-clj-callback [reader writer f out-collector x] 
-  (letfn [(collect-grps [kv-map] 
-	    (for [[k v] kv-map] (. out-collector add (Tuple. (into-array String (writer k) (writer v))))))
-	  (write-out [kv-map]
-	    (into {} (for [[k v] kv-map] [(writer k) (writer v)])))]
-    (with-monad maybe-nilempty-m
-		(def reader-m (m-lift 1 reader))
-		(def f-m (m-lift 1 f)))
-        (write-out (f-m (reader-m x)))))
+  (let [write-out (fn [kv-map]
+		    (into {} (for [[k v] kv-map] [(writer k) (writer v)])))]
+        (write-out (apply f (map reader (seq x))))))
 
-(defn everygroup-clj-callback [reader writer f acc-val x] (f acc-val (reader x)))
+(defn everygroup-clj-callback [reader writer f acc-val x] 
+  (apply (partial f acc-val) (map reader (seq x))))
 (defn join-clj-callback [reader writer joinFn args]
   (writer (apply joinFn (map reader (seq args)))))
 
 
+(defn mk-fields [coll] (Fields. (into-array String coll)))
 ;; multimethods instead?
 (defn each-j [prev wf]
-  (Each. prev (FunctionBootstrap. (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (FunctionBootstrap. (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))))
 
 (defn c-filter-j [prev wf]
-  (Each. prev (FunctionFilterBootstrap. (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (FunctionFilterBootstrap. (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))))
 
 (defn groupBy-j [prev wf]
-  (GroupBy. (Each. prev (GroupByFunctionBootstrap. (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf))) Fields/FIRST))
+  (GroupBy. (Each. prev (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))) Fields/FIRST))
 
 (defn groupBy2-j [prev wf]
   (GroupBy. (Each. prev (GroupByFunctionBootstrap2. (:reader wf) (:writer wf) (:using wf) groupby-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn everyGroup-j [prev wf]
-  (Every. prev (AggregationOperationBootstrap. (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
+  (Every. prev (mk-fields (:inputFields wf)) (AggregationOperationBootstrap. (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))))
 
 (defn transformation-j [prev wf]  
   (GroupBy. 
