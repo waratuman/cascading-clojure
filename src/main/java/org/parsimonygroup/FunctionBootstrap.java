@@ -4,6 +4,7 @@ import cascading.flow.FlowProcess;
 import cascading.operation.BaseOperation;
 import cascading.operation.Function;
 import cascading.operation.FunctionCall;
+import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
@@ -18,7 +19,8 @@ public class FunctionBootstrap extends BaseOperation implements Function {
   private IFn writer;
   private IFn cljCallback;
 
-  public FunctionBootstrap(IFn reader, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
+  public FunctionBootstrap(Fields inFields, Fields outFields, IFn reader, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
+    super( outFields);
     this.reader = reader;
     this.function = function;
     this.writer = writer;
@@ -44,7 +46,7 @@ public class FunctionBootstrap extends BaseOperation implements Function {
          collector.add(tuple);
       }
     } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw new RuntimeException("error prcessing Data", e);
     }
   }
 }

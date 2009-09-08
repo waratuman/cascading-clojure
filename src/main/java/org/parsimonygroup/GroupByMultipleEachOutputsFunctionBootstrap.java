@@ -17,21 +17,15 @@ public class GroupByMultipleEachOutputsFunctionBootstrap extends BaseOperation i
   private IFn function;
   private IFn cljCallback;
   private ClojureCascadingHelper clojureHelper;
-    private static Fields outputFields = new Fields("key", "clojurecode");
   private IFn writer;
 
-  public GroupByMultipleEachOutputsFunctionBootstrap(IFn reader, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
-    super(1, outputFields);
+  public GroupByMultipleEachOutputsFunctionBootstrap(Fields inFields, Fields outFields, IFn reader, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
+    super(inFields.size(), outFields);
     this.rdr = reader;
     this.function = function;
     this.cljCallback = cljCallback;
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
     this.writer = writer;
-  }
-
-  public GroupByMultipleEachOutputsFunctionBootstrap(Fields fields, String fnNsName) {
-    super(1, fields);
-    this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
 
   public void operate(FlowProcess flowProcess, FunctionCall functionCall) {
@@ -45,7 +39,7 @@ public class GroupByMultipleEachOutputsFunctionBootstrap extends BaseOperation i
 
   protected void processData(TupleEntry arguments, TupleEntryCollector outputCollector) {
     try {
-      String jsonOutput = (String) clojureHelper.callClojure(arguments, function, cljCallback, rdr, writer);
+      String jsonOutput = (String) clojureHelper.groupByGetKey(arguments, function, cljCallback, rdr, writer);
 
       JSONArray jsonArray = new JSONArray(jsonOutput);
       for(int i = 0; i < jsonArray.length(); i++) {
