@@ -9,17 +9,17 @@
 ; workflows
 (defstruct executable-wf :pipe :tap :sink)
 
-(defstruct workflow :using :reader :writer :namespace :javahelper)
+(defstruct workflow :using :reader :writer :namespace :javahelper :inputFields :outputFields)
 
 ; add tag for multimethods?
 ; these are default workflows
-(def each (struct-map workflow :using identity :reader read-string :writer pr-str :javahelper each-j))
-(def groupBy (struct-map workflow :using identity :reader read-string :writer pr-str :groupby (fn [x] 1) :javahelper groupBy-j))
-(def groupBy2 (struct-map workflow :using identity :reader read-string :writer pr-str :javahelper groupBy2-j))
-(def everyGroup (struct-map workflow :using identity :reader read-string :writer pr-str :init (fn [] {}) :javahelper everyGroup-j))
-(def c-filter (struct-map workflow :using (fn [x] true) :reader read-string :writer pr-str :javahelper c-filter-j))
-(def transformation (struct-map workflow :using identity :reader read-string :writer pr-str :javahelper transformation-j))
-
+(def common-wf-fields {:using identity :reader read-string :writer pr-str :inputFields ["line"] :outputFields ["data"]})
+(def each (merge common-wf-fields (struct-map workflow :javahelper each-j)))
+(def groupBy (merge common-wf-fields (struct-map workflow :groupby (fn [x] 1) :javahelper groupBy-j :outputFields ["key", "clojurecode"])))
+(def groupBy2 (merge common-wf-fields (struct-map workflow :javahelper groupBy2-j  :outputFields ["key", "clojurecode"])))
+(def everyGroup (merge common-wf-fields (struct-map workflow :init (fn [] {}) :javahelper everyGroup-j)))
+(def c-filter (merge common-wf-fields (struct-map workflow :using (fn [x] true) :javahelper c-filter-j)))
+(def transformation (merge common-wf-fields (struct-map workflow :javahelper transformation-j)))
 
 (def op-lookup {:each each :groupBy groupBy :groupBy2 groupBy2 :everygroup everyGroup :filter c-filter :transformation transformation})
 

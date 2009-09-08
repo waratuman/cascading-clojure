@@ -4,11 +4,12 @@ import cascading.flow.FlowProcess;
 import cascading.operation.BaseOperation;
 import cascading.operation.Function;
 import cascading.operation.FunctionCall;
-import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import clojure.lang.IFn;
+
+import java.util.Collection;
 
 public class FunctionBootstrap extends BaseOperation implements Function {
   private IFn reader;
@@ -18,16 +19,10 @@ public class FunctionBootstrap extends BaseOperation implements Function {
   private IFn cljCallback;
 
   public FunctionBootstrap(IFn reader, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
-    super(1, new Fields("clojurecode"));
     this.reader = reader;
     this.function = function;
     this.writer = writer;
     this.cljCallback = cljCallback;
-    this.clojureHelper = new ClojureCascadingHelper(fnNsName);
-  }
-
-  public FunctionBootstrap(Fields fields, String fnNsName) {
-    super(1, fields);
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
 
@@ -37,20 +32,19 @@ public class FunctionBootstrap extends BaseOperation implements Function {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    TupleEntry arguments = functionCall.getArguments();
-    Tuple result = processData(arguments);
-
     TupleEntryCollector outputCollector = functionCall.getOutputCollector();
-    outputCollector.add(result);
+    TupleEntry arguments = functionCall.getArguments();
+    processData(arguments, outputCollector);
   }
 
-  private Tuple processData(TupleEntry arguments) {
-    Tuple result = new Tuple();
+  private void processData(TupleEntry arguments, TupleEntryCollector collector) {
     try {
-      result.add((String) clojureHelper.callClojure(arguments, function, cljCallback, reader, writer));
+      Collection<Tuple> resultTuples = clojureHelper.callClojure(arguments, function, cljCallback, reader, writer);
+      for(Tuple tuple : resultTuples) {
+         collector.add(tuple);
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e.getMessage());
     }
-    return result;
   }
 }

@@ -22,17 +22,11 @@ public class GroupByFunctionBootstrap extends BaseOperation implements Function 
   private static final Logger LOG = Logger.getLogger( GroupByFunctionBootstrap.class );
 
   public GroupByFunctionBootstrap(IFn rdr, IFn writer, IFn function, IFn groupBy, IFn cljCallback, String fnNsName) {
-    super(1, outputFields);
     this.rdr = rdr;
     this.writer = writer;
     this.function = function;
     this.groupBy = groupBy;
     this.cljCallback = cljCallback;
-    this.clojureHelper = new ClojureCascadingHelper(fnNsName);
-  }
-
-  public GroupByFunctionBootstrap(Fields fields, String fnNsName) {
-    super(1, fields);
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
 
