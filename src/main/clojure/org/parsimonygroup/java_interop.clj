@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionBootstrap FunctionFilterBootstrap GroupByFunctionBootstrap GroupByFilterBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme GroupByMultipleEachOutputsFunctionBootstrap JoinerBootstrap GroupByFunctionBootstrap2]
+  (:import [org.parsimonygroup FunctionBootstrap FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme GroupByMultipleEachOutputsFunctionBootstrap JoinerBootstrap GroupByFunctionBootstrap2]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -15,9 +15,12 @@
 	       (first (drop-while nil-or-empty? mvs)))])
 
 (defn default-clj-callback [reader writer f x]
-  (writer (apply f (map reader (seq x)))))
+  "expect [[rowitems] [rowitems] [rowitems]]"
+  (for [result (apply f (map reader (seq x)))]
+    (map writer result)))
 
 (defn groupby-clj-callback [reader writer f out-collector x] 
+  "expect [[k v1 v2...] [k v1 v2...]]"
   (let [write-out (fn [kv-map]
 		    (into {} (for [[k v] kv-map] [(writer k) (writer v)])))]
         (write-out (apply f (map reader (seq x))))))
@@ -31,25 +34,25 @@
 (defn mk-fields [coll] (Fields. (into-array String coll)))
 ;; multimethods instead?
 (defn each-j [prev wf]
-  (Each. prev (mk-fields (:inputFields wf)) (FunctionBootstrap. (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
 
 (defn c-filter-j [prev wf]
-  (Each. prev (mk-fields (:inputFields wf)) (FunctionFilterBootstrap. (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (FunctionFilterBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
 
 (defn groupBy-j [prev wf]
-  (GroupBy. (Each. prev (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))) Fields/FIRST))
+  (GroupBy. (Each. prev (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn groupBy2-j [prev wf]
-  (GroupBy. (Each. prev (GroupByFunctionBootstrap2. (:reader wf) (:writer wf) (:using wf) groupby-clj-callback (:namespace wf))) Fields/FIRST))
+  (GroupBy. (Each. prev (GroupByFunctionBootstrap2. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) groupby-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn everyGroup-j [prev wf]
-  (Every. prev (mk-fields (:inputFields wf)) (AggregationOperationBootstrap. (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf)) (mk-fields (:outputFields wf))))
+  (Every. prev (mk-fields (:inputFields wf)) (AggregationOperationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
 
 (defn transformation-j [prev wf]  
   (GroupBy. 
    (Each. prev 
 	  (GroupByMultipleEachOutputsFunctionBootstrap. 
-	   (:reader wf) (:writer wf) (:using wf) 
+	   (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) 
 	   default-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn group-fields [n k] (into-array Fields (repeat n Fields/FIRST)))
@@ -68,7 +71,6 @@
 
 ;; (defn hadoop-filter [reader writer pred x] (writer (pred (reader x))))
 ;; (defn cascading-filter [reader writer pred fnNsName] (FunctionFilterBootstrap. reader writer pred fnNsName))
-;; (defn groupby-filter [reader writer pred groupby fnNsName] (GroupByFilterBootstrap. reader writer pred groupby fnNsName))
 
 ;; (defn hadoop-function [reader writer f x] (writer (f (reader x))))
 ;; (defn cascading-function [reader writer f fnNsName] (FunctionBootstrap. reader writer f fnNsName))

@@ -4,6 +4,7 @@ import cascading.flow.FlowProcess;
 import cascading.operation.Aggregator;
 import cascading.operation.AggregatorCall;
 import cascading.operation.BaseOperation;
+import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import clojure.lang.IFn;
 
@@ -15,7 +16,8 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
   private IFn writer;
   private IFn cljCallback;
 
-  public AggregationOperationBootstrap(IFn reader, IFn writer, IFn aggregateFn, IFn initFn, IFn cljCallback, String fnNsName) {
+  public AggregationOperationBootstrap(Fields inFields, Fields outFields, IFn reader, IFn writer, IFn aggregateFn, IFn initFn, IFn cljCallback, String fnNsName) {
+    super(inFields.size(), outFields);
     this.reader = reader;
     this.initFn = initFn;
     this.aggregateFn = aggregateFn;

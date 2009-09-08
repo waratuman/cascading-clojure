@@ -19,11 +19,10 @@ public class GroupByFunctionBootstrap2 extends BaseOperation implements Function
   private IFn function;
   private IFn cljCallback;
   private ClojureCascadingHelper clojureHelper;
-  private static Fields outputFields = new Fields("key", "clojurecode");
   private static final Logger LOG = Logger.getLogger( GroupByFunctionBootstrap2.class );
 
-  public GroupByFunctionBootstrap2(IFn rdr, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
-    super(1, outputFields);
+  public GroupByFunctionBootstrap2(Fields inFields, Fields outFields, IFn rdr, IFn writer, IFn function, IFn cljCallback, String fnNsName) {
+    super(inFields.size(), outFields);
     this.rdr = rdr;
     this.writer = writer;
     this.function = function;
