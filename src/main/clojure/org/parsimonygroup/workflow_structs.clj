@@ -16,12 +16,10 @@
 (def common-wf-fields {:using identity :reader read-string :writer pr-str :inputFields ["line"] :outputFields ["data"]})
 (def each (merge common-wf-fields {:javahelper each-j}))
 (def groupBy (merge common-wf-fields {:groupby (fn [x] 1) :javahelper groupBy-j :outputFields ["key", "clojurecode"]}))
-(def groupBy2 (merge common-wf-fields {:javahelper groupBy2-j  :outputFields ["key", "clojurecode"]}))
 (def everyGroup (merge common-wf-fields {:init (fn [] {}) :javahelper everyGroup-j}))
 (def c-filter (merge common-wf-fields {:using (fn [x] true) :javahelper c-filter-j}))
-(def transformation (merge common-wf-fields {:javahelper transformation-j}))
 
-(def op-lookup {:each each :groupBy groupBy :groupBy2 groupBy2 :everygroup everyGroup :filter c-filter :transformation transformation})
+(def op-lookup {:each each :groupBy groupBy :everygroup everyGroup :filter c-filter})
 
 (defn cascading-ize [prev step fnNsName]
   (let [[opType operations] step

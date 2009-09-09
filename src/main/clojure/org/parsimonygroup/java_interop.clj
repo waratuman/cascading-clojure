@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionBootstrap FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme GroupByMultipleEachOutputsFunctionBootstrap JoinerBootstrap GroupByFunctionBootstrap2]
+  (:import [org.parsimonygroup FunctionBootstrap FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme JoinerBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -19,12 +19,6 @@
   (for [result (apply f (map reader (seq x)))]
     (map writer result)))
 
-(defn groupby-clj-callback [reader writer f out-collector x] 
-  "expect [[k v1 v2...] [k v1 v2...]]"
-  (let [write-out (fn [kv-map]
-		    (into {} (for [[k v] kv-map] [(writer k) (writer v)])))]
-        (write-out (apply f (map reader (seq x))))))
-
 (defn everygroup-clj-callback [reader writer f acc-val x] 
   (apply (partial f acc-val) (map reader (seq x))))
 (defn join-clj-callback [reader writer joinFn args]
@@ -42,18 +36,8 @@
 (defn groupBy-j [prev wf]
   (GroupBy. (Each. prev (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf))) Fields/FIRST))
 
-(defn groupBy2-j [prev wf]
-  (GroupBy. (Each. prev (GroupByFunctionBootstrap2. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) groupby-clj-callback (:namespace wf))) Fields/FIRST))
-
 (defn everyGroup-j [prev wf]
   (Every. prev (mk-fields (:inputFields wf)) (AggregationOperationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
-
-(defn transformation-j [prev wf]  
-  (GroupBy. 
-   (Each. prev 
-	  (GroupByMultipleEachOutputsFunctionBootstrap. 
-	   (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) 
-	   default-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn group-fields [n k] (into-array Fields (repeat n Fields/FIRST)))
 

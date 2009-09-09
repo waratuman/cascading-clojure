@@ -43,7 +43,7 @@ public class GroupByFunctionBootstrap extends BaseOperation implements Function 
 
   private void processData(TupleEntry arguments, TupleEntryCollector outputCollector) {
     try {
-      String key = (String) clojureHelper.groupByGetKey(arguments, groupBy, cljCallback, rdr, writer);
+      Comparable key = (Comparable) clojureHelper.groupByGetKey(arguments, groupBy);
       Collection<Tuple> cljResult = clojureHelper.callClojure(arguments, function, cljCallback, rdr, writer);
       for(Tuple tuple : cljResult) {
         outputCollector.add(new Tuple(key).append(tuple));
