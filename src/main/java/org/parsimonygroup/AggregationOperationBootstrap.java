@@ -8,6 +8,8 @@ import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import clojure.lang.IFn;
 
+import java.util.Collection;
+
 public class AggregationOperationBootstrap extends BaseOperation<Object[]> implements Aggregator<Object[]>  {
   private IFn reader;
   private IFn initFn;
@@ -52,7 +54,14 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
 
   public void complete(FlowProcess flowProcess, AggregatorCall<Object[]> aggregatorCall) {
     try {
-      aggregatorCall.getOutputCollector().add(new Tuple((Comparable) writer.invoke(aggregatorCall.getContext()[0].toString())));
+      Collection resultRow = (Collection) aggregatorCall.getContext()[0];
+      Comparable [] rowForTuple = new Comparable[resultRow.size()];
+      int i = 0;
+      for(Object data : resultRow) {
+        rowForTuple[i] = (Comparable) writer.invoke(data);
+        i++;
+      }
+      aggregatorCall.getOutputCollector().add(new Tuple(rowForTuple));
     } catch (Exception e) {
       e.printStackTrace();  
     }
