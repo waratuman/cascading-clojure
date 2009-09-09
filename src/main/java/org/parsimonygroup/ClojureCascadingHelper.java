@@ -87,8 +87,8 @@ public class ClojureCascadingHelper implements Serializable {
      return dataConverter.invoke(reader, writer, f, outputCollector, clojureData(arguments));
   }
 
-  public Collection<Tuple> callClojure(Object acc, TupleEntry arguments, IFn aggregateFn, IFn dataConverter, IFn reader, IFn writer) throws Exception {
-     return toFieldTuples(dataConverter.invoke(reader, writer, aggregateFn, acc, clojureData(arguments)));
+  public Object callClojure(Object acc, TupleEntry arguments, IFn aggregateFn, IFn dataConverter, IFn reader, IFn writer) throws Exception {
+     return dataConverter.invoke(reader, writer, aggregateFn, acc, clojureData(arguments));
   }
 
   // for joins
