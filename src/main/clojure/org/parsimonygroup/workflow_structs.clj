@@ -16,7 +16,7 @@
 (def common-wf-fields {:using identity :reader read-string :writer pr-str :inputFields ["line"] :outputFields ["data"]})
 (def each (merge common-wf-fields {:javahelper each-j}))
 (def groupBy (merge common-wf-fields {:groupby (fn [x] 1) :javahelper groupBy-j :outputFields ["key", "clojurecode"]}))
-(def everyGroup (merge common-wf-fields {:init (fn [] {}) :javahelper everyGroup-j}))
+(def everyGroup (merge common-wf-fields {:init (fn [] [""]) :using (fn [acc next-line] [(str (first acc) next-line)]) :javahelper everyGroup-j}))
 (def c-filter (merge common-wf-fields {:using (fn [x] true) :javahelper c-filter-j}))
 
 (def op-lookup {:each each :groupBy groupBy :everygroup everyGroup :filter c-filter})
