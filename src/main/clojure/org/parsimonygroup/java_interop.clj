@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionBootstrap FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme JoinerBootstrap]
+  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme JoinerBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -28,7 +28,7 @@
 (defn mk-fields [coll] (Fields. (into-array String coll)))
 ;; multimethods instead?
 (defn each-j [prev wf]
-  (Each. prev (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
 
 (defn c-filter-j [prev wf]
   (Each. prev (mk-fields (:inputFields wf)) (FunctionFilterBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
