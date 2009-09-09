@@ -1,6 +1,7 @@
 (ns org.parsimonygroup.load-all)
 
 (def *all-clj-cascading-libs* '[
+  function-bootstrap
   java-interop
   makemain-utils
   workflow-structs
