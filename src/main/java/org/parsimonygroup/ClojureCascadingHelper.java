@@ -77,8 +77,9 @@ public class ClojureCascadingHelper implements Serializable {
      return toFieldTuples(dataConverter.invoke(reader, writer, function, clojureData(arguments)));
    }
 
-   public Object groupByGetKey(TupleEntry arguments, IFn function, IFn dataConverter, IFn reader, IFn writer) throws Exception {
-     return dataConverter.invoke(reader, writer, function, clojureData(arguments));
+   public Object groupByGetKey(TupleEntry arguments, IFn function) throws Exception {
+     Object data = clojureData(arguments);
+     return function.invoke(ArraySeq.create((Object[]) data));
    }
 
   // for multiple groupbys per file/line
