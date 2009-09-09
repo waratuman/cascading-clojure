@@ -5,7 +5,7 @@
   makemain-utils
   workflow-structs
   join-helper
-  cascading
+  cascading				
   ])
 
 (doseq [name *all-clj-cascading-libs*]

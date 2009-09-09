@@ -17,17 +17,12 @@ public class FunctionFilterBootstrap extends BaseOperation implements Function {
   private IFn writer;
   private IFn cljCallback;
 
-  public FunctionFilterBootstrap(IFn reader,IFn writer, IFn function, IFn cljCallback, String fnNsName) {
-    super(1, new Fields("clojurecode"));
+  public FunctionFilterBootstrap(Fields inFields, Fields outFields, IFn reader,IFn writer, IFn function, IFn cljCallback, String fnNsName) {
+    super(inFields.size(),outFields);
     this.reader = reader;
     this.function = function;
     this.writer = writer;
     this.cljCallback = cljCallback;
-    this.clojureHelper = new ClojureCascadingHelper(fnNsName);
-  }
-
-  public FunctionFilterBootstrap(Fields fields, String fnNsName) {
-    super(1, fields);
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
 
@@ -47,7 +42,7 @@ public class FunctionFilterBootstrap extends BaseOperation implements Function {
   private Tuple processData(TupleEntry arguments) {
     Tuple result = new Tuple();
     try {
-      if((Boolean)clojureHelper.callClojure(arguments, function, cljCallback, reader, writer)) {
+      if((Boolean)clojureHelper.filterCall(arguments, function, cljCallback, reader, writer)) {
         result.add(arguments.getTuple().get(arguments.getFields().size() -1));
       }
     } catch (Exception e) {

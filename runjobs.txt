@@ -1,0 +1,3 @@
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/cascading-clojure/data/ -out file:///Users/Admin/projects/githubcontest/out/ -ns timwee.remote-jobs -wf test-with-fields
+
+~/techLib/hadoop-0.18.3/bin/hadoop jar build/jobs.jar -in file:///Users/Admin/projects/cascading-clojure/data/ -out file:///Users/Admin/projects/githubcontest/out/ -ns timwee.remote-jobs -wf groupby-with-fields
