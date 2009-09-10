@@ -23,27 +23,27 @@
              clj-callback fn-ns-name]
   [[out-fields] {"reader" reader "writer" writer "function" function
                  "clj-callback" clj-callback
-                 "clojure-helper"
-                 (ClojureCascadingHelper. fn-ns-name)}])
+                 "fn-ns-name" fn-ns-name}])
+
+(defn -prepare [this _ _]
+  (println "gbj prepare")
+  (require 'clojure.main)
+  (require 'org.parsimonygroup.cascading)
+  (require (symbol ((.state this) "fn-ns-name"))))
+
 
 (defn process-data [this arguments collector]
-  (try
    (let [state (.state this)
          result-tuples
-         (.callClojure (state "clojure-helper" ) arguments
-                       (state "function" ) (state "clj-callback" )
-                       (state "reader" ) (state "writer" ))]
+	 ((state "clj-callback" ) 
+	  (state "reader" ) (state "writer" )
+	  (state "function" )  (iterator-seq (.. arguments getTuple iterator)))
+	 result-tuples (map #(Tuple. (into-array Comparable %)) result-tuples)]
      (doseq [tuple result-tuples]
-       (.add collector tuple)))
-   (catch Exception e
-         (throw (RuntimeException. "error prcessing Data" e)))))
+       (.add collector tuple))))
 
 (defn -operate [this flow-process function-call]
   (println "gbj operate FunctionBootstrapInClojure")
-  (try
-   (.bootClojure ((.state this) "clojure-helper"))
-   (catch Exception e
-     (.printStackTrace e)))
   (let [output-collector (.getOutputCollector function-call)
         arguments (.getArguments function-call)]
     (process-data this arguments output-collector)))
