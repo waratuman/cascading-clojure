@@ -28,7 +28,7 @@
 (defn mk-fields [coll] (Fields. (into-array String coll)))
 ;; multimethods instead?
 (defn each-j [prev wf]
-  (Each. prev (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
 
 (defn c-filter-j [prev wf]
   (Each. prev (mk-fields (:inputFields wf)) (FunctionFilterBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
