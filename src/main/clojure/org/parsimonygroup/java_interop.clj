@@ -1,25 +1,25 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper RollingWindowScheme JoinerBootstrap]
+  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper  JoinerBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
 
 (defn seqable? [x] (or (seq? x) (string? x)))
 (defn nil-or-empty? [coll] (or (nil? coll) (and (seqable? coll) (empty? coll))))
-(defmonad maybe-nilempty-m 
+(defmonad maybe-nilempty-m
    [m-zero   nil
     m-result (fn m-result-maybe [v] v)
     m-bind   (fn m-bind-maybe [mv f]
                (if (nil-or-empty? mv) nil (f mv)))
     m-plus   (fn m-plus-maybe [& mvs]
-	       (first (drop-while nil-or-empty? mvs)))])
+               (first (drop-while nil-or-empty? mvs)))])
 
 (defn default-clj-callback [reader writer f x]
   "expect [[rowitems] [rowitems] [rowitems]]"
   (for [result (apply f (map reader (seq x)))]
     (map writer result)))
 
-(defn everygroup-clj-callback [reader writer f acc-val x] 
+(defn everygroup-clj-callback [reader writer f acc-val x]
   (apply (partial f acc-val) (map reader (seq x))))
 (defn join-clj-callback [reader writer joinFn args]
   (writer (apply joinFn (map reader (seq args)))))
