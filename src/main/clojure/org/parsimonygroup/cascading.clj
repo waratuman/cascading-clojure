@@ -5,7 +5,8 @@
     [org.apache.hadoop.mapred JobConf]
     [java.util Map Properties])
   (:use org.danlarkin.json)
-  (:use [org.parsimonygroup.workflow-structs :only (executable-wf cascading-ize mk-config)]))
+  (:use [org.parsimonygroup.workflow-structs :only
+         (executable-wf cascading-ize mk-config)]))
 
 (defn mk-pipe [prev pipeline-ns fns]
     (let [f (first fns)]
@@ -23,21 +24,12 @@
 (defn pipe-with-name [name] (Pipe. name))
 
 (defn configure-properties [main-class]
-  (let [prop (Properties.)
-        jobConf (JobConf.)]
-    ;; (.load prop (.. (class *ns*) getClassLoader
-    ;;                 (getResourceAsStream "config.properties")))
+  (let [prop (Properties.)]
+    (when-let [config (.. (class *ns*) (getClassLoader)
+                          (getResourceAsStream "config.properties"))]
+      (.load prop config))
     ;; (Flow/setStopJobsOnExit prop false)
     (FlowConnector/setApplicationJarClass prop main-class)
-    (.set jobConf "mapred.task.timeout" "600000000")
-    ;; (.set jobConf "mapred.child.java.opts" "-Xmx768m")
-    ;; (.set jobConf "mapred.tasktracker.map.tasks.maximum" "1")
-    ;; (.set jobConf "mapred.tasktracker.reduce.tasks.maximum" "1")
-
-    ;; (Flow/setStopJobsOnExit prop false)
-    ;; (.set jobConf "fs.default.name" "file:///")
-    ;; (.set jobConf "mapred.compress.map.output" "true")
-    (MultiMapReducePlanner/setJobConf prop jobConf)
     prop))
 
 (defn mk-workflow [pipeline-ns in-path out-path pipeline]
