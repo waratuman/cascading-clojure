@@ -19,14 +19,16 @@
       (.addOption "wf" true "function that makes workflow map")
       (.addOption "join" true "indicates whether this job is a join or not"))))
 
-(defn extract-arg [arg]
+(defn extract-arg
   "this extracts values out of a java String[]"
+  [arg]
   (cond (nil? arg) arg
         (> (alength arg) 1) (seq arg)
         :else (aget arg 0)))
 
-(defn parse-args [args]
+(defn parse-args
   "gives a map of options back"
+  [args]
   (let [opt (mk-options)
         cmd-line (.parse (GnuParser.) opt (into-array String args))]
     (into {} (for [o (map #(.getOpt %) (.getOptions opt))]
