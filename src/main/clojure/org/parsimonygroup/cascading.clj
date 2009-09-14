@@ -30,6 +30,7 @@
       (.load prop config))
     ;; (Flow/setStopJobsOnExit prop false)
     (FlowConnector/setApplicationJarClass prop main-class)
+    (MultiMapReducePlanner/setJobConf prop (JobConf.))
     prop))
 
 (defn mk-workflow [pipeline-ns in-path out-path pipeline]
