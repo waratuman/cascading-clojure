@@ -7,67 +7,80 @@
   (:use org.danlarkin.json)
   (:use [org.parsimonygroup.workflow-structs :only (executable-wf cascading-ize mk-config)]))
 
-(defn mk-pipe [prev fnNsName fns]
+(defn mk-pipe [prev pipeline-ns fns]
     (let [f (first fns)]
       (if (nil? f)
         prev
-	(mk-pipe (cascading-ize prev f fnNsName) fnNsName (rest fns)))))
-   
-(defn -retrieveFn [namespace sym]
-    (let [nsSym (symbol namespace)]
-		(apply use :reloadall [nsSym])
-		((ns-resolve nsSym (symbol sym)))))
+        (mk-pipe (cascading-ize prev f pipeline-ns) pipeline-ns (rest fns)))))
+
+(defn- retrieve-fn [namespace sym]
+    (let [ns-sym (symbol (or namespace (first (.split sym "/"))))]
+      (apply use :reloadall [ns-sym])
+      ;; TODO: once we store pipelines in vars instead of functions,
+      ;; remove one layer of parens here:
+      ((ns-resolve ns-sym (symbol sym)))))
 
 (defn pipe-with-name [name] (Pipe. name))
 
-(defn configure-properties [mainCls]
+(defn configure-properties [main-class]
   (let [prop (Properties.)
         jobConf (JobConf.)]
-    ;; (. prop load (.. (class *ns*) getClassLoader (getResourceAsStream "config.properties")))
+    ;; (.load prop (.. (class *ns*) getClassLoader
+    ;;                 (getResourceAsStream "config.properties")))
     ;; (Flow/setStopJobsOnExit prop false)
-    (FlowConnector/setApplicationJarClass prop mainCls)
-    (. jobConf set "mapred.task.timeout" "600000000")
-;    (. jobConf set "mapred.child.java.opts" "-Xmx768m")
- ;   (. jobConf set "mapred.tasktracker.map.tasks.maximum" "1")
-  ;  (. jobConf set "mapred.tasktracker.reduce.tasks.maximum" "1")
+    (FlowConnector/setApplicationJarClass prop main-class)
+    (.set jobConf "mapred.task.timeout" "600000000")
+    ;; (.set jobConf "mapred.child.java.opts" "-Xmx768m")
+    ;; (.set jobConf "mapred.tasktracker.map.tasks.maximum" "1")
+    ;; (.set jobConf "mapred.tasktracker.reduce.tasks.maximum" "1")
 
-
-;    (Flow/setStopJobsOnExit prop false)(. jobConf set "fs.default.name" "file:///")(. jobConf set "mapred.compress.map.output" "true")
+    ;; (Flow/setStopJobsOnExit prop false)
+    ;; (.set jobConf "fs.default.name" "file:///")
+    ;; (.set jobConf "mapred.compress.map.output" "true")
     (MultiMapReducePlanner/setJobConf prop jobConf)
     prop))
 
-(defn mk-workflow [fnNs inPath outPath pline]
+(defn mk-workflow [pipeline-ns in-path out-path pipeline]
   "this makes a single workflow, with keys of :pipe :sink :tap"
-  (let [steps (:operations pline) 
-        config (mk-config pline)
-	genName ((:name config) 6)]
-    (struct-map executable-wf :pipe (mk-pipe (pipe-with-name genName) fnNs steps) :tap ((:tap config) inPath) :sink ((:sink config) outPath) :name genName)))
+  (let [steps (:operations pipeline)
+        config (mk-config pipeline)
+        gen-name ((:name config) 6)]
+    (struct-map executable-wf :pipe (mk-pipe (pipe-with-name gen-name)
+                                             pipeline-ns steps)
+                :tap ((:tap config) in-path) :sink ((:sink config) out-path)
+                :name gen-name)))
 
-(defn run-workflow [wf mainCls]
-  (let [prop (configure-properties mainCls)
-	flowConnector (FlowConnector. prop)]
+(defn run-workflow [wf main-class]
+  (let [prop (configure-properties main-class)
+        flowConnector (FlowConnector. prop)]
     (.. flowConnector (connect (:tap wf) (:sink wf) (:pipe wf)) complete)))
 
 ; pull out fields to read and write?
-(defn cascading [{:keys [input output mainCls pipeline fnNsName]}]
-  (run-workflow (mk-workflow fnNsName input output (-retrieveFn fnNsName pipeline)) mainCls))
+(defn cascading [{:keys [input output main-class pipeline pipeline-ns]}]
+  (run-workflow (mk-workflow pipeline-ns input output
+                             (retrieve-fn pipeline-ns pipeline)) main-class))
 
 ;; refactor this to multimethods
-(defn mk-join-workflow [fnNs input output join-pline]
+(defn mk-join-workflow [pipeline-ns input output join-pipeline]
   "takes in a join-s struct, inputs (which should match number of wfs to join), output loc"
   ; validate?
-  (let [mk-single-wf (partial mk-workflow fnNs)
-	in-out-pipe-triples (partition 3 (interleave input (repeat output) (:join-wfs join-pline)))
-	wfs (map #(apply mk-single-wf %) in-out-pipe-triples)
-	pipes (map #(:pipe %) wfs)
-	taps (into {} (map (fn [x] [(:name x) (:tap x)]) wfs)) ; I need <name, tap>
-	join-pipe ((:javahelper join-pline) fnNs join-pline pipes (:numOutFields join-pline))]
-    (struct-map executable-wf :pipe join-pipe :tap taps :sink ((:to join-pline) output))))
+  (let [mk-single-wf (partial mk-workflow pipeline-ns)
+        in-out-pipe-triples (partition 3 (interleave input (repeat output)
+                                                     (:join-wfs join-pipeline)))
+        wfs (map #(apply mk-single-wf %) in-out-pipe-triples)
+        pipes (map #(:pipe %) wfs)
+        taps (into {} (map (fn [x] [(:name x) (:tap x)])
+                           wfs)) ; I need <name, tap>
+        join-pipe ((:javahelper join-pipeline) pipeline-ns
+                   join-pipeline pipes (:numOutFields join-pipeline))]
+    (struct-map executable-wf :pipe join-pipe :tap taps
+                :sink ((:to join-pipeline) output))))
 
-(defn cascading-join [{:keys [input output mainCls pipeline fnNsName]}]
-  (cond (not (seq? input)) (throw (IllegalArgumentException. "need at least 2 inputs to join, this should match the number of workflows in your join definition"))
-	:else (let [join-pipeline (-retrieveFn fnNsName pipeline)]
-		(run-workflow (mk-join-workflow fnNsName input output join-pipeline) mainCls))))
-
-  
-
+(defn cascading-join [{:keys [input output main-class pipeline pipeline-ns]}]
+  (when-not (seq? input)
+    (throw (IllegalArgumentException.
+            (str "need at least 2 inputs to join, this should match the "
+                 "number of workflows in your join definition"))))
+  (let [join-pipeline (retrieve-fn pipeline-ns pipeline)]
+    (run-workflow (mk-join-workflow pipeline-ns input output join-pipeline)
+                  main-class)))
