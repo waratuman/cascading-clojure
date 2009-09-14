@@ -15,7 +15,7 @@
         (mk-pipe (cascading-ize prev f pipeline-ns) pipeline-ns (rest fns)))))
 
 (defn- retrieve-fn [namespace sym]
-    (let [ns-sym (symbol (or namespace (first (.split sym "/"))))]
+    (let [ns-sym (symbol namespace)]
       (apply use :reloadall [ns-sym])
       ;; TODO: once we store pipelines in vars instead of functions,
       ;; remove one layer of parens here:
@@ -49,9 +49,10 @@
     (.. flowConnector (connect (:tap wf) (:sink wf) (:pipe wf)) complete)))
 
 ; pull out fields to read and write?
-(defn cascading [{:keys [input output main-class pipeline pipeline-ns]}]
-  (run-workflow (mk-workflow pipeline-ns input output
-                             (retrieve-fn pipeline-ns pipeline)) main-class))
+(defn cascading [{:keys [input output main-class pipeline]}]
+  (let [[pipeline-ns pipeline-sym] (.split pipeline "/")]
+    (run-workflow (mk-workflow pipeline-ns input output
+                               (retrieve-fn pipeline-ns pipeline-sym)) main-class)))
 
 ;; refactor this to multimethods
 (defn mk-join-workflow [pipeline-ns input output join-pipeline]
@@ -69,11 +70,12 @@
     (struct-map executable-wf :pipe join-pipe :tap taps
                 :sink ((:to join-pipeline) output))))
 
-(defn cascading-join [{:keys [input output main-class pipeline pipeline-ns]}]
+(defn cascading-join [{:keys [input output main-class pipeline]}]
   (when-not (seq? input)
     (throw (IllegalArgumentException.
             (str "need at least 2 inputs to join, this should match the "
                  "number of workflows in your join definition"))))
-  (let [join-pipeline (retrieve-fn pipeline-ns pipeline)]
+  (let [[pipeline-ns pipeline-sym] (.split pipeline "/")
+        join-pipeline (retrieve-fn pipeline-ns pipeline-sym)]
     (run-workflow (mk-join-workflow pipeline-ns input output join-pipeline)
                   main-class)))

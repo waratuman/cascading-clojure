@@ -93,7 +93,7 @@ There should also be a main class, which should look like this:
   (:gen-class))
   
 (defn- -main [& args]
-  (let [opts (assoc (m/parseArgs args) :mainCls (class -main))]
+  (let [opts (assoc (m/parseArgs args) :main-class (class -main))]
     (if (:join opts) 
       (c/cascading-join opts)
       (c/cascading opts))))
@@ -101,10 +101,9 @@ There should also be a main class, which should look like this:
 
 Cascading-clojure uses apache commons cli to parse commandline arguments. A sample command looks like this:
 hadoop jar build/jobs.jar -in  file:///Users/Admin/projects/githubcontestcode/calcs/splitupusers/ -out 
-file:///Users/Admin/projects/githubcontestcode/out/ -ns timwee.remote-jobs -wf user-covisit-wf
+file:///Users/Admin/projects/githubcontestcode/out/ -wf timwee.remote-jobs/user-covisit-wf
 
--in and -out are self-explanatory, -wf is the function that defines your workflow map, and -ns is the namespace of that 
-function.
+-in and -out are self-explanatory, -wf is the fully-qualified name of the function that defines your workflow map.
 
 
 
