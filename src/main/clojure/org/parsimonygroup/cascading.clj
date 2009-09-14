@@ -33,8 +33,9 @@
     (MultiMapReducePlanner/setJobConf prop (JobConf.))
     prop))
 
-(defn mk-workflow [pipeline-ns in-path out-path pipeline]
+(defn mk-workflow
   "this makes a single workflow, with keys of :pipe :sink :tap"
+  [pipeline-ns in-path out-path pipeline]
   (let [steps (:operations pipeline)
         config (mk-config pipeline)
         gen-name ((:name config) 6)]
@@ -55,9 +56,10 @@
                                (retrieve-fn pipeline-ns pipeline-sym)) main-class)))
 
 ;; refactor this to multimethods
-(defn mk-join-workflow [pipeline-ns input output join-pipeline]
+(defn mk-join-workflow
   "takes in a join-s struct, inputs (which should match number of wfs to join), output loc"
-  ; validate?
+  [pipeline-ns input output join-pipeline]
+  ;; validate?
   (let [mk-single-wf (partial mk-workflow pipeline-ns)
         in-out-pipe-triples (partition 3 (interleave input (repeat output)
                                                      (:join-wfs join-pipeline)))
