@@ -4,7 +4,7 @@
   (:gen-class))
 	
 (defn- -main [& args]
-  (let [opts (assoc (m/parseArgs args) :mainCls (class -main))]
+  (let [opts (assoc (m/parse-args args) :main-class (class -main))]
     (if (:join opts) 
       (c/cascading-join opts)
       (c/cascading opts))))
