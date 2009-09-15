@@ -2,7 +2,8 @@
   (:import [org.parsimonygroup ClojureCascadingHelper]
            [cascading.flow FlowProcess]
            [cascading.operation BaseOperation Function FunctionCall]
-           [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry]))
+           [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
+  (:use org.parsimonygroup.utils))
 
 
 (gen-class
@@ -26,10 +27,7 @@
                  "fn-ns-name" fn-ns-name}])
 
 (defn -prepare [this _ _]
-  (println "fb prepare")
-  (require 'clojure.main)
-  (require 'org.parsimonygroup.cascading)
-  (require (symbol ((.state this) "fn-ns-name"))))
+  (boot-clojure (.state this)))
 
 
 (defn process-data [this arguments collector]
