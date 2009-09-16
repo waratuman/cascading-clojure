@@ -29,19 +29,16 @@
   (boot-clojure (.state this)))
 
 (defn process-data [this arguments]
-   (let [state (.state this)
-         result (Tuple. )]
+   (let [state (.state this)]
      (if ((state "clj-callback" )
-          (state "reader" ) (state "writer" )
+          (state "reader" )
           (state "function" )  (iterator-seq (.. arguments getTuple iterator)))
-       (.add result
-             (.. arguments getTuple get
-                 (- (.. arguments getFields size) 1))))))
+      (.. arguments getTuple))))
 
 
 (defn -operate [this flow-process function-call]
   (let [arguments (.getArguments function-call)
         result (process-data this arguments)
         output-collector (.getOutputCollector function-call)]
-    (.add output-collector result)))
+    (if (not (nil? result)) (.add output-collector result))))
 

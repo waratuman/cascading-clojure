@@ -19,6 +19,9 @@
   (for [result (apply f (map reader (seq x)))]
     (map writer result)))
 
+(defn filter-callback [reader f x]
+  (apply f (map reader (seq x))))
+
 (defn everygroup-clj-callback [reader writer f acc-val x]
   (apply (partial f acc-val) (map reader (seq x))))
 (defn join-clj-callback [reader writer joinFn args]
@@ -31,7 +34,7 @@
   (Each. prev (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
 
 (defn c-filter-j [prev wf]
-  (Each. prev (mk-fields (:inputFields wf)) (FunctionFilterBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))))
+  (Each. prev (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionFilterBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) filter-callback (:namespace wf))))
 
 (defn groupBy-j [prev wf]
   (GroupBy. (Each. prev (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf))) Fields/FIRST))

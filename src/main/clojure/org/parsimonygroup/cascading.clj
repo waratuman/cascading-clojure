@@ -4,7 +4,6 @@
     [cascading.pipe Pipe]
     [org.apache.hadoop.mapred JobConf]
     [java.util Map Properties])
-  (:use org.danlarkin.json)
   (:use [org.parsimonygroup.workflow-structs :only
          (executable-wf cascading-ize mk-config)]))
 
