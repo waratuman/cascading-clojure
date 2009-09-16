@@ -2,6 +2,7 @@
 
 (def *all-clj-cascading-libs* '[
   function-bootstrap
+  function-filter-bootstrap
   java-interop
   makemain-utils
   workflow-structs
