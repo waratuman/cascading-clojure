@@ -6,7 +6,6 @@
   java-interop
   makemain-utils
   workflow-structs
-  join-helper
   cascading				
   ])
 

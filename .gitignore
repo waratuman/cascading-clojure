@@ -16,3 +16,4 @@ syntax: glob
 *.project
 *.settings
 *.pyc
+*.dot

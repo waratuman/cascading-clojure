@@ -46,8 +46,8 @@
                       classname="clojure.lang.Compile"
                       classpathref="maven.compile.classpath">
                   <sysproperty key="clojure.compile.path"
-                               value="${project.build.outputDirectory}" />
-                  <arg value="org.parsimonygroup.load-all" />
+                               value="${project.build.outputDirectory}"/>
+                  <arg value="org.parsimonygroup.load-all"/>
                 </java>
               </tasks>
             </configuration>

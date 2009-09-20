@@ -1,7 +1,7 @@
 (ns org.parsimonygroup.makemain-utils
    (:import [org.apache.commons.cli Options GnuParser OptionBuilder]))
 
-(def cmdline-to-keys {"in" :input "out" :output "wf" :pipeline "join" :join})
+(def cmdline-to-keys {"in" :input "out" :output "wf" :pipeline})
 
 (defn mk-options []
   (let [opt (Options.)]
@@ -14,8 +14,7 @@
                       (OptionBuilder/withValueSeparator \,)
                       (OptionBuilder/create "in")))
       (.addOption "out" true "output of job")
-      (.addOption "wf" true "function that makes workflow map")
-      (.addOption "join" true "indicates whether this job is a join or not"))))
+      (.addOption "wf" true "function that makes workflow map"))))
 
 (defn extract-arg
   "this extracts values out of a java String[]"

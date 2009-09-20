@@ -20,13 +20,25 @@
 		:each {:using identity-each :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name" "id"]}
 		:filter {:using filter-dummycontent-name :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name" "id"]}}})
 	
-	
+(defn test-with-fields1 []
+  {:operations {:each {:using split-line :reader identity :writer str :outputFields ["name1" "id1" "content1"]}
+		:each {:using identity-each :reader identity :writer str :inputFields ["name1" "id1"] :outputFields ["name1" "id1"]}
+		:filter {:using filter-dummycontent-name :reader identity :writer str :inputFields ["name1" "id1"] :outputFields ["name1" "id1"]}}})
 
 (defn append-str [acc nxt]
   (let [seen (first acc)]
-    [(str seen nxt)]))	
+    [(str seen nxt)]))
 				
 (defn groupby-with-fields []
   {:operations {:groupBy {:groupby (fn [x] (rand-int 5)) :using second-of-line :reader identity :writer str :outputFields ["key" "second"]}
 		:everygroup {:using append-str :reader identity :init (fn [] [""]) :writer str :inputFields ["second"] :outputFields ["combined"]}}})
 
+
+(defn sample-join []
+  {:wfs [(test-with-fields) (test-with-fields1)] 
+   :groupFields [["id"] ["id1"]]
+   :using (fn [id name id1 name1] [id name id1 name1])
+   :outputFields ["id" "name" "id1" "name1"]
+   :reader identity
+   :writer str
+   :wftype :join})
