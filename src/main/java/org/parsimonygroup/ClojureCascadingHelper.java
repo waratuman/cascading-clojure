@@ -4,6 +4,7 @@ import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
 import cascading.tuple.TupleEntryCollector;
 import clojure.lang.*;
+import org.apache.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 
 public class ClojureCascadingHelper implements Serializable {
   private String fnNsName;
+   private static final Logger LOG = Logger.getLogger(ClojureCascadingHelper.class);
 
   public ClojureCascadingHelper(String fnNsName) {
     this.fnNsName = fnNsName;
@@ -92,8 +94,16 @@ public class ClojureCascadingHelper implements Serializable {
   }
 
   // for joins
-  public Object callClojure(Comparable[] args, IFn joinFn, IFn dataConverter, IFn reader, IFn writer) throws Exception {
-    return dataConverter.invoke(reader, writer, joinFn, args);
+  public Tuple callClojure(Comparable[] args, IFn joinFn, IFn dataConverter, IFn reader, IFn writer) throws Exception {
+    Collection cljResultRow = (Collection) dataConverter.invoke(reader, writer, joinFn, args);
+    Comparable[] result = new Comparable[cljResultRow.size()];
+    int i = 0;
+    for(Object item : cljResultRow) {
+      LOG.debug(i + "th item " + item);
+      result[i] = (Comparable) item;
+        i++;
+    }
+    return new Tuple(result);
   }
 
   public Boolean filterCall(TupleEntry arguments, IFn function, IFn cljCallback, IFn reader, IFn writer) throws Exception {

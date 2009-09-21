@@ -38,7 +38,7 @@ public class CljJoinIterator implements Iterator<Tuple>, Serializable {
 
     for (int i = 0; i < singletons.length; i++) {
       if (isOuter(i))
-        singletons[i] = Collections.singletonList(Tuple.size(4 /*value fields*/));
+        singletons[i] = Collections.singletonList(Tuple.size(pipeFieldsSum));
     }
 
     iterators = new Iterator[closure.size()];
@@ -90,43 +90,31 @@ public class CljJoinIterator implements Iterator<Tuple>, Serializable {
   }
 
   private Tuple makeResult(Comparable[] lastValues) {
-    Tuple result = new Tuple();
-    lastValues = dumpKeysKeepData(lastValues);
+    Comparable[] rowItems = toRowItems(lastValues);
     try {
-      result.add((Comparable) cljHelper.callClojure(lastValues, joinFn, cljCallBack, reader, writer));
+      Tuple cljResult = cljHelper.callClojure(rowItems, joinFn, cljCallBack, reader, writer);
+      LOG.debug("result added is" + cljResult);
+      return cljResult;
     } catch (Exception e) {
-      LOG.fatal("calling clojure blew up in join");
-      LOG.fatal(e.toString(), e);
-      for (Comparable lastValue : lastValues) {
+      for (Comparable lastValue : rowItems) {
         LOG.fatal(lastValue + "-" + lastValue.toString());
       }
-      return null;
+      throw new RuntimeException("clj blew up in join", e);
     }
 
-    // add enough fields to satisfy cogroup
-//    addDummyFields(pipeFieldsSum -1, result);
-
-    if (LOG.isTraceEnabled())
-      LOG.trace("tuple: " + result.print());
-
-    return result;
   }
 
-  private String[] dumpKeysKeepData(Comparable[] lastValues) {
-    Collection<String> values = new Transform<Comparable, String>() {
-      @Override
-      public String closure(Comparable in) {
-        Tuple tuple = (Tuple) in;
-        String result = tuple.getString(tuple.size() - 1);
-        return (result != null && result.trim().length() > 0) ? result : null;
+  private Comparable[] toRowItems(Comparable[] lastValues) {
+    List<Comparable> result = new ArrayList<Comparable>();
+    for (Comparable val : lastValues) {
+      Tuple in = (Tuple) val;
+      for(Object rowItem : in) {
+        LOG.debug("rowItem is " + rowItem);
+        result.add((Comparable) rowItem);  
       }
-    }.apply(Arrays.asList(lastValues));
-    return values.toArray(new String[values.size()]);
-  }
-
-  private void addDummyFields(int numDummys, Tuple result) {
-    for (int i = 0; i < numDummys; i++)
-      result.add("");
+    }
+    
+    return result.toArray(new Comparable[result.size()]);
   }
 
   protected boolean isOuter(int i) {
