@@ -19,6 +19,8 @@
 (def everyGroup (merge common-wf-fields {:init (fn [] [""]) :using (fn [acc next-line] [(str (first acc) next-line)]) :javahelper everyGroup-j}))
 (def c-filter (merge common-wf-fields {:using (fn [x] true) :javahelper c-filter-j}))
 
+
+
 (def op-lookup {:each each :groupBy groupBy :everygroup everyGroup :filter c-filter})
 
 (defn cascading-ize [prev step fnNsName]

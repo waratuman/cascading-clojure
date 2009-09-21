@@ -1,11 +1,13 @@
 (ns org.parsimonygroup.cascading
-  (:import [cascading.cascade Cascade CascadeConnector]
+  (:import 
+    [cascading.cascade Cascade CascadeConnector]
     [cascading.flow Flow FlowConnector FlowProcess MultiMapReducePlanner]
     [cascading.pipe Pipe]
+    [cascading.tap Tap]
     [org.apache.hadoop.mapred JobConf]
     [java.util Map Properties])
   (:use org.danlarkin.json)
-  (:use [org.parsimonygroup.workflow-structs :only (executable-wf cascading-ize mk-config)]))
+  (:use [org.parsimonygroup.workflow-structs :only (default-tap executable-wf cascading-ize mk-config)]))
 
 (defn mk-pipe [prev fnNsName fns]
     (let [f (first fns)]
@@ -18,8 +20,6 @@
 		(apply use :reloadall [nsSym])
 		((ns-resolve nsSym (symbol sym)))))
 
-(defn pipe-with-name [name] (Pipe. name))
-
 (defn configure-properties [mainCls]
   (let [prop (Properties.)
         jobConf (JobConf.)]
@@ -30,18 +30,22 @@
 ;    (. jobConf set "mapred.child.java.opts" "-Xmx768m")
  ;   (. jobConf set "mapred.tasktracker.map.tasks.maximum" "1")
   ;  (. jobConf set "mapred.tasktracker.reduce.tasks.maximum" "1")
-
-
 ;    (Flow/setStopJobsOnExit prop false)(. jobConf set "fs.default.name" "file:///")(. jobConf set "mapred.compress.map.output" "true")
     (MultiMapReducePlanner/setJobConf prop jobConf)
     prop))
+
+(defn copy-flow [source-tap sink-tap]
+  (.connect (FlowConnector.) source-tap sink-tap (Pipe."copy")))
+
+(defn mk-cascade [& flows]
+  (. (CascadeConnector.) connect flows))
 
 (defn mk-workflow [fnNs inPath outPath pline]
   "this makes a single workflow, with keys of :pipe :sink :tap"
   (let [steps (:operations pline) 
         config (mk-config pline)
 	genName ((:name config) 6)]
-    (struct-map executable-wf :pipe (mk-pipe (pipe-with-name genName) fnNs steps) :tap ((:tap config) inPath) :sink ((:sink config) outPath) :name genName)))
+    (struct-map executable-wf :pipe (mk-pipe (Pipe. genName) fnNs steps) :tap ((:tap config) inPath) :sink ((:sink config) outPath) :name genName)))
 
 (defn run-workflow [wf mainCls]
   (let [prop (configure-properties mainCls)
