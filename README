@@ -1,5 +1,12 @@
 HIGH LEVEL DESCRIPTION
 
+project setup & build:
+1. get hadoop 0.20.1
+2. ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
+3. get dyscascanger's cascading http://github.com/dysinger/cascading/
+4. if you can't build cacading, go delete the .pom files for the .m2 repo
+5. build cascading-clojure
+
 The goal of this wrapper is to be able to write as much application code in clojure as you can, and treat cascading as 
 almost like an HOF, and one of the restrictions is where you have to follow certain conventions in terms of arity of 
 fns.
