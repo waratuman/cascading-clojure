@@ -5,8 +5,10 @@
 (defn delete-file
   "Delete file f. Raise an exception if it fails."
   [f]
-  (or (.delete (if (string? f) (File. f) f))
-      (throw (java.io.IOException. (str "Couldn't delete " f)))))
+  (let [file (if (string? f) (File. f) f)]
+    (if (.exists file)
+  (or (.delete file)
+      (throw (java.io.IOException. (str "Couldn't delete " f)))))))
 
 (defn delete-file-recursively
   "Delete file f. If it's a directory, recursively delete all its
