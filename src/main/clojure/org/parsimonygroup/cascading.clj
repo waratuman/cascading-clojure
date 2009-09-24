@@ -34,11 +34,15 @@
     (MultiMapReducePlanner/setJobConf prop jobConf)
     prop))
 
+(defn uuid [] (.toString (java.util.UUID/randomUUID)))
+
 (defn copy-flow [source-tap sink-tap]
-  (.connect (FlowConnector.) source-tap sink-tap (Pipe."copy")))
+ "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
+  (.connect (FlowConnector.) source-tap sink-tap (Pipe. (uuid))))
 
 (defn mk-cascade [& flows]
-  (. (CascadeConnector.) connect flows))
+  "note the into-array trickery to call the java variadic method"
+  (. (CascadeConnector.) connect (into-array Flow flows)))
 
 (defn mk-workflow [fnNs inPath outPath pline]
   "this makes a single workflow, with keys of :pipe :sink :tap"

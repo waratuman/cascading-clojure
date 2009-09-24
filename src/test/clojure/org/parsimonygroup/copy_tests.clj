@@ -55,3 +55,19 @@
       (is (= [1 2 3]
 	     (read-tuple (.next copied))))
       (is (not (.hasNext copied))))))
+
+(deftest write-read-cascade
+  (with-tmp-files [in (temp-dir "source")
+		   sink1 (File. (temp-path "sink"))
+		   sink2 (File. (temp-path "sink2"))]
+    (let [lines [{:a 1 :b 2} [1 2 3]]
+	  file (write-lines-in in "some.data" lines)
+	  flow1 (copy-flow (test-tap in) (test-tap sink1))
+	  flow2 (copy-flow (test-tap sink1) (test-tap sink2))
+	  cascade (execute (mk-cascade flow1 flow2))
+	  copied (.openSink flow2)]
+      (is (= {:a 1 :b 2}
+	     (read-tuple (.next copied))))
+      (is (= [1 2 3]
+	     (read-tuple (.next copied))))
+      (is (not (.hasNext copied))))))
