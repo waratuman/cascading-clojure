@@ -14,6 +14,8 @@
      (is (= "tmp/foo/bar/data"
 	 (path "tmp" "foo" "bar" "data"))))
 
+
+;;TODO: factor out structural duplication in with-files test useages.  note the problem with closing file and the iterator mentioned in simple-copy fn
 (defn simple-copy 
   ([] (simple-copy []))
   ([lines]
@@ -28,7 +30,6 @@
 ;;TODO: problem is it deletes file and the tupleiterator is lazy loading.
        (execute (copy-flow (test-tap in) (test-tap out)))))))
 
-;;TODO: factor out structural duplication in with-files useages.
 (deftest empty-copy
   (with-tmp-files [in (temp-dir "source")
 		   out (File. (temp-path "sink"))]

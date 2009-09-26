@@ -1,24 +1,24 @@
 (ns org.parsimonygroup.cascading
   (:import 
-    [cascading.cascade Cascade CascadeConnector]
-    [cascading.flow Flow FlowConnector FlowProcess MultiMapReducePlanner]
-    [cascading.pipe Pipe]
-    [cascading.tap Tap]
-    [org.apache.hadoop.mapred JobConf]
-    [java.util Map Properties])
+   [cascading.cascade Cascade CascadeConnector]
+   [cascading.flow Flow FlowConnector FlowProcess MultiMapReducePlanner]
+   [cascading.pipe Pipe]
+   [cascading.tap Tap]
+   [org.apache.hadoop.mapred JobConf]
+   [java.util Map Properties])
   (:use org.danlarkin.json)
   (:use [org.parsimonygroup.workflow-structs :only (default-tap executable-wf cascading-ize mk-config)]))
 
 (defn mk-pipe [prev fnNsName fns]
-    (let [f (first fns)]
-      (if (nil? f)
-        prev
-	(mk-pipe (cascading-ize prev f fnNsName) fnNsName (rest fns)))))
-   
+  (let [f (first fns)]
+    (if (nil? f)
+      prev
+      (mk-pipe (cascading-ize prev f fnNsName) fnNsName (rest fns)))))
+
 (defn -retrieveFn [namespace sym]
-    (let [nsSym (symbol namespace)]
-		(apply use :reloadall [nsSym])
-		((ns-resolve nsSym (symbol sym)))))
+  (let [nsSym (symbol namespace)]
+    (apply use :reloadall [nsSym])
+    ((ns-resolve nsSym (symbol sym)))))
 
 (defn configure-properties [mainCls]
   (let [prop (Properties.)
@@ -27,25 +27,28 @@
     (Flow/setStopJobsOnExit prop false)
     (FlowConnector/setApplicationJarClass prop mainCls)
     (. jobConf set "mapred.task.timeout" "600000000")
-; (. jobConf set "mapred.child.java.opts" "-Xmx768m")
-; (. jobConf set "mapred.tasktracker.map.tasks.maximum" "1")
-; (. jobConf set "mapred.tasktracker.reduce.tasks.maximum" "1")
-; (Flow/setStopJobsOnExit prop false)(. jobConf set "fs.default.name" "file:///")(. jobConf set "mapred.compress.map.output" "true")
+					; (. jobConf set "mapred.child.java.opts" "-Xmx768m")
+					; (. jobConf set "mapred.tasktracker.map.tasks.maximum" "1")
+					; (. jobConf set "mapred.tasktracker.reduce.tasks.maximum" "1")
+					; (Flow/setStopJobsOnExit prop false)(. jobConf set "fs.default.name" "file:///")(. jobConf set "mapred.compress.map.output" "true")
     (MultiMapReducePlanner/setJobConf prop jobConf)
     prop))
 
 (defn uuid [] (.toString (java.util.UUID/randomUUID)))
 
-(defn copy-flow [source-tap sink-tap]
- "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
+(defn copy-flow
+  "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
+  [source-tap sink-tap]
   (.connect (FlowConnector.) source-tap sink-tap (Pipe. (uuid))))
 
-(defn mk-cascade [& flows]
+(defn mk-cascade 
   "note the into-array trickery to call the java variadic method"
+  [& flows]
   (. (CascadeConnector.) connect (into-array Flow flows)))
 
-(defn mk-workflow [fnNs inPath outPath pline]
+(defn mk-workflow 
   "this makes a single workflow, with keys of :pipe :sink :tap"
+  [fnNs inPath outPath pline]
   (let [steps (:operations pline) 
         config (mk-config pline)
 	genName ((:name config) 6)]
@@ -56,14 +59,15 @@
 	flowConnector (FlowConnector. prop)]
     (.. flowConnector (connect (:tap wf) (:sink wf) (:pipe wf)) complete)))
 
-; pull out fields to read and write?
+					; pull out fields to read and write?
 (defn cascading [{:keys [input output mainCls pipeline fnNsName]}]
   (run-workflow (mk-workflow fnNsName input output (-retrieveFn fnNsName pipeline)) mainCls))
 
 ;; refactor this to multimethods
-(defn mk-join-workflow [fnNs input output join-pline]
+(defn mk-join-workflow 
   "takes in a join-s struct, inputs (which should match number of wfs to join), output loc"
-  ; validate?
+  [fnNs input output join-pline]
+					; validate?
   (let [mk-single-wf (partial mk-workflow fnNs)
 	in-out-pipe-triples (partition 3 (interleave input (repeat output) (:join-wfs join-pline)))
 	wfs (map #(apply mk-single-wf %) in-out-pipe-triples)
