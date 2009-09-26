@@ -1,5 +1,6 @@
 (ns org.parsimonygroup.io
   (:import java.io.File)
+  (:use clojure.contrib.java-utils)
   (:use clojure.contrib.duck-streams))
 
 (defn delete-file
@@ -20,21 +21,18 @@
           (delete-file-recursively child)))
     (delete-file file)))
 
-(defn path [root & rest]
-  (reduce #(str %1 File/separator %2)
-	  root
-	  rest))
-
 (defn temp-path [sub-path]
-  (path (System/getProperty "java.io.tmpdir") 
-	       sub-path))
+  (.getAbsolutePath 
+   (file (System/getProperty "java.io.tmpdir") 
+	       sub-path)))
 
-;;TODO: trouble with this is that lazy cleanup doesn't work well with the repl. :-)
+;;TODO:  deleteOnExit is last resort cleanup on jvm exit.  delete-file-recursively is preemptive delete on exitint the code block for repl and tests run in the same process.
 
-(defn temp-dir [sub-path]
+(defn temp-dir
 "1) creates a directory in System.getProperty(\"java.io.tmpdir\") 
  2) calls tempDir.deleteOn Exit() so the file is deleted by the jvm.
  reference: ;http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4735419"
+ [sub-path]
   (let [tmp-dir  (File. (temp-path sub-path))]
   (if (not (.exists tmp-dir))
     (.mkdir tmp-dir))
