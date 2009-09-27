@@ -36,15 +36,21 @@
      (.connect (FlowConnector. properties) source-tap sink-tap pipe)))
 
 (defn execute 
-  "executes a flow or cascade and blocks until completion."
-  [x] (doto x .start .complete) x)
+  "executes a flow or cascade and blocks until completion. writes dot file on planner exception."
+  [x] 
+  (try
+     (doto x .start .complete) x)
+   (catch cascading.flow.PlannerException e 
+     (do 
+       (.writeDOT e "exception.dot")
+       (throw (RuntimeException. "see exception.dot file for visualization of plan" e)))))
 
 (defn copy-flow
   "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
   [source-tap sink-tap]
   (flow source-tap sink-tap (Pipe. (uuid))))
 
-(defn cascade 
+(defn cascade
   "note the into-array trickery to call the java variadic method"
   [& flows]
   (.connect (CascadeConnector.) (into-array Flow flows)))
@@ -87,13 +93,9 @@
       :tap ((:tap config) in-path) :sink ((:sink config) out-path))))
 
 (defn run-workflow [wf main-class]
-  (try
    (let [prop (configure-properties main-class)]
-     (execute (flow prop (:tap wf) (:sink wf) (:pipe wf))))
-   (catch cascading.flow.PlannerException e 
-     (do 
-       (.writeDOT e "exception.dot")
-       (throw (RuntimeException. "see exception.dot file for visualization of plan" e))))))
+     (execute (flow prop (:tap wf) (:sink wf) (:pipe wf)))))
+
 					; pull out fields to read and write?
 (defn cascading [{:keys [input output mainCls pipeline fnNsName]}]
 	(let [[pipeline-ns pipeline-sym] (.split pipeline "/")]
