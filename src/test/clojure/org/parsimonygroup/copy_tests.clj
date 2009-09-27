@@ -66,3 +66,4 @@
       (is (= [1 2 3]
 	     (read-tuple (.next copied))))
       (is (not (.hasNext copied))))))
+
