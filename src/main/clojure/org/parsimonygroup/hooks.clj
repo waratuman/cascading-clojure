@@ -1,6 +1,8 @@
 (ns org.parsimonygroup.hooks
   (:import    [cascading.flow FlowListener]))
 
+;;TODOs: get @cwensel to do onComplete for cascades
+
 (defn listen [{to :to with :with}]
  (do (.addListener to with))
  to)
@@ -17,12 +19,5 @@
     (onStopping [flow] (if stop (stop flow)))
     (onThrowable [flow throwable] (if error (error flow throwable)))))
 
-;;TODOs: 
-;;on by default
-;;1.  do we need stop-on-exit or can we just do everyhting by shelling out in the on completed.
-;;2.  how can we get onComplete for cacades rather than flows?
-
-;; (defn stop-on-exit 
-;;   "Property stopJobsOnExit will tell the Flow to add a JVM shutdown hook that will kill all running processes if the underlying computing system supports it."
-;; [flow properties])
 ;;   ;;.setStopJobsOnExit(Map<Object,Object> properties, boolean stopJobsOnExit)
+;;   "Property stopJobsOnExit is on by default and will tell the Flow to add a JVM shutdown hook that will kill all running processes if the underlying computing system supports it."
