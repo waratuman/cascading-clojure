@@ -9,19 +9,13 @@
   (:use clojure.contrib.duck-streams)
   (:use clojure.contrib.test-is))
 
-;;TODO: move to tests specific to io
-(deftest building-paths
-     (is (= "tmp/foo/bar/data"
-	 (path "tmp" "foo" "bar" "data"))))
-
-
 ;;TODO: factor out structural duplication in with-files test useages.  note the problem with closing file and the iterator mentioned in simple-copy fn
 (defn simple-copy 
   ([] (simple-copy []))
   ([lines]
      ;;source-tap creates a dir and sticks fake data in there
 	   (with-tmp-files [in (temp-dir "source")
-			out (File. (temp-path "sink"))]
+			out (temp-path "sink")]
 	  (let [   
 	   file (write-lines-in in "some.data" lines)]
 	   ;;sink tap creates a tap from a path in tmp that doesn't 
@@ -32,9 +26,9 @@
 
 (deftest empty-copy
   (with-tmp-files [in (temp-dir "source")
-		   out (File. (temp-path "sink"))]
-    (let [file (write-lines-in in "some.data" [])
-	  copied (.openSink 
+		   out (temp-path "sink")]
+     (write-lines-in in "some.data" [])
+	  (let [copied (.openSink 
 		  (execute 
 		   (copy-flow 
 		    (test-tap in) 
@@ -43,7 +37,7 @@
 
 (deftest write-read-clojure
   (with-tmp-files [in (temp-dir "source")
-		   out (File. (temp-path "sink"))]
+		   out (temp-path "sink")]
     (let [lines [{:a 1 :b 2} [1 2 3]]
 	  file (write-lines-in in "some.data" lines)
 	  copied (.openSink 
@@ -59,13 +53,13 @@
 
 (deftest write-read-cascade
   (with-tmp-files [in (temp-dir "source")
-		   sink1 (File. (temp-path "sink"))
-		   sink2 (File. (temp-path "sink2"))]
+		   sink1 (temp-path "sink")
+		   sink2 (temp-path "sink2")]
     (let [lines [{:a 1 :b 2} [1 2 3]]
 	  file (write-lines-in in "some.data" lines)
 	  flow1 (copy-flow (test-tap in) (test-tap sink1))
 	  flow2 (copy-flow (test-tap sink1) (test-tap sink2))
-	  cascade (execute (mk-cascade flow1 flow2))
+	  cascade (execute (cascade flow1 flow2))
 	  copied (.openSink flow2)]
       (is (= {:a 1 :b 2}
 	     (read-tuple (.next copied))))

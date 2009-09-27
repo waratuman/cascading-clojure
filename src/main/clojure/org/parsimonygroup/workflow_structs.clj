@@ -31,19 +31,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; config shit
 
-;use java's random generator
-(def random (java.util.Random.))
-;define characters list to use to generate string
-(def chars (map char (concat (range 48 58) (range 66 92) (range 97 123))))
-;generates 1 random character
-(defn random-char [] (nth chars (.nextInt random (count chars))))
-; generates random string of length characters
-(defn random-string [length] (apply str (take length (repeatedly random-char))))
-
 (defstruct wf-config :tap :sink :name)
 
 (defn default-tap [path] (Hfs. (TextLine.) path))
-(def default-config (struct-map wf-config :tap default-tap :sink default-tap :name #(random-string %)))
+(def default-config (struct-map wf-config :tap default-tap :sink default-tap))
 
 (defn mk-config [pline]
     (merge default-config (:config pline)))

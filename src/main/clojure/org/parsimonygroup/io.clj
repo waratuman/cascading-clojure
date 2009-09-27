@@ -22,9 +22,7 @@
     (delete-file file)))
 
 (defn temp-path [sub-path]
-  (.getAbsolutePath 
-   (file (System/getProperty "java.io.tmpdir") 
-	       sub-path)))
+   (file (System/getProperty "java.io.tmpdir") sub-path))
 
 ;;TODO:  deleteOnExit is last resort cleanup on jvm exit.  delete-file-recursively is preemptive delete on exitint the code block for repl and tests run in the same process.
 
@@ -33,7 +31,7 @@
  2) calls tempDir.deleteOn Exit() so the file is deleted by the jvm.
  reference: ;http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4735419"
  [sub-path]
-  (let [tmp-dir  (File. (temp-path sub-path))]
+  (let [tmp-dir (temp-path sub-path)]
   (if (not (.exists tmp-dir))
     (.mkdir tmp-dir))
   (.deleteOnExit tmp-dir)
@@ -50,5 +48,4 @@
 
 (defn write-lines-in [root filename lines]
   (write-lines 
-   (File. 
-    (path (.getAbsolutePath root) filename)) lines))
+    (file (.getAbsolutePath root) filename) lines))

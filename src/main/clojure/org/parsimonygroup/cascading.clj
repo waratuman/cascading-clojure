@@ -36,32 +36,42 @@
 
 (defn uuid [] (.toString (java.util.UUID/randomUUID)))
 
+(defn flow
+  ([source-tap sink-tap pipe]
+     (.connect (FlowConnector.) source-tap sink-tap pipe))
+  ([properties source-tap sink-tap pipe]
+     (.connect (FlowConnector. properties) source-tap sink-tap pipe)))
+
 (defn copy-flow
   "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
   [source-tap sink-tap]
-  (.connect (FlowConnector.) source-tap sink-tap (Pipe. (uuid))))
+  (flow source-tap sink-tap (Pipe. (uuid))))
 
-(defn mk-cascade 
+(defn cascade 
   "note the into-array trickery to call the java variadic method"
   [& flows]
-  (. (CascadeConnector.) connect (into-array Flow flows)))
+  (.connect (CascadeConnector.) (into-array Flow flows)))
 
 (defn mk-workflow 
   "this makes a single workflow, with keys of :pipe :sink :tap"
   [fnNs inPath outPath pline]
   (let [steps (:operations pline) 
         config (mk-config pline)
-	genName ((:name config) 6)]
-    (struct-map executable-wf :pipe (mk-pipe (Pipe. genName) fnNs steps) :tap ((:tap config) inPath) :sink ((:sink config) outPath) :name genName)))
+	unique-name (uuid)]
+    (struct-map executable-wf 
+      :pipe (mk-pipe (Pipe. unique-name) fnNs steps) 
+      :tap ((:tap config) inPath) 
+      :sink ((:sink config) outPath) 
+      :name unique-name)))
 
-(defn run-workflow [wf mainCls]
-  (let [prop (configure-properties mainCls)
-	flowConnector (FlowConnector. prop)]
-    (.. flowConnector (connect (:tap wf) (:sink wf) (:pipe wf)) complete)))
+(defn execute 
+  "executes a flow or cascade and blocks until completion."
+  [x] (doto x .start .complete) x)
 
-					; pull out fields to read and write?
 (defn cascading [{:keys [input output mainCls pipeline fnNsName]}]
-  (run-workflow (mk-workflow fnNsName input output (-retrieveFn fnNsName pipeline)) mainCls))
+  (let [prop (configure-properties mainCls)
+	wf (mk-workflow fnNsName input output (-retrieveFn fnNsName pipeline))]
+    (execute (flow prop (:tap wf) (:sink wf) (:pipe wf)))))
 
 ;; refactor this to multimethods
 (defn mk-join-workflow 
@@ -78,8 +88,7 @@
 
 (defn cascading-join [{:keys [input output mainCls pipeline fnNsName]}]
   (cond (not (seq? input)) (throw (IllegalArgumentException. "need at least 2 inputs to join, this should match the number of workflows in your join definition"))
-	:else (let [join-pipeline (-retrieveFn fnNsName pipeline)]
-		(run-workflow (mk-join-workflow fnNsName input output join-pipeline) mainCls))))
-
-  
-
+	:else (let [join-pipeline (-retrieveFn fnNsName pipeline)
+		    prop (configure-properties mainCls)
+		    wf (mk-join-workflow fnNsName input output join-pipeline)]
+		(execute (flow prop (:tap wf) (:sink wf) (:pipe wf))))))
