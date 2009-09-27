@@ -1,7 +1,7 @@
 (ns org.parsimonygroup.cascading
   (:import 
    [cascading.cascade Cascade CascadeConnector Cascades]
-   [cascading.flow Flow FlowConnector FlowProcess MultiMapReducePlanner]
+   [cascading.flow Flow FlowConnector FlowListener FlowProcess MultiMapReducePlanner]
    [cascading.pipe Pipe]
    [cascading.tap Tap]
    [org.apache.hadoop.mapred JobConf]
@@ -39,11 +39,11 @@
   "executes a flow or cascade and blocks until completion. writes dot file on planner exception."
   [x] 
   (try
-     (doto x .start .complete) x)
+     (doto x .start .complete) x
    (catch cascading.flow.PlannerException e 
      (do 
        (.writeDOT e "exception.dot")
-       (throw (RuntimeException. "see exception.dot file for visualization of plan" e)))))
+       (throw (RuntimeException. "see exception.dot file for visualization of plan" e))))))
 
 (defn copy-flow
   "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
