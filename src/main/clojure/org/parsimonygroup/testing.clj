@@ -16,10 +16,6 @@
   textlines, we must split as in: (second (.split (.get t 1) \"\t\"))))"
   (read-string  (.get t 0)))
 
-(defn execute [flow]
-       (doto flow .start .complete)
-       flow)
-
 ;;BEWARE of the iterator-tap and the mutable-reused tuple iterator entries!!!!!
 ;; <stuartsierra> bradford: careful you don't hang on to the Writable objects from the iterator -- Hadoop reuses them
 ;; <bradford> yea, that may have had something to do with the interaction with interator-seq <stuartsierra> I ran into this ages ago, which is why iterator-seq was created in the first place.
