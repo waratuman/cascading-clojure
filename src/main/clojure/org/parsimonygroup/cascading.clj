@@ -39,11 +39,11 @@
   "executes a flow or cascade and blocks until completion. writes dot file on planner exception."
   [x] 
   (try
-     (doto x .start .complete) x)
+     (doto x .start .complete)
    (catch cascading.flow.PlannerException e 
      (do 
        (.writeDOT e "exception.dot")
-       (throw (RuntimeException. "see exception.dot file for visualization of plan" e)))))
+       (throw (RuntimeException. "see exception.dot file for visualization of plan" e))))))
 
 (defn copy-flow
   "uses random flow name that cascading creates because: all flow names must be unique, found duplicate: copy"
@@ -86,7 +86,7 @@
   [pipeline-ns in-path out-path pipeline]
   (let [steps (:operations pipeline)
         config (mk-config pipeline)
-	gen-name ((:name config) 6)]
+	      gen-name (uuid)]
     (struct-map executable-wf 
       :pipe (mk-pipe gen-name pipeline-ns steps)
       :name gen-name
