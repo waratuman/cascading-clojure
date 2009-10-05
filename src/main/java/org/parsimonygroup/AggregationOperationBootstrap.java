@@ -4,6 +4,7 @@ import cascading.flow.FlowProcess;
 import cascading.operation.Aggregator;
 import cascading.operation.AggregatorCall;
 import cascading.operation.BaseOperation;
+import cascading.operation.OperationCall;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import clojure.lang.IFn;
@@ -28,6 +29,11 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
     this.clojureHelper = new ClojureCascadingHelper(fnNsName);
   }
 
+  @Override
+  public void prepare(FlowProcess flowProcess, OperationCall<Object[]> operationCall) {
+    super.prepare(flowProcess, operationCall);    //To change body of overridden methods use File | Settings | File Templates.
+  }
+
   public void start(FlowProcess flowProcess, AggregatorCall<Object[]> aggregatorCall) {
     try {
       clojureHelper.bootClojure();
@@ -37,7 +43,7 @@ public class AggregationOperationBootstrap extends BaseOperation<Object[]> imple
         aggregatorCall.getContext()[0] = clojureHelper.callClojure(initFn);
       }
     } catch (Exception e) {
-      e.printStackTrace();  
+      e.printStackTrace();
     }
 
   }
