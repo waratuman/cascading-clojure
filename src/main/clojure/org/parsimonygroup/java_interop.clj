@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper  JoinerBootstrap]
+  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationBootstrap ClojureCascadingHelper  JoinerBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -29,7 +29,7 @@
     (map writer result)))
 
 (defn everygroup-clj-callback [reader writer f acc-val x]
-  (apply (partial f acc-val) (map reader (seq x))))
+  (apply (partial f acc-val) (map reader x)))
 
 
 (defn mk-fields [coll] (Fields. (into-array String coll)))
@@ -48,7 +48,7 @@
 
 (defn everyGroup-j 
   [prev-or-name wf]
-     (Every. prev-or-name (mk-fields (:inputFields wf)) (AggregationOperationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
+     (Every. prev-or-name (mk-fields (:inputFields wf)) (AggregationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
 
 (defn group-fields [n on-fields] (into-array Fields (repeat n (mk-fields on-fields))))
 

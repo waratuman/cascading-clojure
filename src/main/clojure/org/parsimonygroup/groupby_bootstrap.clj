@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.function-bootstrap
+(ns org.parsimonygroup.groupby-bootstrap
   (:import [cascading.flow FlowProcess]
            [cascading.operation BaseOperation Function FunctionCall]
            [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
@@ -6,7 +6,7 @@
 
 
 (gen-class
- :name org.parsimonygroup.FunctionBootstrap
+ :name org.parsimonygroup.GroupByBootstrap
  :extends cascading.operation.BaseOperation
  :implements [cascading.operation.Function]
  :constructors {[cascading.tuple.Fields cascading.tuple.Fields
