@@ -44,7 +44,7 @@
 
 (defn groupBy-j
   [prev-or-name wf]
-     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf))) Fields/FIRST))
+     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn everyGroup-j 
   [prev-or-name wf]

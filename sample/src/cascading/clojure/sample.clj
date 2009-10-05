@@ -10,7 +10,7 @@
   [line])
 
 (defn second-of-line [line]
-  [[(second (s/split line #"\t"))]])
+  [[(rand-int 5) (second (s/split line #"\t"))]])
 
 (defn filter-dummycontent-name [name id]
   (not (= "dummycontent" name)))
@@ -30,7 +30,7 @@
     [(str seen nxt)]))
 				
 (defn groupby-with-fields []
-  {:operations {:groupBy {:groupby (fn [x] (rand-int 5)) :using second-of-line :reader identity :writer str :outputFields ["key" "second"]}
+  {:operations {:groupBy {:using second-of-line :reader identity :writer str :outputFields ["key" "second"]}
 		:everygroup {:using append-str :reader identity :init (fn [] [""]) :writer str :inputFields ["second"] :outputFields ["combined"]}}})
 
 
