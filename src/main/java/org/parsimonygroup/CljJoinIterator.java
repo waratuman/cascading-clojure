@@ -7,7 +7,10 @@ import clojure.lang.IFn;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class CljJoinIterator implements Iterator<Tuple>, Serializable {
   private GroupClosure closure;

@@ -3,7 +3,9 @@
 (def *all-clj-cascading-libs* '[
   function-bootstrap
   function-filter-bootstrap
-  aggregation-bootstrap				
+  aggregation-bootstrap
+  clj-iterator
+  join-bootstrap
   java-interop
   makemain-utils
   workflow-structs
