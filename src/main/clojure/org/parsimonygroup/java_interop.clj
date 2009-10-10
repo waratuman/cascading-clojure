@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationBootstrap JoinBootstrap]
+  (:import [org.parsimonygroup FunctionFilterBootstrapInClojure FunctionBootstrap AggregationBootstrap JoinBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -36,15 +36,15 @@
 ;; multimethods instead?
 (defn each-j 
   ([prev-or-name wf]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)))))
+     (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)))))
 
 (defn c-filter-j 
   [prev-or-name wf]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionFilterBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) filter-callback (:namespace wf))))
+     (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionFilterBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) filter-callback (:namespace wf))))
 
 (defn groupBy-j
   [prev-or-name wf]
-     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))) Fields/FIRST))
+     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn everyGroup-j 
   [prev-or-name wf]
