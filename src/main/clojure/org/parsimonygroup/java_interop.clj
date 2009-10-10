@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationBootstrap ClojureCascadingHelper  JoinerBootstrap]
+  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationBootstrap JoinBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -61,7 +61,7 @@
 	      wf2
 	      (mk-fields grp-fields2)
 	      (mk-fields (:outputFields join-wf)) 
-	      (JoinerBootstrap. (:reader join-wf) 
+	      (JoinBootstrap. (:reader join-wf) 
 				(:writer join-wf) 
 				(:using join-wf) 
 				join-clj-callback (:namespace join-wf) (count (:outputFields join-wf))))))
