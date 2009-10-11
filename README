@@ -3,6 +3,7 @@ HIGH LEVEL DESCRIPTION
 project setup & build:
 1. get hadoop 0.20.1
 2. ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
+***you may have to change from 0.20.0 to 0.20.2-dev in ivy/libraries.properties 
 3. get dyscascanger's cascading http://github.com/dysinger/cascading/
 4. if you can't build cacading, go delete the .pom files for the .m2 repo
 5. build cascading-clojure
