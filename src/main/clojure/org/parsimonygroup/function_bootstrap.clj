@@ -1,6 +1,5 @@
 (ns org.parsimonygroup.function-bootstrap
-  (:import [org.parsimonygroup ClojureCascadingHelper]
-           [cascading.flow FlowProcess]
+  (:import [cascading.flow FlowProcess]
            [cascading.operation BaseOperation Function FunctionCall]
            [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use org.parsimonygroup.utils))
