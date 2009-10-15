@@ -4,7 +4,6 @@
            [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use org.parsimonygroup.utils))
 
-
 (gen-class
  :name org.parsimonygroup.FunctionBootstrap
  :extends cascading.operation.BaseOperation
