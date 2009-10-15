@@ -1,7 +1,7 @@
 (ns org.parsimonygroup.cascading
   (:import 
    [cascading.cascade Cascade CascadeConnector Cascades]
-   [cascading.flow Flow FlowConnector FlowProcess MultiMapReducePlanner]
+   [cascading.flow Flow FlowConnector FlowListener FlowProcess MultiMapReducePlanner]
    [cascading.pipe Pipe]
    [cascading.tap Tap]
    [org.apache.hadoop.mapred JobConf]
