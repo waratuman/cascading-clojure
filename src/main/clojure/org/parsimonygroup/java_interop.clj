@@ -1,5 +1,5 @@
 (ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionFilterBootstrap GroupByFunctionBootstrap AggregationOperationBootstrap ClojureCascadingHelper  JoinerBootstrap]
+  (:import [org.parsimonygroup FunctionFilterBootstrapInClojure FunctionBootstrap AggregationBootstrap JoinBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
@@ -29,26 +29,26 @@
     (map writer result)))
 
 (defn everygroup-clj-callback [reader writer f acc-val x]
-  (apply (partial f acc-val) (map reader (seq x))))
+  (apply (partial f acc-val) (map reader x)))
 
 
 (defn mk-fields [coll] (Fields. (into-array String coll)))
 ;; multimethods instead?
 (defn each-j 
   ([prev-or-name wf]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)))))
+     (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf)))))
 
 (defn c-filter-j 
   [prev-or-name wf]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) (org.parsimonygroup.FunctionFilterBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) filter-callback (:namespace wf))))
+     (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionFilterBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) filter-callback (:namespace wf))))
 
 (defn groupBy-j
   [prev-or-name wf]
-     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (GroupByFunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:groupby wf) default-clj-callback (:namespace wf))) Fields/FIRST))
+     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))) Fields/FIRST))
 
 (defn everyGroup-j 
   [prev-or-name wf]
-     (Every. prev-or-name (mk-fields (:inputFields wf)) (AggregationOperationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
+     (Every. prev-or-name (mk-fields (:inputFields wf)) (AggregationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
 
 (defn group-fields [n on-fields] (into-array Fields (repeat n (mk-fields on-fields))))
 
@@ -61,7 +61,7 @@
 	      wf2
 	      (mk-fields grp-fields2)
 	      (mk-fields (:outputFields join-wf)) 
-	      (JoinerBootstrap. (:reader join-wf) 
+	      (JoinBootstrap. (:reader join-wf) 
 				(:writer join-wf) 
 				(:using join-wf) 
 				join-clj-callback (:namespace join-wf) (count (:outputFields join-wf))))))
