@@ -16,10 +16,10 @@
   contents. Raise an exception if any deletion fails."
   [f]
   (let [file (if (string? f) (File. f) f)]
-    (if (.isDirectory file)
+    (if (not (.isDirectory file))
+      (delete-file file)
       (doseq [child (.listFiles file)]
-          (delete-file-recursively child)))
-    (delete-file file)))
+          (delete-file-recursively child)))))
 
 (defn temp-path [sub-path]
    (file (System/getProperty "java.io.tmpdir") sub-path))
@@ -37,14 +37,16 @@
   (.deleteOnExit tmp-dir)
   tmp-dir))
 
+(defn delete-all [bindings]
+  (doall (for [file (reverse 
+		     (map first 
+			  (partition 2 bindings)))]
+	   (delete-file-recursively file))))
+
 (defmacro with-tmp-files [bindings & body]
   `(let ~bindings 
      (try ~@body 
-	  (finally 
-	    (doall (for [file# (reverse 
-			       (map first 
-				    (partition 2 ~bindings)))]
-			       (delete-file-recursively file#)))))))
+	  (finally (delete-all ~bindings)))))
 
 (defn write-lines-in [root filename lines]
   (write-lines 

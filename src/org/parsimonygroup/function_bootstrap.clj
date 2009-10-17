@@ -16,8 +16,7 @@
  :state state)
 
 
-;; Oddly Cascading gags when trying to serialize
-;; Clojure keywords so we can't use them here:
+;; Clojure keywords could noit be serialized, but now they can, so we can use them here if we want
 (defn -init [in-fields out-fields reader writer function
              clj-callback fn-ns-name]
   [[out-fields] {"reader" reader "writer" writer "function" function
@@ -42,5 +41,3 @@
   (let [output-collector (.getOutputCollector function-call)
         arguments (.getArguments function-call)]
     (process-data this arguments output-collector)))
-
-
