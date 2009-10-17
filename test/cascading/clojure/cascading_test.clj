@@ -1,5 +1,5 @@
-(ns org.parsimonygroup.cascading-test
-   (:use [org.parsimonygroup cascading])
+(ns cascading.clojure.cascading-test
+   (:use [cascading.clojure cascading])
    (:use [clojure.contrib test-is map-utils])
    (:require [clojure.contrib.str-utils2 :as s])
    (:import [cascading.pipe Pipe Each]

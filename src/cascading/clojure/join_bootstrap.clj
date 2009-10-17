@@ -1,10 +1,10 @@
-(ns org.parsimonygroup.join-bootstrap
+(ns cascading.clojure.join-bootstrap
   (:import [cascading.pipe.cogroup GroupClosure Joiner]
            [cascading.tuple Tuple]
-	   [org.parsimonygroup CljIterator]))
+	   [cascading.clojure CljIterator]))
 
 (gen-class
- :name org.parsimonygroup.JoinBootstrap
+ :name cascading.clojure.JoinBootstrap
  :implements [cascading.pipe.cogroup.Joiner]
  :constructors {[clojure.lang.IFn clojure.lang.IFn clojure.lang.IFn clojure.lang.IFn String Integer]
 		[]}

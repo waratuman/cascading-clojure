@@ -1,5 +1,5 @@
-(ns org.parsimonygroup.java-interop
-  (:import [org.parsimonygroup FunctionFilterBootstrapInClojure FunctionBootstrap AggregationBootstrap JoinBootstrap]
+(ns cascading.clojure.java-interop
+  (:import [cascading.clojure FunctionFilterBootstrapInClojure FunctionBootstrap AggregationBootstrap JoinBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))

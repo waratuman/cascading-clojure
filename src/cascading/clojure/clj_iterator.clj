@@ -1,13 +1,13 @@
-(ns org.parsimonygroup.clj-iterator
+(ns cascading.clojure.clj-iterator
   (:import [cascading.pipe.cogroup CoGroupClosure GroupClosure]
            [cascading.tuple Tuple]
 	   [java.util Collections]
 	   [org.apache.log4j Logger])
-  (:use [org.parsimonygroup utils]
+  (:use [cascading.clojure utils]
 	[clojure.contrib seq-utils combinatorics]))
 
 (gen-class
- :name org.parsimonygroup.CljIterator
+ :name cascading.clojure.CljIterator
  :implements [java.util.Iterator java.io.Serializable]
  :constructors {[cascading.pipe.cogroup.GroupClosure clojure.lang.IFn clojure.lang.IFn clojure.lang.IFn clojure.lang.IFn Integer]
 		[]}

@@ -1,9 +1,9 @@
-(ns org.parsimonygroup.utils)
+(ns cascading.clojure.utils)
 
 (defn boot-clojure [init-map]
   (println "boot-clojure prepare")
   (require 'clojure.main)
-  (require 'org.parsimonygroup.cascading)
+  (require 'cascading.clojure.cascading)
   (require (symbol (init-map "fn-ns-name"))))
 
 (defn reverse-indexed 

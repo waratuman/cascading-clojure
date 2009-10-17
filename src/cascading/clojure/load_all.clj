@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.load-all)
+(ns cascading.clojure.load-all)
 
 (def *all-clj-cascading-libs* '[
   function-bootstrap
@@ -13,4 +13,4 @@
   ])
 
 (doseq [name *all-clj-cascading-libs*]
-  (require (symbol (str "org.parsimonygroup." name))))
+  (require (symbol (str "cascading.clojure." name))))
