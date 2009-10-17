@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.copy-test
+(ns org.parsimonygroup.copy-tests
   (:import java.io.File)
   (:import cascading.tap.Lfs)
   (:import cascading.scheme.TextLine)

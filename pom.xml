@@ -13,18 +13,18 @@
   <name>${artifactId}</name>
   <version>1.0-SNAPSHOT</version>
   <build>
-    <sourceDirectory>src/main/java</sourceDirectory>
+    <sourceDirectory>src</sourceDirectory>
     <resources>
       <resource>
         <directory>conf</directory>
       </resource>
       <resource>
-        <directory>src/main/clojure</directory>
+        <directory>src</directory>
       </resource>
     </resources>
     <testResources>
       <testResource>
-        <directory>src/test/java</directory>
+        <directory>test</directory>
       </testResource>
     </testResources>
     <plugins>
