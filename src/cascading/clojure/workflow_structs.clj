@@ -1,5 +1,5 @@
-(ns org.parsimonygroup.workflow-structs
-  (:use org.parsimonygroup.java-interop)
+(ns cascading.clojure.workflow-structs
+  (:use cascading.clojure.java-interop)
   (:import [cascading.scheme TextLine]
 	   [cascading.tap Hfs]))
 

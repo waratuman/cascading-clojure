@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.makemain-utils
+(ns cascading.clojure.makemain-utils
    (:import [org.apache.commons.cli Options GnuParser OptionBuilder]))
 
 (def cmdline-to-keys {"in" :input "out" :output "wf" :pipeline})

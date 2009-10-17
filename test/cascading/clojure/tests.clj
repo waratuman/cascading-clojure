@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.tests
+(ns cascading.clojure.tests
   (:use [clojure.contrib.test-is :only (run-tests)])
   (:gen-class))
 
@@ -7,7 +7,7 @@
 		 :cascading-test]) 
 
 (def test-namespaces
-     (map #(symbol (str "org.parsimonygroup." (name %)))
+     (map #(symbol (str "cascading.clojure." (name %)))
           test-names))
 
 (defn run

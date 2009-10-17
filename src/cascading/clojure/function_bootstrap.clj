@@ -1,11 +1,11 @@
-(ns org.parsimonygroup.function-bootstrap
+(ns cascading.clojure.function-bootstrap
   (:import [cascading.flow FlowProcess]
            [cascading.operation BaseOperation Function FunctionCall]
            [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
-  (:use org.parsimonygroup.utils))
+  (:use cascading.clojure.utils))
 
 (gen-class
- :name org.parsimonygroup.FunctionBootstrap
+ :name cascading.clojure.FunctionBootstrap
  :extends cascading.operation.BaseOperation
  :implements [cascading.operation.Function]
  :constructors {[cascading.tuple.Fields cascading.tuple.Fields

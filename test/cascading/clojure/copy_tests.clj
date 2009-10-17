@@ -1,11 +1,11 @@
-(ns org.parsimonygroup.copy-tests
+(ns cascading.clojure.copy-tests
   (:import java.io.File)
   (:import cascading.tap.Lfs)
   (:import cascading.scheme.TextLine)
   (:import [cascading.tuple TupleEntry Fields])
-  (:use org.parsimonygroup.cascading)
-  (:use org.parsimonygroup.io)
-  (:use org.parsimonygroup.testing)
+  (:use cascading.clojure.cascading)
+  (:use cascading.clojure.io)
+  (:use cascading.clojure.testing)
   (:use clojure.contrib.duck-streams)
   (:use clojure.contrib.test-is))
 

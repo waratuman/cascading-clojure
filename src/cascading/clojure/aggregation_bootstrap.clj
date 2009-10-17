@@ -1,12 +1,12 @@
-(ns org.parsimonygroup.aggregation-bootstrap
+(ns cascading.clojure.aggregation-bootstrap
   (:import [cascading.flow FlowProcess]
            [cascading.operation BaseOperation Aggregator AggregatorCall]
            [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
-  (:use org.parsimonygroup.utils))
+  (:use cascading.clojure.utils))
 
 
 (gen-class
- :name org.parsimonygroup.AggregationBootstrap
+ :name cascading.clojure.AggregationBootstrap
  :extends cascading.operation.BaseOperation
  :implements [cascading.operation.Aggregator]
  :constructors {[cascading.tuple.Fields cascading.tuple.Fields

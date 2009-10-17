@@ -1,8 +1,8 @@
-(ns org.parsimonygroup.hooks-tests
-  (:use org.parsimonygroup.cascading)
-  (:use org.parsimonygroup.hooks)
-  (:use org.parsimonygroup.io)
-  (:use org.parsimonygroup.testing)
+(ns cascading.clojure.hooks-tests
+  (:use cascading.clojure.cascading)
+  (:use cascading.clojure.hooks)
+  (:use cascading.clojure.io)
+  (:use cascading.clojure.testing)
   (:use clojure.contrib.test-is))
 
 (deftest shutdown-hook

@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.hooks
+(ns cascading.clojure.hooks
   (:import    [cascading.flow FlowListener]))
 
 ;;TODOs: get @cwensel to do onComplete for cascades

@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.io
+(ns cascading.clojure.io
   (:import java.io.File)
   (:use clojure.contrib.java-utils)
   (:use clojure.contrib.duck-streams))
@@ -18,8 +18,10 @@
   (let [file (if (string? f) (File. f) f)]
     (if (not (.isDirectory file))
       (delete-file file)
+      (do 
       (doseq [child (.listFiles file)]
-          (delete-file-recursively child)))))
+          (delete-file-recursively child))
+      (delete-file file)))))
 
 (defn temp-path [sub-path]
    (file (System/getProperty "java.io.tmpdir") sub-path))
@@ -39,7 +41,7 @@
 
 (defn delete-all [bindings]
   (doall (for [file (reverse 
-		     (map first 
+		     (map second 
 			  (partition 2 bindings)))]
 	   (delete-file-recursively file))))
 

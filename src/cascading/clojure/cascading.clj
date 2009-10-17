@@ -1,4 +1,4 @@
-(ns org.parsimonygroup.cascading
+(ns cascading.clojure.cascading
   (:import 
    [cascading.cascade Cascade CascadeConnector Cascades]
    [cascading.flow Flow FlowConnector FlowListener FlowProcess MultiMapReducePlanner]
@@ -6,7 +6,7 @@
    [cascading.tap Tap]
    [org.apache.hadoop.mapred JobConf]
    [java.util Map Properties])
-  (:use [org.parsimonygroup.workflow-structs :only (executable-wf cascading-ize mk-config)]))
+  (:use [cascading.clojure.workflow-structs :only (executable-wf cascading-ize mk-config)]))
 
 (defn mk-pipe [prev-or-name pipeline-ns fns]
   (if-let [f (first fns)]

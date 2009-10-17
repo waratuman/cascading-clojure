@@ -1,9 +1,9 @@
-(ns org.parsimonygroup.testing
+(ns cascading.clojure.testing
   (:import java.io.File)
   (:import cascading.tap.Lfs)
   (:import cascading.scheme.TextLine)
   (:import [cascading.tuple TupleEntry Fields])
-  (:use org.parsimonygroup.io)
+  (:use cascading.clojure.io)
   (:use clojure.contrib.duck-streams))
 
 (defn test-tap [f]
