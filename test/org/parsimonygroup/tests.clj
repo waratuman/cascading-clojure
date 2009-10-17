@@ -2,8 +2,8 @@
   (:use [clojure.contrib.test-is :only (run-tests)])
   (:gen-class))
 
-(def test-names [:workflow-structs-test
-		 :makemain-utils-test
+(def test-names [:makemain-utils-test
+		 :copy-tests
 		 :cascading-test]) 
 
 (def test-namespaces

@@ -10,7 +10,9 @@
 
 (defn mk-pipe [prev-or-name pipeline-ns fns]
   (if-let [f (first fns)]
-    (mk-pipe (cascading-ize prev-or-name f pipeline-ns) pipeline-ns (rest fns))
+    (mk-pipe (cascading-ize prev-or-name f pipeline-ns) 
+	     pipeline-ns 
+	     (rest fns))
     prev-or-name))
 
 (defn retrieve-fn [namespace sym]
@@ -92,12 +94,10 @@
       :name gen-name
       :tap ((:tap config) in-path) :sink ((:sink config) out-path))))
 
-(defn run-workflow [wf main-class]
-   (let [prop (configure-properties main-class)]
-     (execute (flow prop (:tap wf) (:sink wf) (:pipe wf)))))
-
-					; pull out fields to read and write?
-(defn cascading [{:keys [input output mainCls pipeline fnNsName]}]
-	(let [[pipeline-ns pipeline-sym] (.split pipeline "/")]
-    (run-workflow (mk-workflow pipeline-ns input output (retrieve-fn pipeline-ns pipeline-sym)) mainCls)))
-
+(defn cascading [{:keys [input output main-class pipeline]}]
+	(let [[pipeline-ns pipeline-sym] (.split pipeline "/")
+	      wf (mk-workflow pipeline-ns input output 
+			      (retrieve-fn pipeline-ns pipeline-sym))
+	      prop (configure-properties main-class)
+	      f (flow prop (:tap wf) (:sink wf) (:pipe wf))]
+    (execute f)))
