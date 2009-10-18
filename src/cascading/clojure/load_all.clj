@@ -6,9 +6,9 @@
   aggregation-bootstrap
   clj-iterator
   join-bootstrap
-  java-interop
   makemain-utils
-  workflow-structs
+  taps
+  pipes
   cascading				
   ])
 

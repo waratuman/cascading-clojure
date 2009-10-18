@@ -1,24 +1,16 @@
 (ns cascading.clojure.cascading
   (:import 
    [cascading.cascade Cascade CascadeConnector Cascades]
-   [cascading.flow Flow FlowConnector FlowListener FlowProcess MultiMapReducePlanner]
+   [cascading.flow Flow FlowConnector FlowListener 
+    FlowProcess MultiMapReducePlanner]
    [cascading.pipe Pipe]
    [cascading.tap Tap]
    [org.apache.hadoop.mapred JobConf]
    [java.util Map Properties])
   (:use cascading.clojure.taps)
-  (:use [cascading.clojure.workflow-structs :only (executable-wf cascading-ize)]))
+  (:use cascading.clojure.pipes))
 
-(defn uuid [] (.toString (java.util.UUID/randomUUID)))
-
-(defn mk-pipe 
-  ([pipeline-ns fns] (mk-pipe (uuid) pipeline-ns fns))
-  ([prev-or-name pipeline-ns fns]
-     (if-let [f (first fns)]
-       (mk-pipe (cascading-ize prev-or-name f pipeline-ns) 
-		pipeline-ns 
-		(rest fns))
-       prev-or-name)))
+;;TODO: we may want to split the flow and cascade metaphors and dsl stuff from some of the hadoop/cascading plumbing like retrieve-fn, configure-properties, etc.
 
 (defn retrieve-fn [namespace sym]
   (let [ns-sym (symbol namespace)]
@@ -60,13 +52,13 @@
   [& flows]
   (.connect (CascadeConnector.) (into-array Flow flows)))
 
-(defn wf-type [props pipeline-ns input output pipeline]
+(defn wf-type [props pipeline-ns make-tap input output pipeline]
    (:wftype pipeline))
 
 (defmulti mk-workflow wf-type)
 
 (defmethod mk-workflow :join
- [props pipeline-ns input output join-pipeline]
+ [props pipeline-ns make-tap input output join-pipeline]
   (let [clj-wfs (:wfs join-pipeline)]
     (cond (not (= 2 (count clj-wfs))) 
 	  (throw (IllegalArgumentException. 
@@ -74,29 +66,30 @@
 	  (not (= (count clj-wfs) (count input))) 
 	  (throw (IllegalArgumentException. 
 		  (str "there are " (count clj-wfs) " workflows and " 
-		       (count input) 
-		       " inputs, these counts needs to match")))
+		       (count input) " inputs, these counts needs to match")))
 	  :otherwise
 	  (let [pipes (map #(mk-pipe pipeline-ns %) clj-wfs)
-		taps (taps-map pipes (map default-tap input))
+		taps (taps-map pipes (map make-tap input))
 		join-pipe (mk-pipe "join-wf" pipeline-ns 
 				   {:join (merge join-pipeline
 						 {:pipes pipes})})]
-	    (flow props taps (default-tap output) join-pipe)))))
+	    (flow props taps (make-tap output) join-pipe)))))
 
 (defmethod mk-workflow :default
-  [props pipeline-ns in-path out-path pipeline]
+  [props pipeline-ns make-tap in-path out-path pipeline]
     (flow props 
-	  (default-tap in-path) 
-	  (default-tap out-path) 
+	  (make-tap in-path) 
+	  (make-tap out-path) 
 	  (mk-pipe pipeline-ns pipeline)))
 
-(defn workflow [pipeline-ns in-path out-path pipeline]
-  (mk-workflow (Properties.) pipeline-ns in-path out-path pipeline))
-
-(defn cascading [{:keys [input output main-class pipeline]}]
-	(let [[pipeline-ns pipeline-sym] (.split pipeline "/")
-	      props (configure-properties main-class)
-	      wf (mk-workflow props pipeline-ns input output 
-			      (retrieve-fn pipeline-ns pipeline-sym))]
-    (execute wf)))
+;;TODO: workflow can be merged with mk-workflow, into a single coherent workflow creation system.
+(defn workflow 
+  ([pipeline-ns in-path out-path pipeline]
+     (mk-workflow (Properties.) pipeline-ns default-tap in-path out-path pipeline))
+ ([pipeline-ns make-tap in-path out-path pipeline]
+     (mk-workflow (Properties.) pipeline-ns make-tap in-path out-path pipeline))
+  ([{:keys [input output main-class pipeline]}]
+     (let [[pipeline-ns pipeline-sym] (.split pipeline "/")
+	   props (configure-properties main-class)]
+       (mk-workflow props pipeline-ns input output 
+		    (retrieve-fn pipeline-ns pipeline-sym)))))
