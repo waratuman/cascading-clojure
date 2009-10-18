@@ -3,23 +3,10 @@
   (:import [cascading.scheme TextLine]
 	   [cascading.tap Hfs]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; config shit
+;for structs, you must call merge with the struct arg before the map arg
 
-(defstruct wf-config :tap :sink :name)
-
-(defn default-tap [path] (Hfs. (TextLine.) path))
-(def default-config (struct-map wf-config :tap default-tap :sink default-tap))
-
-(defn mk-config [pline]
-    (merge default-config (:config pline)))
-
-
-; note for structs
-;    I can call merge, except struct has to be before the map
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; workflows
-(defstruct executable-wf :pipe :tap :sink)
+(defstruct executable-wf :pipe :source :sink)
 
 (defstruct workflow :using :reader :writer :namespace :javahelper :inputFields :outputFields)
 

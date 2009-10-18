@@ -48,6 +48,25 @@
                   <sysproperty key="clojure.compile.path"
                                value="${project.build.outputDirectory}"/>
                   <arg value="cascading.clojure.load-all"/>
+                  <arg value="cascading.clojure.tests"/>
+                </java>
+              </tasks>
+            </configuration>
+          </execution>
+	  <execution>
+	    <id>test</id>
+            <configuration>
+              <tasks>
+		<path id="test.path">
+		<fileset dir="lib">
+                    <include name="*.jar"/>
+                  </fileset>  
+		</path>
+		<java classname="clojure.main" 
+		      classpathref="maven.test.classpath">
+                  <arg value="-e"/>
+                  <arg value="(require '(cascading.clojure [tests :as main]))
+                              (main/run)"/>
                 </java>
               </tasks>
             </configuration>

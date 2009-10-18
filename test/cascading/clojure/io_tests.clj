@@ -1,7 +1,6 @@
 (ns cascading.clojure.io-tests
   (:import java.io.File)
   (:use cascading.clojure.io)
-  (:use cascading.clojure.testing)
   (:use clojure.contrib.duck-streams)
   (:use clojure.contrib.test-is))
 

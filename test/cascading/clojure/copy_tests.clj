@@ -5,7 +5,7 @@
   (:import [cascading.tuple TupleEntry Fields])
   (:use cascading.clojure.cascading)
   (:use cascading.clojure.io)
-  (:use cascading.clojure.testing)
+  (:use cascading.clojure.taps)
   (:use clojure.contrib.duck-streams)
   (:use clojure.contrib.test-is))
 
