@@ -6,14 +6,19 @@
    [cascading.tap Tap]
    [org.apache.hadoop.mapred JobConf]
    [java.util Map Properties])
-  (:use [cascading.clojure.workflow-structs :only (executable-wf cascading-ize mk-config)]))
+  (:use cascading.clojure.taps)
+  (:use [cascading.clojure.workflow-structs :only (executable-wf cascading-ize)]))
 
-(defn mk-pipe [prev-or-name pipeline-ns fns]
-  (if-let [f (first fns)]
-    (mk-pipe (cascading-ize prev-or-name f pipeline-ns) 
-	     pipeline-ns 
-	     (rest fns))
-    prev-or-name))
+(defn uuid [] (.toString (java.util.UUID/randomUUID)))
+
+(defn mk-pipe 
+  ([pipeline-ns fns] (mk-pipe (uuid) pipeline-ns fns))
+  ([prev-or-name pipeline-ns fns]
+     (if-let [f (first fns)]
+       (mk-pipe (cascading-ize prev-or-name f pipeline-ns) 
+		pipeline-ns 
+		(rest fns))
+       prev-or-name)))
 
 (defn retrieve-fn [namespace sym]
   (let [ns-sym (symbol namespace)]
@@ -28,8 +33,6 @@
     ;; (Flow/setStopJobsOnExit prop false)
     (FlowConnector/setApplicationJarClass prop main-class)
     (MultiMapReducePlanner/setJobConf prop (JobConf.)) prop))
-
-(defn uuid [] (.toString (java.util.UUID/randomUUID)))
 
 (defn flow
   ([source-tap sink-tap pipe]
@@ -57,47 +60,43 @@
   [& flows]
   (.connect (CascadeConnector.) (into-array Flow flows)))
 
-(defn wf-type [pipeline-ns input output pipeline]
-  (:wftype pipeline))
+(defn wf-type [props pipeline-ns input output pipeline]
+   (:wftype pipeline))
 
 (defmulti mk-workflow wf-type)
 
-(defn taps-map [pipes taps]
-  (Cascades/tapsMap (into-array Pipe pipes) (into-array Tap taps)))
-
 (defmethod mk-workflow :join
-  [pipeline-ns input output join-pipeline]
+ [props pipeline-ns input output join-pipeline]
   (let [clj-wfs (:wfs join-pipeline)]
-    (cond (not (= 2 (count clj-wfs))) (throw (IllegalArgumentException. "can only take 2 wfs for join for now"))
-	  (not (= (count clj-wfs) (count input))) (throw (IllegalArgumentException. (str "there are " (count clj-wfs) " workflows and " (count input) " inputs, these counts needs to match")))
-
+    (cond (not (= 2 (count clj-wfs))) 
+	  (throw (IllegalArgumentException. 
+		  "can only take 2 wfs for join for now"))
+	  (not (= (count clj-wfs) (count input))) 
+	  (throw (IllegalArgumentException. 
+		  (str "there are " (count clj-wfs) " workflows and " 
+		       (count input) 
+		       " inputs, these counts needs to match")))
 	  :otherwise
-	  (let [mk-single-wf (partial mk-workflow pipeline-ns)
-		in-out-pipe-triples (partition 3 (interleave input (repeat output)
-							     clj-wfs))
-		wfs (map #(apply mk-single-wf %) in-out-pipe-triples)
-		pipes (map :pipe wfs)
-		taps (taps-map pipes (map :tap wfs))
-		config (mk-config join-pipeline)
-		join-pipe (mk-pipe "join-wf"
-				   pipeline-ns {:join (merge join-pipeline {:pipes pipes})})]
-	    (struct-map executable-wf :pipe join-pipe :tap taps
-			:sink ((:sink config) output))))))
+	  (let [pipes (map #(mk-pipe pipeline-ns %) clj-wfs)
+		taps (taps-map pipes (map default-tap input))
+		join-pipe (mk-pipe "join-wf" pipeline-ns 
+				   {:join (merge join-pipeline
+						 {:pipes pipes})})]
+	    (flow props taps (default-tap output) join-pipe)))))
 
 (defmethod mk-workflow :default
-  [pipeline-ns in-path out-path pipeline]
-  (let [steps (:operations pipeline)
-        config (mk-config pipeline)
-	      gen-name (uuid)]
-    (struct-map executable-wf 
-      :pipe (mk-pipe gen-name pipeline-ns steps)
-      :name gen-name
-      :tap ((:tap config) in-path) :sink ((:sink config) out-path))))
+  [props pipeline-ns in-path out-path pipeline]
+    (flow props 
+	  (default-tap in-path) 
+	  (default-tap out-path) 
+	  (mk-pipe pipeline-ns pipeline)))
+
+(defn workflow [pipeline-ns in-path out-path pipeline]
+  (mk-workflow (Properties.) pipeline-ns in-path out-path pipeline))
 
 (defn cascading [{:keys [input output main-class pipeline]}]
 	(let [[pipeline-ns pipeline-sym] (.split pipeline "/")
-	      wf (mk-workflow pipeline-ns input output 
-			      (retrieve-fn pipeline-ns pipeline-sym))
-	      prop (configure-properties main-class)
-	      f (flow prop (:tap wf) (:sink wf) (:pipe wf))]
-    (execute f)))
+	      props (configure-properties main-class)
+	      wf (mk-workflow props pipeline-ns input output 
+			      (retrieve-fn pipeline-ns pipeline-sym))]
+    (execute wf)))
