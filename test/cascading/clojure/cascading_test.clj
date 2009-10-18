@@ -1,5 +1,7 @@
 (ns cascading.clojure.cascading-test
-   (:use [cascading.clojure cascading 
+   (:use [cascading.clojure 
+	  cascading
+	  pipes
 	  function-filter-bootstrap])
    (:use [clojure.contrib test-is map-utils])
    (:require [clojure.contrib.str-utils2 :as s])
@@ -13,6 +15,7 @@
   (let [data (s/split line #"\t")]
     (cond (= 3 (count data)) (list data)
 	  :otherwise (list (conj data "dummycontent")))))
+
 (defn identity-each [& line]
   [line])
 
@@ -53,13 +56,13 @@
     (is (= Flow (class wf)))))
 
 (deftest mk-workflow-join-test
-  (let [executable-wf (workflow "ns" ["in1" "in2"] "out" sample-join)
+  (let [wf (workflow "ns" ["in1" "in2"] "out" sample-join)
 	ops (.getAllOperations 
-			  (first (.getSteps executable-wf)))
+			  (first (.getSteps wf)))
 	filter-ops (filter 
 		 #(= FunctionFilterBootstrapInClojure (class %))
 		 ops)
-	tapmap (.getSources executable-wf)]
+	tapmap (.getSources wf)]
 
     ;;there are two incoming sources
     (is (= 2 (count tapmap)))
