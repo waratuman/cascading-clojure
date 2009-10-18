@@ -85,11 +85,13 @@
 ;;TODO: workflow can be merged with mk-workflow, into a single coherent workflow creation system.
 (defn workflow 
   ([pipeline-ns in-path out-path pipeline]
-     (mk-workflow (Properties.) pipeline-ns default-tap in-path out-path pipeline))
+     (mk-workflow 
+      (Properties.) pipeline-ns default-tap in-path out-path pipeline))
  ([pipeline-ns make-tap in-path out-path pipeline]
-     (mk-workflow (Properties.) pipeline-ns make-tap in-path out-path pipeline))
+     (mk-workflow 
+      (Properties.) pipeline-ns make-tap in-path out-path pipeline))
   ([{:keys [input output main-class pipeline]}]
      (let [[pipeline-ns pipeline-sym] (.split pipeline "/")
 	   props (configure-properties main-class)]
-       (mk-workflow props pipeline-ns input output 
+       (mk-workflow props pipeline-ns default-tap input output 
 		    (retrieve-fn pipeline-ns pipeline-sym)))))
