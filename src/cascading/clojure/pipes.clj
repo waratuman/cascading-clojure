@@ -5,8 +5,6 @@
 	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
   (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
 
-;;TODO: refactor to be more in line with newer approach (more fn, less map - more like dsl.)
-
 (defn seqable? [x] (or (seq? x) (string? x)))
 (defn nil-or-empty? [coll] 
   (or (nil? coll) 
@@ -35,12 +33,29 @@
     (map writer result)))
 
 (defn everygroup-clj-callback [reader writer f acc-val x]
-  (apply (partial f acc-val) (map reader x)))
+  (apply f acc-val (map reader x)))
 
-(defn mk-fields [coll] (Fields. (into-array String coll)))
-;; multimethods instead?
-(defn each-j 
-  [prev-or-name wf]
+(defn mk-fields [coll] 
+  (Fields. (into-array String coll)))
+
+(defn group-fields [n on-fields] 
+  (into-array Fields (repeat n (mk-fields on-fields))))
+
+(def common-wf-fields {:using identity 
+		       :reader read-string 
+		       :writer pr-str 
+		       :inputFields ["line"] 
+		       :outputFields ["data"]})
+
+(defn pipe-type [prev-or-name wf]
+   (:optype wf))
+
+;;TODO: the multimethod is OK for now but at this point is is just as easy to pass the functions for different pipe-types arounda s first class and then apply them whne needed rather than passing keys around to look the functions up by keyword.  This would be essentially the final step away from map based and tward function composition based api.
+(defmulti pipe pipe-type)
+
+(defmethod pipe :each 
+  [prev-or-name wf-without-defaults]
+  (let [wf (merge common-wf-fields wf-without-defaults)]
      (Each. prev-or-name (mk-fields (:inputFields wf)) 
 	    (FunctionBootstrap. (mk-fields (:inputFields wf)) 
 				(mk-fields (:outputFields wf)) 
@@ -48,24 +63,67 @@
 				(:writer wf) 
 				(:using wf) 
 				default-clj-callback 
-				(:namespace wf))))
+				(:namespace wf)))))
 
-(defn c-filter-j 
-  [prev-or-name wf]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionFilterBootstrapInClojure. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) filter-callback (:namespace wf))))
+(defmethod pipe :filter 
+  [prev-or-name wf-without-defaults]
+  (let [wf (merge common-wf-fields 
+		  {:using (fn [x] true)}
+		  wf-without-defaults)]
+     (Each. prev-or-name (mk-fields (:inputFields wf)) 
+	    (FunctionFilterBootstrapInClojure. 
+	     (mk-fields (:inputFields wf)) 
+	     (mk-fields (:outputFields wf)) 
+	     (:reader wf) 
+	     (:writer wf) 
+	     (:using wf) 
+	     filter-callback 
+	     (:namespace wf)))))
 
-(defn groupBy-j
-  [prev-or-name wf]
-     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) (FunctionBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) default-clj-callback (:namespace wf))) Fields/FIRST))
+(defmethod pipe :groupBy
+  [prev-or-name wf-without-defaults]
+  (let [wf (merge common-wf-fields 
+		  {:using (fn [x] [1 x])
+		   :outputFields ["key", "clojurecode"]}
+		  wf-without-defaults)]
+     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) 
+		      (FunctionBootstrap. 
+		       (mk-fields (:inputFields wf)) 
+		       (mk-fields (:outputFields wf)) 
+		       (:reader wf) 
+		       (:writer wf) 
+		       (:using wf) 
+		       default-clj-callback 
+		       (:namespace wf))) 
+	       Fields/FIRST)))
 
-(defn everyGroup-j 
-  [prev-or-name wf]
-     (Every. prev-or-name (mk-fields (:inputFields wf)) (AggregationBootstrap. (mk-fields (:inputFields wf)) (mk-fields (:outputFields wf)) (:reader wf) (:writer wf) (:using wf) (:init wf) everygroup-clj-callback (:namespace wf))))
+(defmethod pipe :everygroup
+  [prev-or-name wf-without-defaults]
+  (let [wf (merge common-wf-fields 
+		  {:init (fn [] [""]) 
+;;note the pattern of getting the first element of the wrapping vector before performing the operation.
+		   :using (fn [acc next-line] 
+			    [(str (first acc) next-line)])}
+		  wf-without-defaults)]
+    (Every. prev-or-name (mk-fields (:inputFields wf)) 
+	    (AggregationBootstrap. 
+	     (mk-fields (:inputFields wf)) 
+	     (mk-fields (:outputFields wf)) 
+	     (:reader wf) 
+	     (:writer wf) 
+	     (:using wf) 
+	     (:init wf) 
+	     everygroup-clj-callback 
+	     (:namespace wf)))))
 
-(defn group-fields [n on-fields] (into-array Fields (repeat n (mk-fields on-fields))))
-
-(defn join-j [prev-or-name join-wf]
-  (let [[wf1 wf2] (:pipes join-wf)
+(defmethod pipe :join
+  [prev-or-name wf-without-defaults]
+  (let [join-wf (merge common-wf-fields 
+		  {:groupFields [] 
+		  :wfs [] 
+		  :wftype :join}
+		  wf-without-defaults)
+	[wf1 wf2] (:pipes join-wf)
 	[grp-fields1 grp-fields2] (:groupFields join-wf)]
     (CoGroup. prev-or-name
               wf1
@@ -76,59 +134,23 @@
 	      (JoinBootstrap. (:reader join-wf) 
 				(:writer join-wf) 
 				(:using join-wf) 
-				join-clj-callback (:namespace join-wf) (count (:outputFields join-wf))))))
-
-
-; add tag for multimethods?
-; these are default workflows
-(def common-wf-fields {:using identity 
-		       :reader read-string 
-		       :writer pr-str 
-		       :inputFields ["line"] 
-		       :outputFields ["data"]})
-
-(def each (merge common-wf-fields {:javahelper each-j}))
-
-(def groupBy (merge common-wf-fields 
-		    {:groupby (fn [x] 1)
-		     :javahelper groupBy-j
-		     :outputFields ["key", "clojurecode"]}))
-
-(def everyGroup (merge common-wf-fields 
-		       {:init (fn [] [""]) 
-			:using (fn [acc next-line] 
-				 [(str (first acc) next-line)]) 
-			:javahelper everyGroup-j}))
-
-(def c-filter (merge common-wf-fields 
-		     {:using (fn [x] true) 
-		      :javahelper c-filter-j}))
-
-(def join (merge common-wf-fields 
-		 {:javahelper join-j 
-		  :groupFields [] 
-		  :wfs [] 
-		  :wftype :join}))
-
-(def op-lookup {:each each 
-		:groupBy groupBy 
-		:everygroup everyGroup 
-		:filter c-filter 
-		:join join})
-
-(defn cascading-ize [prev-or-name step fn-ns-name]
-  (let [[op-type operations] step
-	wf-struct (merge (op-lookup op-type) 
-			 (assoc operations :namespace fn-ns-name))] 
-    ((:javahelper wf-struct) prev-or-name wf-struct)))
+				join-clj-callback 
+				(:namespace join-wf) 
+				(count (:outputFields join-wf))))))
 
 (defn uuid [] (.toString (java.util.UUID/randomUUID)))
 
 (defn mk-pipe 
-  ([pipeline-ns fns] (mk-pipe (uuid) pipeline-ns fns))
+  ([pipeline-ns fns] 
+     (mk-pipe (uuid) pipeline-ns fns))
   ([prev-or-name pipeline-ns fns]
-     (if-let [f (first fns)]
-       (mk-pipe (cascading-ize prev-or-name f pipeline-ns) 
-		pipeline-ns 
-		(rest fns))
+     (if-let [[op-type operations] (first fns)]
+       (mk-pipe 
+	(pipe 
+	 prev-or-name 
+	 (merge operations 
+	   {:namespace pipeline-ns
+	    :optype op-type})) 
+	pipeline-ns 
+	(rest fns))
        prev-or-name)))
