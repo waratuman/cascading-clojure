@@ -30,9 +30,16 @@
     [(str seen nxt)]))
 				
 (defn groupby-with-fields []
-  {:groupBy {:using second-of-line :reader identity :writer str :outputFields ["key" "second"]}
-		:everygroup {:using append-str :reader identity :init (fn [] [""]) :writer str :inputFields ["second"] :outputFields ["combined"]}})
-
+  {:groupBy {:using second-of-line 
+	     :reader identity 
+	     :writer str 
+	     :outputFields ["key" "second"]}
+   :everygroup {:using append-str 
+		:reader identity 
+		:init (fn [] [""]) 
+		:writer str 
+		:inputFields ["second"] 
+		:outputFields ["combined"]}})
 
 (defn sample-join []
   {:wfs [(test-with-fields) (test-with-fields1)] 

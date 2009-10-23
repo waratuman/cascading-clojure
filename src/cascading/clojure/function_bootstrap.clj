@@ -26,7 +26,6 @@
 (defn -prepare [this _ _]
   (boot-clojure (.state this)))
 
-
 (defn process-data [this arguments collector]
    (let [state (.state this)
          result-tuples
