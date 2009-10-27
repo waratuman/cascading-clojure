@@ -1,12 +1,25 @@
 HIGH LEVEL DESCRIPTION
 
-project setup & build:
-1. get hadoop 0.20.1
-2. ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
-3. git clone git://github.com/bradford/cascading.git
-4. build cascading. if you can't build cacading, go delete the .pom files for the .m2 repo:
---> .m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev/hadoop-core-0.20.2-dev.pom
-5. build cascading-clojure
+= Installation & Setup
+
+1. Install Hadoop
+   - curl -O http://mirrors.axint.net/apache/hadoop/core/hadoop-0.20.1/hadoop-0.20.1.tar.gz
+   - tar -xvzf hadoop-0.20.1.tar.gz && rm -r hadoop-0.20.1.tar.gz
+   - cd hadoop-0.20.1
+   - ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
+   - cd ../ && rm -r hadoop-0.20.1
+
+2. Install Cascading
+   - git clone git://github.com/bradford/cascading.git
+   - mvn clean install
+   - cd ../ && rm -r cascading
+
+3. Install Cascading Clojure
+   - git clone git@github.com:bradford/cascading-clojure.git
+   - cd cascading-clojure
+   - mvn clean install
+   - cd ../ && rm -r cascading-clojure
+
 
 The goal of this wrapper is to be able to write as much application code in clojure as you can, and treat cascading as 
 almost like an HOF, and one of the restrictions is where you have to follow certain conventions in terms of arity of 
