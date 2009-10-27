@@ -94,4 +94,4 @@
      (let [[pipeline-ns pipeline-sym] (.split pipeline "/")
 	   props (configure-properties main-class)]
        (mk-workflow props pipeline-ns default-tap input output 
-		    (retrieve-fn pipeline-ns pipeline-sym)))))
+		    (retrieve-fn pipeline-ns pipeline-sym))))) 

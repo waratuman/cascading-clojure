@@ -3,7 +3,7 @@ HIGH LEVEL DESCRIPTION
 project setup & build:
 1. get hadoop 0.20.1
 2. ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
-3. get dyscascanger's cascading http://github.com/dysinger/cascading/
+3. git clone git://github.com/bradford/cascading.git
 4. build cascading. if you can't build cacading, go delete the .pom files for the .m2 repo:
 --> .m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev/hadoop-core-0.20.2-dev.pom
 5. build cascading-clojure
@@ -113,31 +113,7 @@ file:///Users/Admin/projects/githubcontestcode/out/ -wf timwee.remote-jobs/user-
 
 -in and -out are self-explanatory, -wf is the fully-qualified name of the function that defines your workflow map.
 
-
-
-UNDOCUMENTED THAT I KNOW
-
-joins
-
 GOTCHAS
 
 cascading textline's fields are "offset" and "line". you have to name the inputfields properly.
 Also when specifying multiple steps in the workflow, your input and output fields have to line up for consecutive steps.
-
-
-FUTURE
-
-monadic definition of workflow 
-The goal is to be able to hook up the steps in the pipeline using a monad.
-The advantage of this is that the monad holds all the "context" of the execution, and it is easy to swap out this 
-context if you want to write tests for your workflow, or if you don't want to run it using this cascading wrapper code.
-
-
-
-TODO
-
-first of all clean up of code, get rid of duplication and some unnecessary passing around of functions
-second, optimize cascading stuff, i'm pretty sure how it's starting up the clojure runtime and other things can be 
-optimized.
-
-then probably change the way the whole thing is structured if there is a better way, monads etc.

@@ -16,7 +16,7 @@
  :state state)
 
 
-;; Clojure keywords could noit be serialized, but now they can, so we can use them here if we want
+;; Clojure keywords could not be serialized, but now they can, so we can use them here if we want
 (defn -init [in-fields out-fields reader writer function
              clj-callback fn-ns-name]
   [[out-fields] {"reader" reader "writer" writer "function" function
