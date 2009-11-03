@@ -1,24 +1,39 @@
 HIGH LEVEL DESCRIPTION
 
-project setup & build:
-1. get hadoop 0.20.1
-2. ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
-3. git clone git://github.com/bradford/cascading.git
-4. build cascading. if you can't build cacading, go delete the .pom files for the .m2 repo:
---> .m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev/hadoop-core-0.20.2-dev.pom
-5. build cascading-clojure
+= Installation & Setup
 
-The goal of this wrapper is to be able to write as much application code in clojure as you can, and treat cascading as 
-almost like an HOF, and one of the restrictions is where you have to follow certain conventions in terms of arity of 
-fns.
+1. Install Hadoop
+   - curl -O http://mirrors.axint.net/apache/hadoop/core/hadoop-0.20.1/hadoop-0.20.1.tar.gz
+   - tar -xvzf hadoop-0.20.1.tar.gz && rm -r hadoop-0.20.1.tar.gz
+   - cd hadoop-0.20.1
+   - ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
+   - cd ../ && rm -r hadoop-0.20.1
 
-Right now, it works on rows, where each row can be thought of as an item in the "collection". (from an 
-HOF perspective)
-A row depends on your input format or scheme, (in cascading parlance) for example, if you use the default textline, each row is a line of text from the input files.
+2. Install Cascading
+   - git clone git://github.com/bradford/cascading.git
+   - mvn clean install
+   - cd ../ && rm -r cascading
 
-The "framework" allows you to define read and write functions. Examples are identity, read-string, fns for reading json, 
-etc.
-Mostly, this wrapper has been used to convert and persist data as clojure data structures.
+3. Install Cascading Clojure
+   - git clone git@github.com:bradford/cascading-clojure.git
+   - cd cascading-clojure
+   - mvn clean install
+   - cd ../ && rm -r cascading-clojure
+
+
+The goal of this wrapper is to be able to write as much application code in 
+clojure as you can, and treat cascading as almost like an HOF, and one of the
+restrictions is where you have to follow certain conventions in terms of arity
+of fns.
+
+Right now, it works on rows, where each row can be thought of as an item in the
+"collection". (from an HOF perspective) A row depends on your input format or
+scheme, (in cascading parlance) for example, if you use the default textline,
+each row is a line of text from the input files.
+
+The "framework" allows you to define read and write functions. Examples are
+identity, read-string, fns for reading json, etc.Mostly, this wrapper has been
+used to convert and persist data as clojure data structures.
 
 You can also define input fields and output fields.
 
@@ -30,44 +45,54 @@ sample code at: http://gist.github.com/183376
 there are currently a few supported cascading constructs...
 each, every, and groupby.
 
-Each of these take in functions that's called per row, or in everygroup's case, per group.
+Each of these take in functions that's called per row, or in everygroup's case,
+per group.
 
-Workflows are defined as functions that return maps, these are called by the internal wrapper code when you specify 
-which workflow/function to call in the commandline when you tell hadoop to run a job. (more on this later)
+Workflows are defined as functions that return maps, these are called by the
+internal wrapper code when you specify which workflow/function to call in the
+commandline when you tell hadoop to run a job. (more on this later)
 
-These workflow maps in general have a function for the operation, a reader (which converts a row into 
-something meaningful for your program), and a writer, (usually just print-string/pr-str).
-There are defaults defined for each of these...
-Some of the cascading constructs take in additional fns. (for example, groupby takes in a function to extract a group 
-key out of the line of input)
+These workflow maps in general have a function for the operation, a reader
+(which converts a row into something meaningful for your program), and a writer,
+ (usually just print-string/pr-str). There are defaults defined for each of
+these... of the cascading constructs take in additional fns. (for example,
+groupby takes in a function to extract a group key out of the line of input)
 
 The readers and writers are called per field of the output rows.
 
 EACH
 
-Each is like map in clojure, it takes in a function with an arity of the number of fields you specify, which defaults to 1, and calls it over each row.
+Each is like map in clojure, it takes in a function with an arity of the number 
+of fields you specify, which defaults to 1, and calls it over each row.
 
-You can multiple results per row that you process, and each row has to correspond to the input fields that you specify.
+You can multiple results per row that you process, and each row has to 
+correspond to the input fields that you specify.
 
 
 The output shape has to be a seq of seqs.
-The inner seqs are rows, and since each call to Each can return multiple rows, we need the outer seq.
+The inner seqs are rows, and since each call to Each can return multiple rows,
+we need the outer seq.
 
 
 The defaults are
-:using identity :reader read-string :writer pr-str :inputFields ["line"] :outputFields ["data"]
+:using identity :reader read-string :writer pr-str :inputFields ["line"]
+:outputFields ["data"]
 
 
 GROUPBY
 
-GroupBy groups rows together, it is typically followed by an everyGroup. It groups things by Fields/FIRST.
-The difference with each is that it takes in a groupkey extractor function. This groupkey extractor has an arity of the num of input fields. The return value is jsut anything that implements comparable.
+GroupBy groups rows together, it is typically followed by an everyGroup. It
+groups things by Fields/FIRST. The difference with each is that it takes in a
+groupkey extractor function. This groupkey extractor has an arity of the num of
+input fields. The return value is jsut anything that implements comparable.
 
-Everything else is pretty similar to each, just don't forget that the first field of the outputFields will be used as the key.
+Everything else is pretty similar to each, just don't forget that the first
+field of the outputFields will be used as the key.
 
 
 defaults:
-:using identity :reader read-string :writer pr-str :groupby (fn [x] 1) :inputFields ["line"] :outputFields ["key", "clojurecode"]
+:using identity :reader read-string :writer pr-str :groupby (fn [x] 1)
+:inputFields ["line"] :outputFields ["key", "clojurecode"]
 
 
 
@@ -75,14 +100,17 @@ EVERYGROUP
 
 This has to be preceded by a groupBy, as per cascading rules. 
 (http://www.cascading.org/javadoc/cascading/pipe/Every.html)
-EveryGroup is similar to reduce/fold, with an "init" function that will return the initial value. This initial value has to be a seq that matches the outputFields count. (since we're "collecting" these values per row we process)
+EveryGroup is similar to reduce/fold, with an "init" function that will return
+the initial value. This initial value has to be a seq that matches the
+outputFields count. (since we're "collecting" these values per row we process)
 
-the using function has to take in the accumulated row so far, and should output a row.
-These rows should match the number of outputFields.
+the using function has to take in the accumulated row so far, and should output
+a row. These rows should match the number of outputFields.
 
 
 defaults:
-:using (fn [acc next-line] [(str (first acc) next-line)]) :reader read-string :writer pr-str :init (fn [] [""]) :inputFields ["line"] :outputFields ["data"]
+:using (fn [acc next-line] [(str (first acc) next-line)]) :reader read-string
+:writer pr-str :init (fn [] [""]) :inputFields ["line"] :outputFields ["data"]
 
 
 A MORE FULL-FLEDGED EXAMPLE
@@ -91,9 +119,9 @@ A MORE FULL-FLEDGED EXAMPLE
 
 PACKAGING AND MAIN CLASS
 
-Packaging-wise, the final jar needs to have cascading and it's dependencies, and also clojure jars in the lib folder, 
-with the rest of your dependencies. (it's a hadoop thing)
-There should also be a main class, which should look like this:
+Packaging-wise, the final jar needs to have cascading and it's dependencies, and
+also clojure jars in the lib folder, with the rest of your dependencies. (it's a
+hadoop thing) There should also be a main class, which should look like this:
 
  (ns mycompany.filename
   (:require [org.parsimonygroup.cascading :as c])
@@ -107,13 +135,18 @@ There should also be a main class, which should look like this:
       (c/cascading opts))))
 
 
-Cascading-clojure uses apache commons cli to parse commandline arguments. A sample command looks like this:
-hadoop jar build/jobs.jar -in  file:///Users/Admin/projects/githubcontestcode/calcs/splitupusers/ -out 
-file:///Users/Admin/projects/githubcontestcode/out/ -wf timwee.remote-jobs/user-covisit-wf
+Cascading-clojure uses apache commons cli to parse commandline arguments. A 
+sample command looks like this: 
+       hadoop jar build/jobs.jar -in \
+         file:///Users/Admin/projects/githubcontestcode/calcs/splitupusers/ -out
+         file:///Users/Admin/projects/githubcontestcode/out/ -wf /
+         timwee.remote-jobs/user-covisit-wf
 
--in and -out are self-explanatory, -wf is the fully-qualified name of the function that defines your workflow map.
+-in and -out are self-explanatory, -wf is the fully-qualified name of the
+function that defines your workflow map.
 
 GOTCHAS
 
-cascading textline's fields are "offset" and "line". you have to name the inputfields properly.
-Also when specifying multiple steps in the workflow, your input and output fields have to line up for consecutive steps.
+cascading textline's fields are "offset" and "line". you have to name the
+inputfields properly. Also when specifying multiple steps in the workflow, your
+input and output fields have to line up for consecutive steps.
