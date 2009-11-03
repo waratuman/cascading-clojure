@@ -3,7 +3,8 @@
 	  cascading
 	  pipes
 	  function-filter-bootstrap])
-   (:use [clojure.contrib test-is map-utils])
+   (:use clojure.contrib.map-utils)
+   (:use clojure.test)
    (:require [clojure.contrib.str-utils2 :as s])
    (:import [cascading.pipe Pipe Each]
 	    [cascading.flow Flow]
