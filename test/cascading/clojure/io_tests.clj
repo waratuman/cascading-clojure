@@ -2,7 +2,7 @@
   (:import java.io.File)
   (:use cascading.clojure.io)
   (:use clojure.contrib.duck-streams)
-  (:use clojure.contrib.test-is))
+  (:use clojure.test))
 
 (deftest delete-after-tmpfiles-block
   (let [i (temp-dir "source")]

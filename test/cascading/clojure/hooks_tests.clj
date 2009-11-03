@@ -3,7 +3,7 @@
   (:use cascading.clojure.hooks)
   (:use cascading.clojure.io)
   (:use cascading.clojure.testing)
-  (:use clojure.contrib.test-is))
+  (:use clojure.test))
 
 (deftest shutdown-hook
   (with-tmp-files [in (temp-dir "source")
