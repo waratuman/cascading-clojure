@@ -51,12 +51,11 @@
     (is (= (Fields. (into-array String ["name" "id"])) (.getFieldDeclaration p)))))
 
 (deftest mk-wf-test
-  (let [input-wf test-with-fields
-	wf (workflow "dummy-ns" "in" "out" input-wf)]
+  (let [wf (workflow "in" "out" #'test-with-fields)]
     (is (= Flow (class wf)))))
 
 (deftest mk-workflow-join-test
-  (let [wf (workflow "ns" ["in1" "in2"] "out" sample-join)
+  (let [wf (workflow ["in1" "in2"] "out" #'sample-join)
 	ops (.getAllOperations 
 			  (first (.getSteps wf)))
 	filter-ops (filter 

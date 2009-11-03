@@ -12,17 +12,18 @@
 
 ;;TODO: we may want to split the flow and cascade metaphors and dsl stuff from some of the hadoop/cascading plumbing like retrieve-fn, configure-properties, etc.
 
-(defn retrieve-fn [namespace sym]
-  (let [ns-sym (symbol namespace)]
-    (apply use :reloadall [ns-sym])
-    ((ns-resolve ns-sym (symbol sym)))))
 
-(defn configure-properties [main-class]
+;;TODO: we may want to change to set jar path so we don't need to crete main class.
+(defn configure-properties 
+"http://www.cascading.org/javadoc/cascading/flow/FlowConnector.html
+
+Most applications will need to call setApplicationJarClass(java.util.Map, Class) or setApplicationJarPath(java.util.Map, String)  so that the correct application jar file is passed through to all child processes. The Class or path must reference the custom application jar, not a Cascading library class or jar. The easiest thing to do is give setApplicationJarClass the Class with your static main function and let Cascading figure out which jar to use." 
+
+[main-class]
   (let [prop (Properties.)]
     (when-let [config (.. (class *ns*) (getClassLoader)
                           (getResourceAsStream "config.properties"))]
       (.load prop config))
-    ;; (Flow/setStopJobsOnExit prop false)
     (FlowConnector/setApplicationJarClass prop main-class)
     (MultiMapReducePlanner/setJobConf prop (JobConf.)) prop))
 
@@ -82,16 +83,42 @@
 	  (make-tap out-path) 
 	  (mk-pipe pipeline-ns pipeline)))
 
+(defn var-symbols 
+  "get the namespace and name symbols from the var metadata:
+
+   http://clojure.org/special_forms
+   http://clojure.org/cheatsheet
+   http://stackoverflow.com/questions/1175920/explain-clojure-symbols"
+  [x]
+  (let [m (meta x)]
+    [(symbol (str (:ns m))) (symbol (str (:name m)))]))
+
+(defn retrieve-fn 
+  "get a fn instance from namespace and name symbols.  note that we must reloadall in order to be have the namespace available for interning in processes where the ns has not been loaded yet."
+  [namespace sym]
+  (apply use :reloadall [namespace])
+  @(intern namespace sym))
+
 ;;TODO: workflow can be merged with mk-workflow, into a single coherent workflow creation system.
+
+;;TODO: 
+;-need to add the ability to pass main-class via code.
+;-the first fns expect pipeline as a var and the second map fn signature expects pipeline as a fully qualified string.
 (defn workflow 
-  ([pipeline-ns in-path out-path pipeline]
+"in or out can be local lifesystem, hdfs, or s3.  if you do not specify the dir as relative to s3n, or local filesystem, the path is assumed to be on hdfs."
+  ([in-path out-path pipeline]
+   (let [[f-ns f-name] (var-symbols pipeline)]
      (mk-workflow 
-      (Properties.) pipeline-ns default-tap in-path out-path pipeline))
- ([pipeline-ns make-tap in-path out-path pipeline]
+      (Properties.) (str f-ns) default-tap in-path out-path (retrieve-fn f-ns f-name))))
+ ([make-tap in-path out-path pipeline]
+   (let [[f-ns f-name] (var-symbols pipeline)]
      (mk-workflow 
-      (Properties.) pipeline-ns make-tap in-path out-path pipeline))
+      (Properties.) (str f-ns) make-tap in-path out-path (retrieve-fn f-ns f-name))))
   ([{:keys [input output main-class pipeline]}]
      (let [[pipeline-ns pipeline-sym] (.split pipeline "/")
 	   props (configure-properties main-class)]
        (mk-workflow props pipeline-ns default-tap input output 
-		    (retrieve-fn pipeline-ns pipeline-sym))))) 
+;;TODO: note that we apply the fn right after retrieving it. this is the "wrap in a fn to avoid serialization issue" fix.	
+	    ((retrieve-fn (symbol pipeline-ns) (symbol pipeline-sym)))))))
+
+;;TODO: api for comp'ing workflows with copy workflow into cascades.
