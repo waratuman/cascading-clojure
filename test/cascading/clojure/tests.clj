@@ -1,5 +1,5 @@
 (ns cascading.clojure.tests
-  (:use [clojure.contrib.test-is :only (run-tests)])
+  (:use [clojure.test :only (run-tests)])
   (:gen-class))
 
 (def test-names [:makemain-utils-test

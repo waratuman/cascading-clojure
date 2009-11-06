@@ -1,6 +1,6 @@
 (ns cascading.clojure.makemain-utils-test
   (:use cascading.clojure.makemain-utils)
-  (:use clojure.contrib.test-is))
+  (:use clojure.test))
 
 (deftest parseArgs-test
   (is (= {:input "input" :output "output" :pipeline "ns/workflow"}

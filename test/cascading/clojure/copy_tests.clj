@@ -7,7 +7,7 @@
   (:use cascading.clojure.io)
   (:use cascading.clojure.taps)
   (:use clojure.contrib.duck-streams)
-  (:use clojure.contrib.test-is))
+  (:use clojure.test))
 
 ;;TODO: factor out structural duplication in with-files test useages.  note the problem with closing file and the iterator mentioned in simple-copy fn
 (defn simple-copy 
