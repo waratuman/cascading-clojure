@@ -3,25 +3,26 @@
   (:use clojure.contrib.java-utils)
   (:use clojure.contrib.duck-streams))
 
-(defn delete-file
-  "Delete file f. Raise an exception if it fails."
-  [f]
-  (let [file (if (string? f) (File. f) f)]
-    (if (.exists file)
-  (or (.delete file)
-      (throw (java.io.IOException. (str "Couldn't delete " f)))))))
+;;;NOW: using equivalents in jova-utils...make sure they work the same before deleting this.
+;; (defn delete-file
+;;   "Delete file f. Raise an exception if it fails."
+;;   [f]
+;;   (let [file (if (string? f) (File. f) f)]
+;;     (if (.exists file)
+;;   (or (.delete file)
+;;       (throw (java.io.IOException. (str "Couldn't delete " f)))))))
 
-(defn delete-file-recursively
-  "Delete file f. If it's a directory, recursively delete all its
-  contents. Raise an exception if any deletion fails."
-  [f]
-  (let [file (if (string? f) (File. f) f)]
-    (if (not (.isDirectory file))
-      (delete-file file)
-      (do 
-      (doseq [child (.listFiles file)]
-          (delete-file-recursively child))
-      (delete-file file)))))
+;; (defn delete-file-recursively
+;;   "Delete file f. If it's a directory, recursively delete all its
+;;   contents. Raise an exception if any deletion fails."
+;;   [f]
+;;   (let [file (if (string? f) (File. f) f)]
+;;     (if (not (.isDirectory file))
+;;       (delete-file file)
+;;       (do 
+;;       (doseq [child (.listFiles file)]
+;;           (delete-file-recursively child))
+;;       (delete-file file)))))
 
 (defn temp-path [sub-path]
    (file (System/getProperty "java.io.tmpdir") sub-path))
