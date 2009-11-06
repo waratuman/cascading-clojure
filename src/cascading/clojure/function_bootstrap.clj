@@ -1,13 +1,11 @@
-(ns org.parsimonygroup.function-bootstrap
-  (:import [org.parsimonygroup ClojureCascadingHelper]
-           [cascading.flow FlowProcess]
+(ns cascading.clojure.function-bootstrap
+  (:import [cascading.flow FlowProcess]
            [cascading.operation BaseOperation Function FunctionCall]
            [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
-  (:use org.parsimonygroup.utils))
-
+  (:use cascading.clojure.utils))
 
 (gen-class
- :name org.parsimonygroup.FunctionBootstrap
+ :name cascading.clojure.FunctionBootstrap
  :extends cascading.operation.BaseOperation
  :implements [cascading.operation.Function]
  :constructors {[cascading.tuple.Fields cascading.tuple.Fields
@@ -18,8 +16,7 @@
  :state state)
 
 
-;; Oddly Cascading gags when trying to serialize
-;; Clojure keywords so we can't use them here:
+;; Clojure keywords could not be serialized, but now they can, so we can use them here if we want
 (defn -init [in-fields out-fields reader writer function
              clj-callback fn-ns-name]
   [[out-fields] {"reader" reader "writer" writer "function" function
@@ -28,7 +25,6 @@
 
 (defn -prepare [this _ _]
   (boot-clojure (.state this)))
-
 
 (defn process-data [this arguments collector]
    (let [state (.state this)
@@ -44,5 +40,3 @@
   (let [output-collector (.getOutputCollector function-call)
         arguments (.getArguments function-call)]
     (process-data this arguments output-collector)))
-
-
