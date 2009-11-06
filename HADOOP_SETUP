@@ -1,0 +1,44 @@
+#GUIDE: http://www.michael-noll.com/wiki/Running_Hadoop_On_Ubuntu_Linux_(Single-Node_Cluster)
+
+#Diverging from the guide:
+- you can get away without a hadoop user if you don't want one
+
+
+#Setup SSH
+ssh-keygen -t rsa -P ""
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+ssh localhost
+
+#if ssh doesn't work, you need to:
+sudo apt-get install openssh-server
+
+#Own hadoop dir
+cd /usr/local
+sudo tar xzf hadoop-0.20.0.tar.gz
+sudo mv hadoop-0.20.0 hadoop
+sudo chown -R you:you hadoop
+
+#If avoiding the hadoop user and keeping the dir with version number.
+sudo chown -R bradford:bradford hadoop-0.18.3/
+
+#make sure to set JAVA_HOME in hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-6-openjdk"
+
+#set hadoop.tmp.dir in hadoop-site.xml 
+-the value should not be be nested from hadoop-0.18.3
+
+<property>
+  <name>hadoop.tmp.dir</name>
+  <value>/home/bradford/hadoop-0.18.3/tmpFs</value>
+  <description>A base for other temporary directories.</description>
+</property>
+
+  <value>/home/bradford/hadoop-0.18.3/tmp/dir/hadoop-${user.name}</value> BAD!!!
+
+#format the namenode
+~/hadoop-0.18.3/bin/hadoop namenode -format
+
+
+#Setting up on EC2:
+http://www.cloudera.com/blog/2009/05/11/using-clouderas-hadoop-amis-to-process-ebs-datasets-on-ec2/
+http://www.cloudera.com/hadoop-ec2-ebs-beta
