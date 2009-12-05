@@ -1,6 +1,8 @@
 build
 target
 out
+lib
+pom.xml
 # use glob syntax.
 syntax: glob
 *.ser
