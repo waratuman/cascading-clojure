@@ -1,4 +1,5 @@
 (ns cascading.clojure.join-bootstrap
+  (:require [cascading.clojure clj_iterator])
   (:import [cascading.pipe.cogroup GroupClosure Joiner]
            [cascading.tuple Tuple]
 	   [cascading.clojure CljIterator]))

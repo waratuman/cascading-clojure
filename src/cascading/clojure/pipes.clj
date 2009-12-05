@@ -1,4 +1,6 @@
 (ns cascading.clojure.pipes
+  (:require [cascading.clojure function_filter_bootstrap function_bootstrap
+	     join_bootstrap aggregation_bootstrap])
   (:import [cascading.clojure FunctionFilterBootstrapInClojure 
 	    FunctionBootstrap AggregationBootstrap JoinBootstrap]
 	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
