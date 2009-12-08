@@ -3,7 +3,9 @@ HIGH LEVEL DESCRIPTION
 project setup & build:
 
 1. Get and install Leiningen http://github.com/technomancy/leiningen
-2. In cascading-clojure home run: lein deps; lein install
+2. In cascading-clojure home run: 
+   $ lein clean
+   $ lein deps; lein install
 
 This should download all dependencies, and install cascading-clojure in your local repo.
 
