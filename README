@@ -1,14 +1,11 @@
 HIGH LEVEL DESCRIPTION
 
-<<<<<<< HEAD:README
 project setup & build:
-1. get hadoop 0.20.1
-2. ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
-***you may have to change from 0.20.0 to 0.20.2-dev in ivy/libraries.properties 
-3. get dyscascanger's cascading http://github.com/dysinger/cascading/
-4. build cascading. if you can't build cacading, go delete the .pom files for the .m2 repo:
---> .m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev/hadoop-core-0.20.2-dev.pom
-5. build cascading-clojure
+
+1. Get and install Leiningen http://github.com/technomancy/leiningen
+2. In cascading-clojure home run: lein deps; lein install
+
+This should download all dependencies, and install cascading-clojure in your local repo.
 
 The goal of this wrapper is to be able to write as much application code in clojure as you can, and treat cascading as 
 almost like an HOF, and one of the restrictions is where you have to follow certain conventions in terms of arity of 
@@ -21,42 +18,6 @@ A row depends on your input format or scheme, (in cascading parlance) for exampl
 The "framework" allows you to define read and write functions. Examples are identity, read-string, fns for reading json, 
 etc.
 Mostly, this wrapper has been used to convert and persist data as clojure data structures.
-=======
-= Installation & Setup
-
-1. Install Hadoop
-   - curl -O http://mirrors.axint.net/apache/hadoop/core/hadoop-0.20.1/hadoop-0.20.1.tar.gz
-   - tar -xvzf hadoop-0.20.1.tar.gz && rm -r hadoop-0.20.1.tar.gz
-   - cd hadoop-0.20.1
-   - ant -Dbuild.ivy.maven.dir=$HOME/.m2/repository/org/apache/hadoop/hadoop-core/0.20.2-dev maven-artifacts
-   - cd ../ && rm -r hadoop-0.20.1
-
-2. Install Cascading
-   - git clone git://github.com/bradford/cascading.git
-   - mvn clean install
-   - cd ../ && rm -r cascading
-
-3. Install Cascading Clojure
-   - git clone git@github.com:bradford/cascading-clojure.git
-   - cd cascading-clojure
-   - mvn clean install
-   - cd ../ && rm -r cascading-clojure
-
-
-The goal of this wrapper is to be able to write as much application code in 
-clojure as you can, and treat cascading as almost like an HOF, and one of the
-restrictions is where you have to follow certain conventions in terms of arity
-of fns.
-
-Right now, it works on rows, where each row can be thought of as an item in the
-"collection". (from an HOF perspective) A row depends on your input format or
-scheme, (in cascading parlance) for example, if you use the default textline,
-each row is a line of text from the input files.
-
-The "framework" allows you to define read and write functions. Examples are
-identity, read-string, fns for reading json, etc.Mostly, this wrapper has been
-used to convert and persist data as clojure data structures.
->>>>>>> 4f47e9070b4bb1d61081cf86b2ef901c61efc5fc:README
 
 You can also define input fields and output fields.
 
