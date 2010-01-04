@@ -1,11 +1,21 @@
 (ns cascading.clojure.pipes
-  (:require [cascading.clojure function_filter_bootstrap function_bootstrap
-	     join_bootstrap aggregation_bootstrap])
-  (:import [cascading.clojure FunctionFilterBootstrapInClojure 
-	    FunctionBootstrap AggregationBootstrap JoinBootstrap]
-	   [cascading.pipe Each Pipe Every GroupBy CoGroup]
-	   [cascading.tuple Fields Tuple TupleEntryCollector TupleEntry])
-  (:use [clojure.contrib.monads :only (defmonad with-monad m-lift)]))
+  (:require [cascading.clojure
+             function_filter_bootstrap
+             function_bootstrap
+	     join_bootstrap
+             aggregation_bootstrap])
+  (:import [cascading.clojure
+            FunctionFilterBootstrapInClojure 
+	    FunctionBootstrap
+            AggregationBootstrap
+            JoinBootstrap]
+	   [cascading.pipe
+            Each Pipe Every GroupBy CoGroup]
+	   [cascading.tuple
+            Fields Tuple
+            TupleEntryCollector TupleEntry])
+  (:use [clojure.contrib.monads
+         :only (defmonad with-monad m-lift)]))
 
 (defn seqable? [x] (or (seq? x) (string? x)))
 (defn nil-or-empty? [coll] 
@@ -37,17 +47,11 @@
 (defn everygroup-clj-callback [reader writer f acc-val x]
   (apply f acc-val (map reader x)))
 
-(defn mk-fields [coll] 
+(defn fields [coll] 
   (Fields. (into-array String coll)))
 
 (defn group-fields [n on-fields] 
-  (into-array Fields (repeat n (mk-fields on-fields))))
-
-(def common-wf-fields {:using identity 
-		       :reader read-string 
-		       :writer pr-str 
-		       :inputFields ["line"] 
-		       :outputFields ["data"]})
+  (into-array Fields (repeat n (fields on-fields))))
 
 (defn pipe-type [prev-or-name wf]
    (:optype wf))
@@ -55,12 +59,19 @@
 ;;TODO: the multimethod is OK for now but at this point is is just as easy to pass the functions for different pipe-types arounda s first class and then apply them whne needed rather than passing keys around to look the functions up by keyword.  This would be essentially the final step away from map based and tward function composition based api.
 (defmulti pipe pipe-type)
 
+;;TODO: these are default.
+(def common-wf-fields {:using identity 
+		       :reader read-string 
+		       :writer pr-str 
+		       :inputFields ["line"] 
+		       :outputFields ["data"]})
+
 (defmethod pipe :each 
   [prev-or-name wf-without-defaults]
   (let [wf (merge common-wf-fields wf-without-defaults)]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) 
-	    (FunctionBootstrap. (mk-fields (:inputFields wf)) 
-				(mk-fields (:outputFields wf)) 
+     (Each. prev-or-name (fields (:inputFields wf)) 
+	    (FunctionBootstrap. (fields (:inputFields wf)) 
+				(fields (:outputFields wf)) 
 				(:reader wf) 
 				(:writer wf) 
 				(:using wf) 
@@ -72,10 +83,10 @@
   (let [wf (merge common-wf-fields 
 		  {:using (fn [x] true)}
 		  wf-without-defaults)]
-     (Each. prev-or-name (mk-fields (:inputFields wf)) 
+     (Each. prev-or-name (fields (:inputFields wf)) 
 	    (FunctionFilterBootstrapInClojure. 
-	     (mk-fields (:inputFields wf)) 
-	     (mk-fields (:outputFields wf)) 
+	     (fields (:inputFields wf)) 
+	     (fields (:outputFields wf)) 
 	     (:reader wf) 
 	     (:writer wf) 
 	     (:using wf) 
@@ -88,10 +99,10 @@
 		  {:using (fn [x] [1 x])
 		   :outputFields ["key", "clojurecode"]}
 		  wf-without-defaults)]
-     (GroupBy. (Each. prev-or-name (mk-fields (:inputFields wf)) 
+     (GroupBy. (Each. prev-or-name (fields (:inputFields wf)) 
 		      (FunctionBootstrap. 
-		       (mk-fields (:inputFields wf)) 
-		       (mk-fields (:outputFields wf)) 
+		       (fields (:inputFields wf)) 
+		       (fields (:outputFields wf)) 
 		       (:reader wf) 
 		       (:writer wf) 
 		       (:using wf) 
@@ -107,10 +118,10 @@
 		   :using (fn [acc next-line] 
 			    [(str (first acc) next-line)])}
 		  wf-without-defaults)]
-    (Every. prev-or-name (mk-fields (:inputFields wf)) 
+    (Every. prev-or-name (fields (:inputFields wf)) 
 	    (AggregationBootstrap. 
-	     (mk-fields (:inputFields wf)) 
-	     (mk-fields (:outputFields wf)) 
+	     (fields (:inputFields wf)) 
+	     (fields (:outputFields wf)) 
 	     (:reader wf) 
 	     (:writer wf) 
 	     (:using wf) 
@@ -129,10 +140,10 @@
 	[grp-fields1 grp-fields2] (:groupFields join-wf)]
     (CoGroup. prev-or-name
               wf1
-	      (mk-fields grp-fields1)
+	      (fields grp-fields1)
 	      wf2
-	      (mk-fields grp-fields2)
-	      (mk-fields (:outputFields join-wf)) 
+	      (fields grp-fields2)
+	      (fields (:outputFields join-wf)) 
 	      (JoinBootstrap. (:reader join-wf) 
 				(:writer join-wf) 
 				(:using join-wf) 

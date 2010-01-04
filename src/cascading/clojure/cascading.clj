@@ -1,4 +1,17 @@
-(ns cascading.clojure.cascading
+(ns
+    #^{:doc
+       "
+Top level API to cascading-clojure.
+
+Create a workflow and execute it.
+
+ (execute (workflow <flow steps>))
+
+TODO:
+-split the flow and cascade metaphors from hadoop/cascading plumbing (retrieve-fn, configure-properties)
+-api for comp'ing workflows with copy workflow into cascades.
+"}
+    cascading.clojure.cascading
   (:import 
    [cascading.cascade Cascade CascadeConnector Cascades]
    [cascading.flow Flow FlowConnector FlowListener 
@@ -10,15 +23,11 @@
   (:use cascading.clojure.taps)
   (:use cascading.clojure.pipes))
 
-;;TODO: we may want to split the flow and cascade metaphors and dsl stuff from some of the hadoop/cascading plumbing like retrieve-fn, configure-properties, etc.
-
-
 ;;TODO: we may want to change to set jar path so we don't need to crete main class.
 (defn configure-properties 
 "http://www.cascading.org/javadoc/cascading/flow/FlowConnector.html
 
 Most applications will need to call setApplicationJarClass(java.util.Map, Class) or setApplicationJarPath(java.util.Map, String)  so that the correct application jar file is passed through to all child processes. The Class or path must reference the custom application jar, not a Cascading library class or jar. The easiest thing to do is give setApplicationJarClass the Class with your static main function and let Cascading figure out which jar to use." 
-
 [main-class]
   (let [prop (Properties.)]
     (when-let [config (.. (class *ns*) (getClassLoader)
@@ -28,6 +37,10 @@ Most applications will need to call setApplicationJarClass(java.util.Map, Class)
     (MultiMapReducePlanner/setJobConf prop (JobConf.)) prop))
 
 (defn flow
+  "create a flow.
+  input = source
+  output = sink
+  fn = pipe"
   ([source-tap sink-tap pipe]
      (.connect (FlowConnector.) source-tap sink-tap pipe))
   ([properties source-tap sink-tap pipe]
@@ -49,7 +62,7 @@ Most applications will need to call setApplicationJarClass(java.util.Map, Class)
   (flow source-tap sink-tap (Pipe. (uuid))))
 
 (defn cascade
-  "note the into-array trickery to call the java variadic method"
+  "create a cascade from individual flows."
   [& flows]
   (.connect (CascadeConnector.) (into-array Flow flows)))
 
@@ -120,5 +133,3 @@ Most applications will need to call setApplicationJarClass(java.util.Map, Class)
        (mk-workflow props pipeline-ns default-tap input output 
 ;;TODO: note that we apply the fn right after retrieving it. this is the "wrap in a fn to avoid serialization issue" fix.	
 	    ((retrieve-fn (symbol pipeline-ns) (symbol pipeline-sym)))))))
-
-;;TODO: api for comp'ing workflows with copy workflow into cascades.
