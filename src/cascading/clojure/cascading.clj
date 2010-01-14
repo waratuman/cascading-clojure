@@ -105,12 +105,12 @@ Most applications will need to call setApplicationJarClass(java.util.Map, Class)
 ;-need to add the ability to pass main-class via code.
 ;-the first fns expect pipeline as a var and the second map fn signature expects pipeline as a fully qualified string.
 (defn workflow 
-"in or out can be local lifesystem, hdfs, or s3.  if you do not specify the dir as relative to s3n, or local filesystem, the path is assumed to be on hdfs."
-  ([in-path out-path pipeline]
+  "in or out can be local lifesystem, hdfs, or s3.  if you do not specify the dir as relative to s3n, or local filesystem, the path is assumed to be on hdfs."
+  ([in-path out-path #^Var pipeline]
    (let [[f-ns f-name] (var-symbols pipeline)]
      (mk-workflow 
       (Properties.) (str f-ns) default-tap in-path out-path (retrieve-fn f-ns f-name))))
- ([make-tap in-path out-path pipeline]
+ ([make-tap in-path out-path #^Var pipeline]
    (let [[f-ns f-name] (var-symbols pipeline)]
      (mk-workflow 
       (Properties.) (str f-ns) make-tap in-path out-path (retrieve-fn f-ns f-name))))
