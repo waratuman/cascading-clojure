@@ -5,16 +5,14 @@
 	  pipes
 	  function-filter-bootstrap
           io])
-   (:use [clojure.contrib map-utils logging])
+   (:use [clojure.contrib map-utils])
    (:use clojure.test)
    (:require [clojure.contrib.str-utils2 :as s])
    (:import [cascading.pipe Pipe Each]
 	    [cascading.flow Flow]
 	    [cascading.clojure
 	     FunctionFilterBootstrapInClojure]
-	    [cascading.tuple Fields]
-            [org.apache.log4j
-             ConsoleAppender Logger SimpleLayout Level LogManager]))
+	    [cascading.tuple Fields]))
 
 (defn split-line [line] 
   (let [data (s/split line #"\t")]
@@ -94,8 +92,9 @@
 		:inputFields ["second"]}})
 
 (def grouper-example
-  {:groupBy {:using (fn [x] [:a (apply + x)])
-	     :reader read-string
+     {:groupBy {:using (fn [x] (do ( print "foo"))
+                         [:a (apply + x)])
+                :reader (fn [x] (do (print "foo")) ( read-string x))
 	     :writer pr-str 
 	     :outputFields ["key" "second"]}})
 
@@ -108,19 +107,11 @@
     (is (= cascading.clojure.FunctionBootstrap
            (class (.getOperation (first (.getHeads grouper))))))))
 
-(defn hadoop-logger []
-  (let [r (Logger/getRootLogger)]
-    (doto r (.setLevel Level/DEBUG)
-          (.addAppender
-           (ConsoleAppender.
-            (SimpleLayout.))))))
-
 (deftest grouping-test
   (with-tmp-files [in  (temp-dir "source")
                    out (temp-path "sink")]
     (let [lines [[1 2] [1 2 3]]
           logging ( hadoop-logger)
-          _ (log :debug "foo")
           file (write-lines-in in "some.data" lines)
           copied (.openSink 
                   (execute 
