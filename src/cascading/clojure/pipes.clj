@@ -48,7 +48,7 @@
   (apply f acc-val (map reader x)))
 
 (defn fields [coll] 
-  (Fields. (into-array String coll)))
+  (Fields. (into-array coll)))
 
 (defn group-fields [n on-fields] 
   (into-array Fields (repeat n (fields on-fields))))

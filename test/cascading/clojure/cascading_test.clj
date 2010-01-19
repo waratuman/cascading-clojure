@@ -1,15 +1,20 @@
 (ns cascading.clojure.cascading-test
-   (:use [cascading.clojure 
+  (:require [cascading.clojure function_bootstrap])
+  (:import [cascading.clojure FunctionBootstrap])
+  (:use [cascading.clojure 
 	  cascading
 	  pipes
+          io
+          taps
 	  function-filter-bootstrap])
    (:use clojure.contrib.map-utils)
    (:use clojure.test)
    (:require [clojure.contrib.str-utils2 :as s])
    (:import [cascading.pipe Pipe Each]
-	    [cascading.flow Flow]
+	    [cascading.flow Flow FlowConnector]
 	    [cascading.clojure
-	     FunctionFilterBootstrapInClojure]
+             FunctionBootstrap
+             FunctionFilterBootstrapInClojure]
 	    [cascading.tuple Fields]))
 
 (defn split-line [line] 
@@ -54,6 +59,25 @@
 (deftest mk-wf-test
   (let [wf (workflow "in" "out" #'test-with-fields)]
     (is (= Flow (class wf)))))
+
+(deftest make-simple-each
+  (with-tmp-files [in (temp-dir "source")
+		   out (temp-path "sink")]
+     (write-lines-in in "some.data" [1])
+     (let [_ (configure-properties FunctionBootstrap)
+           e (Each. "simple"
+                 (fields [0])
+                 (FunctionBootstrap.
+                  (fields [0])
+                  (fields [0])
+                  read-string
+                  pr-str
+                  inc
+                  default-clj-callback
+                  (str (ns-name *ns*))))
+        inced (.openSink
+               ( execute (flow (test-tap in) (test-tap out) e)))]
+    (is (= 2 (read-tuple (.next inced)))))))
 
 (deftest mk-workflow-join-test
   (let [wf (workflow ["in1" "in2"] "out" #'sample-join)
