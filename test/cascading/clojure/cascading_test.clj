@@ -3,11 +3,12 @@
   (:import [cascading.clojure FunctionBootstrap])
   (:use [cascading.clojure 
 	  cascading
+          taps
 	  pipes
           io
           taps
 	  function-filter-bootstrap])
-   (:use clojure.contrib.map-utils)
+   (:use [clojure.contrib map-utils])
    (:use clojure.test)
    (:require [clojure.contrib.str-utils2 :as s])
    (:import [cascading.pipe Pipe Each]
@@ -56,7 +57,7 @@
   (let [p (mk-pipe "test" "dummy-ns" test-with-fields)]
     (is (= (Fields. (into-array String ["name" "id"])) (.getFieldDeclaration p)))))
 
-(deftest mk-wf-test
+(deftest build-workflow-from-symbol
   (let [wf (workflow "in" "out" #'test-with-fields)]
     (is (= Flow (class wf)))))
 
@@ -79,7 +80,7 @@
                ( execute (flow props (test-tap in) (test-tap out) e)))]
     (is (= 2 (read-tuple (.next inced)))))))
 
-(deftest mk-workflow-join-test
+(deftest build-join-from-symbol
   (let [wf (workflow ["in1" "in2"] "out" #'sample-join)
 	ops (.getAllOperations 
 			  (first (.getSteps wf)))
@@ -101,3 +102,20 @@
 
     (is (= 2 (count filter-ops)))
     (is (= 6 (count ops)))))
+
+(def classifier-example
+  {:groupBy {:using (fn [x] [:a (apply + x)])
+	     :reader read-string
+	     :writer pr-str 
+	     :outputFields ["key" "second"]}
+   :everygroup {:using +
+		:reader read-string 
+		:init (fn [] [[0 0]]) 
+		:writer str 
+		:inputFields ["second"]}})
+
+(def foo 10)
+
+(deftest get-ns-and-name-from-symbol
+  (is (= ['cascading.clojure.cascading-test 'foo] (var-symbols #'foo))))
+

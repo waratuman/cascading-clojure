@@ -20,9 +20,9 @@
   [path] (Hfs. (TextLine.) path))
 
 (defn test-tap [f]
-"by making it a single field textline (passing in Fields with 1 field), we should be able to get a single rather than a tuple.  this negates the parsing steps in read-tuple."
-(let [path (if (string? f) f (.getAbsolutePath f))]
- (Lfs. (TextLine. Fields/FIRST) path)))
+  "by making it a single field textline (passing in Fields with 1 field), we should be able to get a single rather than a tuple.  this negates the parsing steps in read-tuple."
+  (let [path (if (string? f) f (.getAbsolutePath f))]
+    (Lfs. (TextLine.) path)))
 
 (defn read-tuple [#^TupleEntry t]
 "assumes a single field textline, if we use tuples or multi-filed 
