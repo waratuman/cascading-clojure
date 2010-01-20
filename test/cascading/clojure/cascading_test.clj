@@ -118,4 +118,3 @@
 
 (deftest get-ns-and-name-from-symbol
   (is (= ['cascading.clojure.cascading-test 'foo] (var-symbols #'foo))))
-
