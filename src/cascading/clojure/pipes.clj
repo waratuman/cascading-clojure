@@ -30,6 +30,11 @@
     m-plus   (fn m-plus-maybe [& mvs]
                (first (drop-while nil-or-empty? mvs)))])
 
+(defn single-val-callback 
+  [reader writer f x]
+  (let [result (apply f (map reader (seq x)))]
+    [(writer result)]))
+
 (defn default-clj-callback 
   "expect [[rowitems] [rowitems] [rowitems]]"
   [reader writer f x]

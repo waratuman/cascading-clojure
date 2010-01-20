@@ -23,7 +23,12 @@ TODO:
   (:use cascading.clojure.taps)
   (:use cascading.clojure.pipes))
 
-;;TODO: we may want to change to set jar path so we don't need to crete main class.
+;;TODO: we may want to change to set jar path so we don't need to
+;;crete main class.
+;;BE VERY CAREFUL:  the hadoop config paradigm is that these static
+;;methods mutate the properties object, the do not configure via
+;;static state.  As a result, you must retain the properties object
+;;and contineu passing it down the line.
 (defn configure-properties 
 "http://www.cascading.org/javadoc/cascading/flow/FlowConnector.html
 
@@ -34,7 +39,8 @@ Most applications will need to call setApplicationJarClass(java.util.Map, Class)
                           (getResourceAsStream "config.properties"))]
       (.load prop config))
     (FlowConnector/setApplicationJarClass prop main-class)
-    (MultiMapReducePlanner/setJobConf prop (JobConf.)) prop))
+    (MultiMapReducePlanner/setJobConf prop (JobConf.))
+    prop))
 
 (defn flow
   "create a flow.

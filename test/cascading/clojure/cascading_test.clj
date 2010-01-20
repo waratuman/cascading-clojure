@@ -64,7 +64,7 @@
   (with-tmp-files [in (temp-dir "source")
 		   out (temp-path "sink")]
      (write-lines-in in "some.data" [1])
-     (let [_ (configure-properties FunctionBootstrap)
+     (let [props (configure-properties FunctionBootstrap)
            e (Each. "simple"
                  (fields [0])
                  (FunctionBootstrap.
@@ -73,10 +73,10 @@
                   read-string
                   pr-str
                   inc
-                  default-clj-callback
+                  single-val-callback
                   (str (ns-name *ns*))))
         inced (.openSink
-               ( execute (flow (test-tap in) (test-tap out) e)))]
+               ( execute (flow props (test-tap in) (test-tap out) e)))]
     (is (= 2 (read-tuple (.next inced)))))))
 
 (deftest mk-workflow-join-test
