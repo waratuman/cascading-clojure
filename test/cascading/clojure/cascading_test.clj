@@ -11,10 +11,11 @@
    (:use [clojure.contrib map-utils])
    (:use clojure.test)
    (:require [clojure.contrib.str-utils2 :as s])
-   (:import [cascading.pipe Pipe Each]
+   (:import [cascading.pipe Pipe Each CoGroup]
 	    [cascading.flow Flow FlowConnector]
 	    [cascading.clojure
              FunctionBootstrap
+             JoinBootstrap
              FunctionFilterBootstrapInClojure]
 	    [cascading.tuple Fields]))
 
@@ -33,29 +34,63 @@
   (not (= "dummycontent" name)))
 
 (def test-with-fields
-  {:each {:using split-line :reader identity :writer str :outputFields ["name" "id" "content"]}
-		:each {:using identity-each :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name" "id"]}
-		:filter {:using filter-dummycontent-name :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name" "id"]}})
-	
-(def test-with-fields1
-  {:each {:using split-line :reader identity :writer str :outputFields ["name" "id" "content"]}
-		:each {:using identity-each :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name" "id"]}
-		:filter {:using filter-dummycontent-name :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name1" "id1"]}})
+     {:each {:using split-line
+             :reader identity
+             :writer str
+             :outputFields ["name" "id" "content"]}
+      :each {:using identity-each
+             :reader identity
+             :writer str
+             :inputFields ["name" "id"]
+             :outputFields ["name" "id"]}
+      :filter {:using filter-dummycontent-name
+               :reader identity
+               :writer str
+               :inputFields ["name" "id"]
+               :outputFields ["name" "id"]}})
 
-(def wf1 {:each {:using identity :reader identity :writer str :outputFields ["name" "id" "content"]}
-		:each {:using identity :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name" "id"]}
-		:filter {:using (constantly true) :reader identity :writer str :inputFields ["name" "id"] :outputFields ["name1" "id1"]}})
+(def test-with-fields1
+     {:each {:using split-line
+             :reader identity
+             :writer str
+             :outputFields ["name" "id" "content"]}
+      :each {:using identity-each
+             :reader identity
+             :writer str
+             :inputFields ["name" "id"]
+             :outputFields ["name" "id"]}
+      :filter {:using filter-dummycontent-name
+               :reader identity
+               :writer str
+               :inputFields ["name" "id"]
+               :outputFields ["name1" "id1"]}})
+
+(def wf1 {:each {:using identity
+                 :reader identity
+                 :writer str
+                 :outputFields ["name" "id" "content"]}
+          :each {:using identity
+                 :reader identity
+                 :writer str
+                 :inputFields ["name" "id"]
+                 :outputFields ["name" "id"]}
+          :filter {:using (constantly true)
+                   :reader identity
+                   :writer str
+                   :inputFields ["name" "id"]
+                   :outputFields ["name1" "id1"]}})
 
 (def sample-join
   {:wfs [test-with-fields test-with-fields1] 
    :groupFields [["id"] ["id1"]] ;fields
-   :using (fn [id name id1 name1] [id name id1 name1])
+   :using identity
    :outputFields ["id" "name" "id1" "name1"]
    :wftype :join})
 
 (deftest mk-pipe-test
   (let [p (mk-pipe "test" "dummy-ns" test-with-fields)]
-    (is (= (Fields. (into-array String ["name" "id"])) (.getFieldDeclaration p)))))
+    (is (= (Fields. (into-array String ["name" "id"]))
+           (.getFieldDeclaration p)))))
 
 (deftest build-workflow-from-symbol
   (let [wf (workflow "in" "out" #'test-with-fields)]
@@ -79,6 +114,36 @@
         inced (.openSink
                ( execute (flow props (test-tap in) (test-tap out) e)))]
     (is (= 2 (read-tuple (.next inced)))))))
+
+(deftest make-simple-join
+  (with-tmp-files [in1 (temp-dir "source1")
+                   in2 (temp-dir "source2")
+		   out (temp-path "sink")]
+    (write-lines-in in1 "some.data" [[1 "A"] [2 "B"] [2 "C"]])
+    (write-lines-in in2 "some.data" [[2 "D"] [3 "E"] [1 "F"]])
+    (let [props (configure-properties FunctionBootstrap)
+          pipe1 (Pipe. "foo")
+          pipe2 (Pipe. "bar")
+          tap1 (test-tap in1)
+          tap2 ( test-tap in2)
+          taps (taps-map [pipe1 pipe2] [tap1 tap2])
+          join (CoGroup. "simple"
+                    pipe1
+                    (fields [0])
+                    pipe2
+                    (fields [0])
+                    (fields ["a" "b"])
+                    (JoinBootstrap.
+                     read-string
+                     pr-str
+                     first
+                     join-clj-callback
+                     (str (ns-name *ns*))
+                     1))
+          joined (.openSink
+                  (execute (flow props taps (test-tap out) join)))]
+          (is (= [[ 1 "AF"] [ 2 "BD"] [2 "CD"]]
+                 (read-tuple (.next joined)))))))
 
 (deftest build-join-from-symbol
   (let [wf (workflow ["in1" "in2"] "out" #'sample-join)

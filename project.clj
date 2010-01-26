@@ -1,6 +1,6 @@
 (defproject cascading-clojure "1.0-SNAPSHOT"
   :description "clojure lib for cascading"
-  :dependencies [[org.clojure/clojure-contrib "1.0-SNAPSHOT"]
+  :dependencies [[org.clojure/clojure-contrib "1.1.0-master-SNAPSHOT"]
                  [commons-cli/commons-cli "1.2"]
                  [cascading/cascading "1.0.17-SNAPSHOT"]
 		 [jline "0.9.94"]

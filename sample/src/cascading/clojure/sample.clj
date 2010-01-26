@@ -89,7 +89,7 @@
 (defn sample-join []
   {:wfs [(test-with-fields) (test-with-fields1)] 
    :groupFields [["id"] ["id1"]]
-   :using (fn [id name id1 name1] [id name id1 name1])
+   :using identity
    :outputFields ["id" "name" "id1" "name1"]
    :reader identity
    :writer str

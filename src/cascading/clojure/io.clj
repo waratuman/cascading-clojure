@@ -1,7 +1,6 @@
 (ns cascading.clojure.io
   (:import java.io.File)
-  (:use clojure.contrib.java-utils)
-  (:use clojure.contrib.duck-streams))
+  (:use [clojure.contrib java-utils duck-streams]))
 
 ;;;NOW: using equivalents in jova-utils...make sure they work the same before deleting this.
 ;; (defn delete-file
@@ -40,17 +39,17 @@
   (.deleteOnExit tmp-dir)
   tmp-dir))
 
-(defn delete-all [bindings]
-  (doall (for [file (reverse 
-		     (map second 
-			  (partition 2 bindings)))]
-	   (delete-file-recursively file))))
+(defn sane-delete [files]
+  (doseq [f files]
+    (delete-file-recursively f true)))
 
 (defmacro with-tmp-files [bindings & body]
   `(let ~bindings 
      (try ~@body 
-	  (finally (delete-all ~bindings)))))
-
+	  (finally
+           (sane-delete
+            (take-nth 2 (drop 1 ~bindings)))))))
+  
 (defn write-lines-in [root filename lines]
   (write-lines 
     (file (.getAbsolutePath root) filename) lines))

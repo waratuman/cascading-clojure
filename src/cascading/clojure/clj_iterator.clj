@@ -26,8 +26,8 @@
 	  (init-iters [singleton-lists]
 		      (for [[idx l] (indexed singleton-lists)]
 			(if (nil? l)
-			  (.. group-closure (getIterator idx))
-			  (.getIterator l))))]
+			  (.getIterator group-closure idx)
+			  (.iterator l))))]
     (let [singleton-lists (singleton-lists)
 	   cartesian-prod-iter (.iterator (apply cartesian-product (map iterator-seq (init-iters singleton-lists))))]
 	  [[] {"reader" reader "group-closure" group-closure "writer" writer
