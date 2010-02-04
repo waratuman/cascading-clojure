@@ -44,6 +44,11 @@
 (defn filter-callback [reader f x]
   (apply f (map reader (seq x))))
 
+(defn test-join-clj-callback 
+  [reader writer f x] x)
+  ;; (let [result (f (reader x))]
+  ;;   (map writer result)))
+
 (defn join-clj-callback 
   [reader writer f x]
   (let [result (apply f (map reader (seq x)))]

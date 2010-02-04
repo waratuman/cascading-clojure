@@ -1,12 +1,20 @@
-(ns cascading.clojure.hooks
-  (:import    [cascading.flow FlowListener]))
+(ns 
+#^{:doc
+"
+This lib gives you hooks to all the cascading events.  In particular, you can connect to recieve shutdown events to tear down clusters for transient jobs.
 
-;;TODOs: get @cwensel to do onComplete for cascades
+ .setStopJobsOnExit(Map<Object,Object> properties, boolean stopJobsOnExit)
+Property stopJobsOnExit is on by default and will tell the Flow to add a JVM shutdown hook that will kill all running processes if the underlying computing system supports it.
+"
+}
+cascading.clojure.hooks
+  (:import    [cascading.flow FlowListener]))
 
 (defn listen [{to :to with :with}]
  (do (.addListener to with))
  to)
 
+;;TODOs: get @cwensel to impliment onComplete for cascades
 (defn flow-listener 
   ":start is fired when a Flow instance receives the start() message.
    :stop is fired when a Flow instance receives the stop() message.
@@ -18,6 +26,3 @@
     (onStarting [flow] (if start (start flow)))
     (onStopping [flow] (if stop (stop flow)))
     (onThrowable [flow throwable] (if error (error flow throwable)))))
-
-;;   ;;.setStopJobsOnExit(Map<Object,Object> properties, boolean stopJobsOnExit)
-;;   "Property stopJobsOnExit is on by default and will tell the Flow to add a JVM shutdown hook that will kill all running processes if the underlying computing system supports it."

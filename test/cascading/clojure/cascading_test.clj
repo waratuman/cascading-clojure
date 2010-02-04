@@ -104,8 +104,8 @@
            e (Each. "simple"
                  (fields [0])
                  (FunctionBootstrap.
-                  (fields [0])
-                  (fields [0])
+                  (fields [1])
+                  (fields [1])
                   read-string
                   pr-str
                   inc
@@ -134,12 +134,12 @@
                     (fields [0])
                     (fields ["a" "b"])
                     (JoinBootstrap.
-                     read-string
+                     identity
                      pr-str
                      first
-                     join-clj-callback
+                     test-join-clj-callback
                      (str (ns-name *ns*))
-                     1))
+                     2))
           joined (.openSink
                   (execute (flow props taps (test-tap out) join)))]
           (is (= [[ 1 "AF"] [ 2 "BD"] [2 "CD"]]
