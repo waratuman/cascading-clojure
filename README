@@ -9,20 +9,36 @@ project setup & build:
 
 This should download all dependencies, and install cascading-clojure in your local repo.
 
-The goal of this wrapper is to be able to write as much application code in clojure as you can, and treat cascading as 
-almost like an HOF, and one of the restrictions is where you have to follow certain conventions in terms of arity of 
-fns.
+PACKAGING AND MAIN CLASS
 
-Right now, it works on rows, where each row can be thought of as an item in the "collection". (from an 
-HOF perspective)
-A row depends on your input format or scheme, (in cascading parlance) for example, if you use the default textline, each row is a line of text from the input files.
+In your client code's project.clj, make sure to include your ":main my.namespace" 
 
-The "framework" allows you to define read and write functions. Examples are identity, read-string, fns for reading json, 
-etc.
-Mostly, this wrapper has been used to convert and persist data as clojure data structures.
+you currently can not use lein uberjar.  you have to build the jar manually with "jar cfe main.namespace lib/ classes/" (your lein project's lib/ folder will have cascading and deps, and clojure jars).
 
-You can also define input fields and output fields.
+your main class looks like:
+ (ns mycompany.filename
+  (:require [cascading.clojure.cascading :as c])
+  (:require [cascading.clojure.makemain-utils :as m])
+  (:gen-class))
+  
+(defn- -main [& args]
+  (let [opts (assoc (m/parseArgs args) :main-class (class -main))]
+    (if (:join opts) 
+      (c/cascading-join opts)
+      (c/cascading opts))))
 
+Cascading-clojure uses apache commons cli to parse commandline arguments. A 
+sample command looks like this: 
+       hadoop jar build/jobs.jar \
+       -in file:///input/dir/ \
+       -out file:///output/dir/ \
+       -wf my.namespace/my-fn
+
+-in and -out are input and output paths, -wf is the fully-qualified name of the function that defines your workflow map.
+
+Right now, it works on rows, where each row can be thought of as an item in the "collection".  row depends on your input format or scheme, (in cascading parlance) for example, if you use the default textline, each row is a line of text from the input files.
+
+you to define read and write functions. Examples are identity, read-string, fns for reading json, etc. you can also define input and output fields.
 
 DEFINING WORKFLOWS
 
@@ -97,39 +113,6 @@ a row. These rows should match the number of outputFields.
 defaults:
 :using (fn [acc next-line] [(str (first acc) next-line)]) :reader read-string
 :writer pr-str :init (fn [] [""]) :inputFields ["line"] :outputFields ["data"]
-
-
-A MORE FULL-FLEDGED EXAMPLE
-
-..........
-
-PACKAGING AND MAIN CLASS
-
-Packaging-wise, the final jar needs to have cascading and it's dependencies, and
-also clojure jars in the lib folder, with the rest of your dependencies. (it's a
-hadoop thing) There should also be a main class, which should look like this:
-
- (ns mycompany.filename
-  (:require [org.parsimonygroup.cascading :as c])
-  (:require [org.parsimonygroup.makemain-utils :as m])
-  (:gen-class))
-  
-(defn- -main [& args]
-  (let [opts (assoc (m/parseArgs args) :main-class (class -main))]
-    (if (:join opts) 
-      (c/cascading-join opts)
-      (c/cascading opts))))
-
-
-Cascading-clojure uses apache commons cli to parse commandline arguments. A 
-sample command looks like this: 
-       hadoop jar build/jobs.jar -in \
-         file:///Users/Admin/projects/githubcontestcode/calcs/splitupusers/ -out
-         file:///Users/Admin/projects/githubcontestcode/out/ -wf /
-         timwee.remote-jobs/user-covisit-wf
-
--in and -out are self-explanatory, -wf is the fully-qualified name of the
-function that defines your workflow map.
 
 GOTCHAS
 
