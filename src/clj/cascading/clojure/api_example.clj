@@ -7,6 +7,9 @@
 (defn split-words [line]
   (map list (re-seq #"\w+" line)))
 
+(defn uppercase [word count]
+  [(.toUpperCase word) count])
+
 (def phrase-reader
   (-> (c/named-pipe "phrase-reader")
     (c/mapcat ["line"] ["word"] #'split-words)
@@ -22,20 +25,33 @@
   (-> [phrase-reader white-reader]
     (c/inner-join ["word" "white"])
     (c/select ["word" "count"])))
+    ;(c/map ["word" "count"] ["upword" "count"] #'uppercase)))
 
-(let [[jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path] *command-line-args*
-      source-scheme  (c/text-line-scheme ["line"])
-      sink-scheme    (c/text-line-scheme ["word" "count"])
-      phrase-source  (c/hfs-tap source-scheme in-phrase-dir-path)
-      white-source   (c/hfs-tap source-scheme in-white-dir-path)
-      sink           (c/hfs-tap sink-scheme out-dir-path)
-      flow           (c/flow
-                       jar-path
-                       {"fs.default.name"    "hdfs://localhost:9000"
-                        "mapred.job.tracker" "localhost:9001"}
-                       {"phrase-reader" phrase-source
-                        "white-reader"  white-source}
-                       sink
-                       joined)]
+(defn run-example
+  [jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path]
+  (let [source-scheme  (c/text-line-scheme ["line"])
+        sink-scheme    (c/text-line-scheme ["word" "count"])
+        phrase-source  (c/hfs-tap source-scheme in-phrase-dir-path)
+        white-source   (c/hfs-tap source-scheme in-white-dir-path)
+        sink           (c/hfs-tap sink-scheme out-dir-path)
+        flow           (c/flow
+                         jar-path
+                         {}
+                         {"phrase-reader" phrase-source
+                          "white-reader"  white-source}
+                         sink
+                         joined)]
     (c/write-dot flow dot-path)
-    (c/complete flow))
+    (c/complete flow)))
+
+(comment
+  (use 'cascading.clojure.api-example)
+  (def root "/Users/mmcgrana/remote/cascading-clojure/")
+  (def example-args
+    [(str root "cascading-clojure-standalone.jar")
+     (str root "data/api-example.dot")
+     (str root "data/phrases")
+     (str root "data/white")
+     (str root "data/output")])
+  (apply run-example example-args)
+)
