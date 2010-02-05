@@ -110,7 +110,7 @@
                   pr-str
                   inc
                   single-val-callback
-                  (str (ns-name *ns*))))
+                  "cascading.clojure.cascading-test"))
         inced (.openSink
                ( execute (flow props (test-tap in) (test-tap out) e)))]
     (is (= 2 (read-tuple (.next inced)))))))
@@ -138,7 +138,7 @@
                      pr-str
                      first
                      test-join-clj-callback
-                     (str (ns-name *ns*))
+                     "cascading.clojure.cascading-test"
                      2))
           joined (.openSink
                   (execute (flow props taps (test-tap out) join)))]

@@ -9,30 +9,50 @@
 (gen-class
  :name cascading.clojure.CljIterator
  :implements [java.util.Iterator java.io.Serializable]
- :constructors {[cascading.pipe.cogroup.GroupClosure clojure.lang.IFn clojure.lang.IFn clojure.lang.IFn clojure.lang.IFn Integer]
+ :constructors {[cascading.pipe.cogroup.GroupClosure 
+		 clojure.lang.IFn clojure.lang.IFn 
+		 clojure.lang.IFn clojure.lang.IFn Integer]
 		[]}
  :init init
  :state state)
 
-(defn -init [group-closure reader writer join-fn callback num-fields]
-  (letfn [(is-outer [i]
-		    (and (= i (- (.size group-closure) 1))
-			 (= 0 (.. group-closure (getGroup i) size))))
-	  (singleton-lists []
-			   (for [i (range (.size group-closure))]
-			     (if (is-outer i)
-			       (Collections/singletonList (Tuple/size num-fields))
-			       nil)))
-	  (init-iters [singleton-lists]
-		      (for [[idx l] (indexed singleton-lists)]
-			(if (nil? l)
-			  (.getIterator group-closure idx)
-			  (.iterator l))))]
-    (let [singleton-lists (singleton-lists)
-	   cartesian-prod-iter (.iterator (apply cartesian-product (map iterator-seq (init-iters singleton-lists))))]
-	  [[] {"reader" reader "group-closure" group-closure "writer" writer
-	       "join-fn" join-fn "callback" callback "logger" (Logger/getLogger (class *ns*))
-	       "cartesian-prod-iter" cartesian-prod-iter}])))
+(defn outer?
+  [cogroup-closure i]
+  (and (= i (- (.size cogroup-closure) 1))
+       (= 0 (.. cogroup-closure (getGroup i) size))))
+
+(defn make-lists
+  [cogroup-closure num-fields]
+  (for [i (range (.size cogroup-closure))]
+    (if (outer? cogroup-closure i)
+      [(Tuple/size num-fields)]
+      nil)))
+
+(defn init-iters 
+  [cogroup-closure singleton-lists]
+  (for [[idx l] (indexed singleton-lists)]
+    (if (nil? l)
+      (.getIterator cogroup-closure idx)
+      (.iterator l))))
+
+(defn cartesian-product-iterator
+  [cogroup-closure lists]
+  (.iterator 
+   (apply cartesian-product 
+	  (map iterator-seq 
+	       (init-iters cogroup-closure lists)))))
+
+(defn -init [cogroup-closure reader writer join-fn callback num-fields]
+  (let [lists 
+	(make-lists cogroup-closure num-fields)
+	cartesian-prod-iter 
+	(cartesian-product-iterator cogroup-closure lists)]
+	[[] {"reader" reader 
+	     "cogroup-closure" cogroup-closure 
+	     "writer" writer
+	     "join-fn" join-fn 
+	     "callback" callback 
+	     "cartesian-prod-iter" cartesian-prod-iter}]))
 
 (defn -hasNext [this]
   (let [state (.state this)
@@ -45,9 +65,12 @@
 	next-vals (apply concat 
 			 (map #(iterator-seq (.iterator %)) 
 			      (.next cartesian-prod-iter)))]
-      (Tuple. (into-array Comparable ((state "callback")
-				    (state "reader") (state "writer") 
-				    (state "join-fn") next-vals)))))
+      (Tuple. (into-array 
+	       Comparable 
+	       ((state "callback") 
+		(state "reader") 
+		(state "writer") 
+		(state "join-fn") next-vals)))))
 
 (defn -remove [this]
   (throw (RuntimeException. "remove not implemented")))
