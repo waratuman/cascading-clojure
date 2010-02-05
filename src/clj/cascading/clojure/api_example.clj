@@ -23,13 +23,16 @@
     (c/inner-join ["word" "white"])
     (c/select ["word" "count"])))
 
-(let [[in-phrase-dir-path in-white-dir-path out-dir-path dot-path] *command-line-args*
+(let [[jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path] *command-line-args*
       source-scheme  (c/text-line-scheme ["line"])
       sink-scheme    (c/text-line-scheme ["word" "count"])
       phrase-source  (c/hfs-tap source-scheme in-phrase-dir-path)
       white-source   (c/hfs-tap source-scheme in-white-dir-path)
       sink           (c/hfs-tap sink-scheme out-dir-path)
       flow           (c/flow
+                       jar-path
+                       {"fs.default.name"    "hdfs://localhost:9000"
+                        "mapred.job.tracker" "localhost:9001"}
                        {"phrase-reader" phrase-source
                         "white-reader"  white-source}
                        sink

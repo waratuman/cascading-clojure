@@ -62,11 +62,14 @@
 (defn hfs-tap [#^Scheme scheme #^String path]
   (Hfs. scheme path))
 
-(defn flow [#^Map source-map #^Tap sink #^Pipe pipe]
-  (let [properties (doto (Properties.)
-                     (.setProperty "mapred.used.genericoptionsparser" "false"))
-        flow-connector (FlowConnector.)]
-    (.connect flow-connector source-map sink pipe)))
+(defn flow [jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
+  (let [props (Properties.)]
+    (when jar-path
+      (FlowConnector/setApplicationJarPath props jar-path))
+    (doseq [[k v] config]
+      (.setProperty props k v))
+    (let [flow-connector (FlowConnector. props)]
+      (.connect flow-connector source-map sink pipe))))
 
 (defn write-dot [#^Flow flow #^String path]
   (.writeDOT flow path))

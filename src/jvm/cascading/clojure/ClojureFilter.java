@@ -25,7 +25,7 @@ public class ClojureFilter extends BaseOperation implements Filter {
   }
   
   public void prepare(FlowProcess flow_process, OperationCall op_call) {
-    this.clojure_pred = (IFn) RT.var(this.clojure_ns, this.clojure_var).deref();
+    this.clojure_pred = (IFn) Util.bootToVar(this.clojure_ns, this.clojure_var);
   }
 
   public boolean isRemove(FlowProcess flow_process, FilterCall filter_call) {

@@ -27,7 +27,7 @@ public class ClojureMapcat extends BaseOperation implements Function {
   }
   
   public void prepare(FlowProcess flow_process, OperationCall op_call) {
-    this.clojure_fn = (IFn) RT.var(this.clojure_ns, this.clojure_var).deref();
+    this.clojure_fn = (IFn) Util.bootToVar(this.clojure_ns, this.clojure_var);
   }
 
   public void operate(FlowProcess flow_process, FunctionCall fn_call) {
