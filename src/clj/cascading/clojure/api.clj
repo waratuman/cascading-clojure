@@ -18,7 +18,9 @@
 (defn- fields
   {:tag Fields}
   [names]
-  (Fields. (into-array names)))
+  (if (string? names)
+    (fields [names])
+    (Fields. (into-array names))))
 
 (defn- ns-fn-pair [v]
   (let [m (meta v)]
@@ -67,8 +69,10 @@
 (defn count [#^Pipe previous #^String count-field]
   (Every. previous (Count. (fields [count-field]))))
 
-(defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-field rhs-field]]
-  (CoGroup. lhs (fields [lhs-field]) rhs (fields [rhs-field]) (InnerJoin.)))
+(defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
+  (prn (fields lhs-fields))
+  (prn (fields rhs-fields))
+  (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
 
 (defn select [#^Pipe previous keep]
   (Each. previous (fields keep) (Identity.)))
