@@ -16,7 +16,7 @@
 
 (def summer
   (-> (c/pipe "summer")
-    (c/map "line" ["word" "subcount"] #'parse-pair)
+    (c/map "line" [["word" "subcount"] #'parse-pair])
     (c/group-by "word")
     (c/aggregate ["word" "subcount"] "count"
       #'add-counts-start #'add-counts-aggregate #'add-counts-complete)

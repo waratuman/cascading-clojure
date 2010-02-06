@@ -1,5 +1,6 @@
 (ns cascading.clojure.api
   (:refer-clojure :exclude (count filter mapcat map))
+  (:use [clojure.contrib.seq-utils :only [find-first indexed]])
   (:import (cascading.tuple Fields)
            (cascading.scheme TextLine)
            (cascading.flow Flow FlowConnector)
@@ -44,7 +45,7 @@
 (defn fields
   {:tag Fields}
   [obj]
-  (if (instance? Fields obj) 
+  (if (or (nil? obj) (instance? Fields obj))
       obj
       (Fields. (into-array String (collectify obj)))))
       
@@ -70,18 +71,19 @@
     [obj (collectify obj)
      i (idx-of-first obj var?)
      spec (fn-spec (drop i obj))
-     func-fields (fields (if (> i 0) (first obj) ((meta (first spec)) :fields)))
+     funcvar (nth obj i)
+     func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))
     ]
     [func-fields spec] ))
 
-(defn- parse-args 
+(defn parse-args 
   ([arr] (parse-args arr Fields/RESULTS))
   ([arr defaultout]
   (let 
     [i (idx-of-first arr #(not (is-fields-obj? %)))
      infields (if (> i 0) (fields (first arr)) Fields/ALL)
      [func-fields spec] (parse-func (nth arr i))
-     outfields (if (< i (dec (count arr))) (fields (last arr)) defaultout)]
+     outfields (if (< i (dec (clojure.core/count arr))) (fields (last arr)) defaultout)]
     [infields func-fields spec outfields] )))
 
 (defn- uuid []

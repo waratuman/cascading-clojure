@@ -5,8 +5,8 @@
   (re-find #"^b.*" word))
 
 (defn split-words 
-  {
-    :fields: "word2"
+  #^{
+    :fields "word2"
   }
   [line]
   (map list (re-seq #"\w+" line)))
@@ -16,7 +16,7 @@
 
 (def phrase-reader
   (-> (c/pipe "phrase-reader")
-    (c/mapcat "line" "word" #'split-words)
+    (c/mapcat "line" ["word" #'split-words])
     (c/filter "word" #'starts-with-b?)
     (c/group-by "word")
     (c/count "count")))
@@ -24,13 +24,13 @@
 
 (def white-reader
   (-> (c/pipe "white-reader")
-    (c/mapcat "line" "white" #'split-words)))
+    (c/mapcat "line" ["white" #'split-words])))
 
 (def joined
   (-> [phrase-reader white-reader]
     (c/inner-join ["word" "white"])
     (c/select ["word" "count"])
-    (c/map ["word" "count"] ["upword" "count"] #'uppercase)))
+    (c/map ["word" "count"] [["upword" "count"] #'uppercase])))
 
 (defn run-example
   [jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path]

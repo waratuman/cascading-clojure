@@ -7,6 +7,8 @@
                  [cascading/cascading "1.0.17-SNAPSHOT"
                    :exclusions [javax.mail/mail janino/janino]]]
   :dev-dependencies [[lein-javac "0.0.2-SNAPSHOT"]]
+  :repositories [["clojars" "http://clojars.org/repo"]]
+  
   :namespaces [cascading.clojure.api
                cascading.clojure.api-example
                cascading.clojure.aggregator-example])
