@@ -20,6 +20,12 @@
     [(str (:ns m)) (str (:name m))]))
 
 (defn fn-spec [v-or-coll]
+  "v-or-coll => var or [var & params]
+   Returns an Object array that is used to represent a Clojure function.
+   If the argument is a var, the array represents that function.
+   If the argument is a coll, the array represents the function returned
+   by applying the first element, which should be a var, to the rest of the
+   elements."
   (cond
     (var? v-or-coll)
       (into-array Object (ns-fn-name-pair v-or-coll))
