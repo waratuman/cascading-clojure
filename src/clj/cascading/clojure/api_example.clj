@@ -4,7 +4,11 @@
 (defn starts-with-b? [word]
   (re-find #"^b.*" word))
 
-(defn split-words [line]
+(defn split-words 
+  {
+    :fields: "word2"
+  }
+  [line]
   (map list (re-seq #"\w+" line)))
 
 (defn uppercase [word count]
@@ -16,6 +20,7 @@
     (c/filter "word" #'starts-with-b?)
     (c/group-by "word")
     (c/count "count")))
+    
 
 (def white-reader
   (-> (c/pipe "white-reader")
@@ -43,6 +48,8 @@
                          joined)]
     (c/write-dot flow dot-path)
     (c/complete flow)))
+
+
 
 (comment
   (use 'cascading.clojure.api-example)

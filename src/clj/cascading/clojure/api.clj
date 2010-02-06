@@ -38,12 +38,44 @@
     :else
       (throw (IllegalArgumentException. (str v-or-coll)))))
 
+(defn collectify [obj]
+  (if (sequential? obj) obj [obj]))
+
 (defn fields
   {:tag Fields}
-  [names]
-  (if (string? names)
-    (fields [names])
-    (Fields. (into-array names))))
+  [obj]
+  (if (instance? Fields obj) 
+      obj
+      (Fields. (into-array String (collectify obj)))))
+      
+(defn- is-fields-obj? [obj]
+  "True is string, array of strings, or a fields obj"
+  (or 
+    (instance? Fields obj)
+    (string? obj)
+    (and (sequential? obj) (every? #(string? %) obj))))
+
+(defn- args-func-idx [arr]
+  (first (find-first #(not (is-fields-obj? (last %))) (indexed arr))))
+
+(defn- parse-func [obj]
+  "
+  #'func
+  [#'func]
+  [overridefields #'func]
+  [#'func params...]
+  [overridefields #'func params...]
+  "
+  
+  )
+
+(defn- parse-args [arr defaultout]
+  (let 
+    [i (args-func-idx arr)
+     infields (if (> i 0) (fields (first arr)) Fields/ALL)
+     [outfields func funcparams] (parse-func (nth arr i))
+     outfields (if (< i (dec (count arr))) (fields (last arr)) defaultout)]
+    [infields func outfields] ))
 
 (defn- uuid []
   (str (UUID/randomUUID)))
