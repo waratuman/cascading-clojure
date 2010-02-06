@@ -15,43 +15,42 @@
                               ClojureAggregator)
            (clojure.lang Var)))
 
-(defn- fields
+
+
+(defn- ns-fn-name-pair [v]
+  (let [m (meta v)]
+    [(str (:ns m)) (str (:name m))]))
+
+(defn fields
   {:tag Fields}
   [names]
   (if (string? names)
     (fields [names])
     (Fields. (into-array names))))
 
-(defn- ns-fn-pair [v]
-  (let [m (meta v)]
-    [(str (:ns m)) (str (:name m))]))
-
 (defn named-pipe [#^String name]
   (Pipe. name))
 
-(defn regex-filter [#^Pipe previous name pattern]
-  (Each. previous (fields [name]) (RegexFilter. pattern)))
-
 (defn filter [#^Pipe previous in-fields #^Var pred]
-  (let [[ns-str var-str] (ns-fn-pair pred)]
+  (let [[ns-str var-str] (ns-fn-name-pair pred)]
     (Each. previous (fields in-fields)
       (ClojureFilter. ns-str var-str))))
 
 (defn mapcat [#^Pipe previous in-fields out-fields #^Var f]
-  (let [[ns-str var-str] (ns-fn-pair f)
+  (let [[ns-str var-str] (ns-fn-name-pair f)
         func (ClojureMapcat. (fields out-fields) ns-str var-str)]
     (Each. previous (fields in-fields) func)))
 
 (defn map [#^Pipe previous in-fields out-fields #^Var f]
-  (let [[ns-str var-str] (ns-fn-pair f)
-        func (ClojureMap. (fields out-fields) ns-str var-str)]
+  (let [[ns-str var-str] (ns-fn-name-pair f)
+        func (ClojureMap. (fields out-fields) ns-str var-str (seq [1 2 3]))]
     (Each. previous (fields in-fields) func)))
 
 (defn aggregate [#^Pipe previous in-fields out-fields
                  #^Var start #^Var aggregate #^Var complete]
-  (let [[start-ns-str     start-fn-str]     (ns-fn-pair start)
-        [aggregate-ns-str aggregate-fn-str] (ns-fn-pair aggregate)
-        [complete-ns-str  complete-fn-str]  (ns-fn-pair complete)]
+  (let [[start-ns-str     start-fn-str]     (ns-fn-name-pair start)
+        [aggregate-ns-str aggregate-fn-str] (ns-fn-name-pair aggregate)
+        [complete-ns-str  complete-fn-str]  (ns-fn-name-pair complete)]
     (Every. previous (fields in-fields)
       (ClojureAggregator. (fields out-fields)
         start-ns-str     start-fn-str
