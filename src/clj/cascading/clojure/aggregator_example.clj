@@ -15,7 +15,7 @@
     [word (Integer/valueOf num-str)]))
 
 (def summer
-  (-> (c/named-pipe "summer")
+  (-> (c/pipe "summer")
     (c/map "line" ["word" "subcount"] #'parse-pair)
     (c/group-by "word")
     (c/aggregate ["word" "subcount"] "count"

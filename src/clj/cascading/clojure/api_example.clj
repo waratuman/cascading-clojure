@@ -11,14 +11,14 @@
   [(.toUpperCase word) count])
 
 (def phrase-reader
-  (-> (c/named-pipe "phrase-reader")
+  (-> (c/pipe "phrase-reader")
     (c/mapcat "line" "word" #'split-words)
     (c/filter "word" #'starts-with-b?)
     (c/group-by "word")
     (c/count "count")))
 
 (def white-reader
-  (-> (c/named-pipe "white-reader")
+  (-> (c/pipe "white-reader")
     (c/mapcat "line" "white" #'split-words)))
 
 (def joined

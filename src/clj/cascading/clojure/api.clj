@@ -13,7 +13,8 @@
            (java.util Properties Map)
            (cascading.clojure ClojureFilter ClojureMapcat ClojureMap
                               ClojureAggregator)
-           (clojure.lang Var)))
+           (clojure.lang Var)
+           (java.util UUID)))
 
 (defn ns-fn-name-pair [v]
   (let [m (meta v)]
@@ -44,8 +45,16 @@
     (fields [names])
     (Fields. (into-array names))))
 
-(defn named-pipe [#^String name]
-  (Pipe. name))
+(defn- uuid []
+  (str (UUID/randomUUID)))
+
+(defn pipe
+  "Returns a Pipe of the given name, or if one is not supplied with a
+   unique random name."
+  ([]
+   (Pipe. (uuid)))
+  ([#^String name]
+   (Pipe. name)))
 
 (defn filter [#^Pipe previous in-fields pred]
   (Each. previous (fields in-fields)
