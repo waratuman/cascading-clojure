@@ -49,7 +49,7 @@ public class ClojureAggregator extends BaseOperation<ClojureAggregator.Box>
     this.complete_clj_var =  complete_clj_var;
   }
   
-  public void prepare(FlowProcess flow_process, AggregatorCall<Box> ag_call) {
+  public void prepare(FlowProcess flow_process, OperationCall<Box> ag_call) {
     this.start_clj_fn =     (IFn) Util.bootToVar(this.start_clj_ns,     this.start_clj_var);
     this.aggregate_clj_fn = (IFn) Util.bootToVar(this.aggregate_clj_ns, this.aggregate_clj_var);
     this.complete_clj_fn =  (IFn) Util.bootToVar(this.complete_clj_ns,  this.complete_clj_var);
