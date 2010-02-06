@@ -24,13 +24,13 @@
 (def joined
   (-> [phrase-reader white-reader]
     (c/inner-join ["word" "white"])
-    (c/select ["word" "count"])))
-    ;(c/map ["word" "count"] ["upword" "count"] #'uppercase)))
+    (c/select ["word" "count"])
+    (c/map ["word" "count"] ["upword" "count"] #'uppercase)))
 
 (defn run-example
   [jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path]
   (let [source-scheme  (c/text-line-scheme ["line"])
-        sink-scheme    (c/text-line-scheme ["word" "count"])
+        sink-scheme    (c/text-line-scheme ["upword" "count"])
         phrase-source  (c/hfs-tap source-scheme in-phrase-dir-path)
         white-source   (c/hfs-tap source-scheme in-white-dir-path)
         sink           (c/hfs-tap sink-scheme out-dir-path)

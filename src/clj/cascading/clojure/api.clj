@@ -11,7 +11,7 @@
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
            (java.util Properties Map)
-           (cascading.clojure ClojureFilter ClojureMapcat); ClojureMap)
+           (cascading.clojure ClojureFilter ClojureMapcat ClojureMap)
            (clojure.lang Var)))
 
 (defn- fields
@@ -39,10 +39,10 @@
         func (ClojureMapcat. (fields out-fields) ns-str var-str)]
     (Each. previous (fields in-fields) func)))
 
-;(defn map [#^Pipe previous in-fields out-fields #^Var f]
-;  (let [[ns-str var-str] (ns-var-pair f)
-;        func (ClojureMap. (fields out-fields) ns-str var-str)]
-;    (Each. previous (fields in-fields) func)))
+(defn map [#^Pipe previous in-fields out-fields #^Var f]
+  (let [[ns-str var-str] (ns-var-pair f)
+        func (ClojureMap. (fields out-fields) ns-str var-str)]
+    (Each. previous (fields in-fields) func)))
 
 (defn word-split [#^Pipe previous in-field out-field]
   (let [func (RegexGenerator. (fields [out-field])

@@ -15,12 +15,12 @@ import clojure.lang.ISeq;
 import clojure.lang.IteratorSeq;
 import java.util.Collection;
 
-public class ClojureMapcat extends BaseOperation implements Function {
+public class ClojureMap extends BaseOperation implements Function {
   private String clj_ns;
   private String clj_var;
   private IFn clj_fn;
   
-  public ClojureMapcat(Fields out_fields, String clj_ns, String clj_var) {
+  public ClojureMap(Fields out_fields, String clj_ns, String clj_var) {
     super(out_fields);
     this.clj_ns = clj_ns;
     this.clj_var = clj_var;
@@ -34,13 +34,9 @@ public class ClojureMapcat extends BaseOperation implements Function {
     Tuple fn_args = fn_call.getArguments().getTuple();
     ISeq fn_args_seq = Util.coerceSeq(fn_args);
     try {
-      ISeq result_seq = RT.seq(this.clj_fn.applyTo(fn_args_seq));
+      Collection clj_tuple = (Collection) this.clj_fn.applyTo(fn_args_seq);
       TupleEntryCollector collector = fn_call.getOutputCollector();
-      while (result_seq != null) {
-        Collection clj_tuple = (Collection) result_seq.first();
-        collector.add(Util.coerceTuple(clj_tuple));
-        result_seq = result_seq.next();
-      }
+      collector.add(Util.coerceTuple(clj_tuple));
     } catch (Exception e) {
       e.printStackTrace();
     }
