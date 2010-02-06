@@ -70,8 +70,6 @@
   (Every. previous (Count. (fields [count-field]))))
 
 (defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
-  (prn (fields lhs-fields))
-  (prn (fields rhs-fields))
   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
 
 (defn select [#^Pipe previous keep]
