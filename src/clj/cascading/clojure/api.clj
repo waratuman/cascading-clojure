@@ -15,11 +15,21 @@
                               ClojureAggregator)
            (clojure.lang Var)))
 
-
-
 (defn ns-fn-name-pair [v]
   (let [m (meta v)]
     [(str (:ns m)) (str (:name m))]))
+
+(defn fn-spec [v-or-coll]
+  (cond
+    (var? v-or-coll)
+      (into-array Object (ns-fn-name-pair v-or-coll))
+    (coll? v-or-coll)
+      (into-array Object
+        (concat
+          (ns-fn-name-pair (first v-or-coll))
+          (next v-or-coll)))
+    :else
+      (throw (IllegalArgumentException. (str v-or-coll)))))
 
 (defn fields
   {:tag Fields}
@@ -31,34 +41,26 @@
 (defn named-pipe [#^String name]
   (Pipe. name))
 
-(defn filter [#^Pipe previous in-fields #^Var pred]
-  (let [[ns-str var-str] (ns-fn-name-pair pred)]
-    (Each. previous (fields in-fields)
-      (ClojureFilter. ns-str var-str))))
+(defn filter [#^Pipe previous in-fields pred]
+  (Each. previous (fields in-fields)
+    (ClojureFilter. (fn-spec pred))))
 
-(defn mapcat [#^Pipe previous in-fields out-fields #^Var f]
-  (let [[ns-str var-str] (ns-fn-name-pair f)
-        func (ClojureMapcat. (fields out-fields) ns-str var-str)]
-    (Each. previous (fields in-fields) func)))
+(defn mapcat [#^Pipe previous in-fields out-fields func]
+  (Each. previous (fields in-fields)
+    (ClojureMapcat. (fields out-fields) (fn-spec func))))
 
-(defn map [#^Pipe previous in-fields out-fields #^Var f]
-  (let [[ns-str var-str] (ns-fn-name-pair f)
-        func (ClojureMap. (fields out-fields) ns-str var-str (seq [1 2 3]))]
-    (Each. previous (fields in-fields) func)))
+(defn map [#^Pipe previous in-fields out-fields func]
+  (Each. previous (fields in-fields)
+    (ClojureMap. (fields out-fields) (fn-spec func))))
 
 (defn aggregate [#^Pipe previous in-fields out-fields
-                 #^Var start #^Var aggregate #^Var complete]
-  (let [[start-ns-str     start-fn-str]     (ns-fn-name-pair start)
-        [aggregate-ns-str aggregate-fn-str] (ns-fn-name-pair aggregate)
-        [complete-ns-str  complete-fn-str]  (ns-fn-name-pair complete)]
-    (Every. previous (fields in-fields)
-      (ClojureAggregator. (fields out-fields)
-        start-ns-str     start-fn-str
-        aggregate-ns-str aggregate-fn-str
-        complete-ns-str  complete-fn-str))))
+                 start aggregate complete]
+  (Every. previous (fields in-fields)
+    (ClojureAggregator. (fields out-fields)
+      (fn-spec start) (fn-spec aggregate) (fn-spec complete))))
 
-(defn group-by [#^Pipe previous group-field]
-  (GroupBy. previous (fields [group-field])))
+(defn group-by [#^Pipe previous group-fields]
+  (GroupBy. previous (fields group-fields)))
 
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous (Count. (fields count-fields))))
@@ -66,11 +68,11 @@
 (defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
 
-(defn select [#^Pipe previous keep]
-  (Each. previous (fields keep) (Identity.)))
+(defn select [#^Pipe previous keep-fields]
+  (Each. previous (fields keep-fields) (Identity.)))
 
-(defn text-line-scheme [names]
-  (TextLine. (fields names) (fields names)))
+(defn text-line-scheme [field-names]
+  (TextLine. (fields field-names) (fields field-names)))
 
 (defn hfs-tap [#^Scheme scheme #^String path]
   (Hfs. scheme path))
@@ -88,4 +90,4 @@
   (.writeDOT flow path))
 
 (defn complete [#^Flow flow]
-  (.complete flow))
+ (.complete flow))

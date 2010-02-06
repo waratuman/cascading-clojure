@@ -12,37 +12,33 @@ import cascading.tuple.Fields;
 import clojure.lang.IFn;
 import clojure.lang.RT;
 import clojure.lang.ISeq;
-import clojure.lang.IteratorSeq;
 import java.util.Collection;
 
 public class ClojureMapcat extends BaseOperation implements Function {
-  private String clj_ns;
-  private String clj_var;
-  private IFn clj_fn;
+  private Object[] fn_spec;
+  private IFn fn;
   
-  public ClojureMapcat(Fields out_fields, String clj_ns, String clj_var) {
+  public ClojureMapcat(Fields out_fields, Object[] fn_spec) {
     super(out_fields);
-    this.clj_ns = clj_ns;
-    this.clj_var = clj_var;
+    this.fn_spec = fn_spec;
   }
   
   public void prepare(FlowProcess flow_process, OperationCall op_call) {
-    this.clj_fn = (IFn) Util.bootToVar(this.clj_ns, this.clj_var);
+    this.fn = Util.bootFn(fn_spec);
   }
 
   public void operate(FlowProcess flow_process, FunctionCall fn_call) {
-    Tuple fn_args = fn_call.getArguments().getTuple();
-    ISeq fn_args_seq = Util.coerceSeq(fn_args);
+    ISeq fn_args_seq = Util.coerceFromTuple(fn_call.getArguments().getTuple());
     try {
-      ISeq result_seq = RT.seq(this.clj_fn.applyTo(fn_args_seq));
+      ISeq result_seq = RT.seq(this.fn.applyTo(fn_args_seq));
       TupleEntryCollector collector = fn_call.getOutputCollector();
       while (result_seq != null) {
-        Collection clj_tuple = (Collection) result_seq.first();
-        collector.add(Util.coerceTuple(clj_tuple));
+        Collection coll = (Collection) result_seq.first();
+        collector.add(Util.coerceToTuple(coll));
         result_seq = result_seq.next();
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 }

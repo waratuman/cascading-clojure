@@ -12,75 +12,57 @@ import cascading.tuple.Fields;
 import clojure.lang.IFn;
 import clojure.lang.RT;
 import clojure.lang.ISeq;
-import clojure.lang.IteratorSeq;
+import clojure.lang.Box;
 import java.util.Collection;
 
-public class ClojureAggregator extends BaseOperation<ClojureAggregator.Box>
-                               implements Aggregator<ClojureAggregator.Box> {
-  
-  public static class Box {
-    public Object val;
-    
-    public Box(Object val) {
-      this.val = val;
-    }
-  }
-  
-  private String start_clj_ns;
-  private String start_clj_var;
-  private IFn    start_clj_fn;
-  private String aggregate_clj_ns;
-  private String aggregate_clj_var;
-  private IFn    aggregate_clj_fn;
-  private String complete_clj_ns;
-  private String complete_clj_var;
-  private IFn    complete_clj_fn;
+public class ClojureAggregator extends BaseOperation<Box>
+                               implements Aggregator<Box> {
+  private Object[] start_fn_spec;
+  private IFn      start_fn;
+  private Object[] aggregate_fn_spec;
+  private IFn      aggregate_fn;
+  private Object[] complete_fn_spec;
+  private IFn      complete_fn;
 
-  public ClojureAggregator(Fields out_fields,
-                           String start_clj_ns,     String start_clj_var,
-                           String aggregate_clj_ns, String aggregate_clj_var,
-                           String complete_clj_ns,  String complete_clj_var) {
+  public ClojureAggregator(Fields out_fields, Object[] start_fn_spec,
+                           Object[] aggregate_fn_spec, Object[] complete_fn_spec) {
     super(out_fields);
-    this.start_clj_ns =      start_clj_ns;
-    this.start_clj_var =     start_clj_var;
-    this.aggregate_clj_ns =  aggregate_clj_ns;
-    this.aggregate_clj_var = aggregate_clj_var;
-    this.complete_clj_ns =   complete_clj_ns;
-    this.complete_clj_var =  complete_clj_var;
+    this.start_fn_spec =      start_fn_spec;
+    this.aggregate_fn_spec =  aggregate_fn_spec;
+    this.complete_fn_spec =   complete_fn_spec;
   }
   
-  public void prepare(FlowProcess flow_process, OperationCall<Box> ag_call) {
-    this.start_clj_fn =     (IFn) Util.bootToVar(this.start_clj_ns,     this.start_clj_var);
-    this.aggregate_clj_fn = (IFn) Util.bootToVar(this.aggregate_clj_ns, this.aggregate_clj_var);
-    this.complete_clj_fn =  (IFn) Util.bootToVar(this.complete_clj_ns,  this.complete_clj_var);
+  public void prepare(FlowProcess flow_process, OperationCall<Box> op_call) {
+    this.start_fn =     Util.bootFn(start_fn_spec);
+    this.aggregate_fn = Util.bootFn(aggregate_fn_spec);
+    this.complete_fn =  Util.bootFn(complete_fn_spec);
   }
 
   public void start(FlowProcess flow_process, AggregatorCall<Box> ag_call) {
     try {
-      ag_call.setContext(new Box(this.start_clj_fn.invoke()));
+      ag_call.setContext(new Box(this.start_fn.invoke()));
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
   public void aggregate(FlowProcess flow_process, AggregatorCall<Box> ag_call) {
     try {
-      Tuple fn_args = ag_call.getArguments().getTuple();
-      ISeq fn_args_seq = Util.coerceSeq(fn_args);
+      ISeq fn_args_seq = Util.coerceFromTuple(ag_call.getArguments().getTuple());
       Box box = ag_call.getContext();
-      box.val = this.aggregate_clj_fn.applyTo(RT.cons(box.val, fn_args_seq));
+      box.val = this.aggregate_fn.applyTo(RT.cons(box.val, fn_args_seq));
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
   public void complete(FlowProcess flow_process, AggregatorCall<Box> ag_call) {
     try {
       Box box = ag_call.getContext();
-      Collection clj_tuple = (Collection) this.complete_clj_fn.invoke(box.val);
-      ag_call.getOutputCollector().add(Util.coerceTuple(clj_tuple));
+      Collection coll = (Collection) this.complete_fn.invoke(box.val);
+      ag_call.getOutputCollector().add(Util.coerceToTuple(coll));
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 }

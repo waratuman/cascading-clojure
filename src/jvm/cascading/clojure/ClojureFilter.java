@@ -9,32 +9,26 @@ import cascading.tuple.TupleEntry;
 import cascading.tuple.Tuple;
 import cascading.tuple.Fields;
 import clojure.lang.IFn;
-import clojure.lang.RT;
 import clojure.lang.ISeq;
-import clojure.lang.IteratorSeq;
 
 public class ClojureFilter extends BaseOperation implements Filter {
-  private String clj_ns;
-  private String clj_var;
-  private IFn clj_pred;
+  private Object[] fn_spec;
+  private IFn fn;
   
-  public ClojureFilter(String clj_ns, String clj_var) {
-    this.clj_ns = clj_ns;
-    this.clj_var = clj_var;
+  public ClojureFilter(Object[] fn_spec) {
+    this.fn_spec = fn_spec;
   }
   
   public void prepare(FlowProcess flow_process, OperationCall op_call) {
-    this.clj_pred = (IFn) Util.bootToVar(this.clj_ns, this.clj_var);
+    this.fn = Util.bootFn(fn_spec);
   }
 
   public boolean isRemove(FlowProcess flow_process, FilterCall filter_call) {
-    Tuple filter_args = filter_call.getArguments().getTuple();
-    ISeq filter_args_seq = Util.coerceSeq(filter_args);
+    ISeq fn_args_seq = Util.coerceFromTuple(filter_call.getArguments().getTuple());
     try {
-      return !Util.truthy(this.clj_pred.applyTo(filter_args_seq));
+      return !Util.truthy(this.fn.applyTo(fn_args_seq));
     } catch (Exception e) {
-      e.printStackTrace();
-      return false;
+      throw new RuntimeException(e);
     }
   }
 }
