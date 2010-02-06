@@ -55,8 +55,8 @@
     (string? obj)
     (and (sequential? obj) (every? #(string? %) obj))))
 
-(defn- args-func-idx [arr]
-  (first (find-first #(not (is-fields-obj? (last %))) (indexed arr))))
+(defn- idx-of-first [aseq pred]
+  (first (find-first #(pred (last %)) (indexed aseq))))
 
 (defn- parse-func [obj]
   "
@@ -66,16 +66,23 @@
   [#'func params...]
   [overridefields #'func params...]
   "
-  
-  )
-
-(defn- parse-args [arr defaultout]
   (let 
-    [i (args-func-idx arr)
+    [obj (collectify obj)
+     i (idx-of-first obj var?)
+     spec (fn-spec (drop i obj))
+     func-fields (fields (if (> i 0) (first obj) ((meta (first spec)) :fields)))
+    ]
+    [func-fields spec] ))
+
+(defn- parse-args 
+  ([arr] (parse-args arr Fields/RESULTS))
+  ([arr defaultout]
+  (let 
+    [i (idx-of-first arr #(not (is-fields-obj? %)))
      infields (if (> i 0) (fields (first arr)) Fields/ALL)
-     [outfields func funcparams] (parse-func (nth arr i))
+     [func-fields spec] (parse-func (nth arr i))
      outfields (if (< i (dec (count arr))) (fields (last arr)) defaultout)]
-    [infields func outfields] ))
+    [infields func-fields spec outfields] )))
 
 (defn- uuid []
   (str (UUID/randomUUID)))
@@ -88,17 +95,20 @@
   ([#^String name]
    (Pipe. name)))
 
-(defn filter [#^Pipe previous in-fields pred]
-  (Each. previous (fields in-fields)
-    (ClojureFilter. (fn-spec pred))))
+(defn filter [#^Pipe previous & args]
+  (let [[in-fields _ spec _] (parse-args args)]
+  (Each. previous in-fields
+    (ClojureFilter. spec))))
 
-(defn mapcat [#^Pipe previous in-fields out-fields func]
-  (Each. previous (fields in-fields)
-    (ClojureMapcat. (fields out-fields) (fn-spec func))))
+(defn mapcat [#^Pipe previous & args]
+  (let [[in-fields func-fields spec out-fields] (parse-args args)]
+  (Each. previous in-fields
+    (ClojureMapcat. func-fields spec) out-fields)))
 
-(defn map [#^Pipe previous in-fields out-fields func]
-  (Each. previous (fields in-fields)
-    (ClojureMap. (fields out-fields) (fn-spec func))))
+(defn map [#^Pipe previous & args]
+  (let [[in-fields func-fields spec out-fields] (parse-args args)]
+  (Each. previous in-fields
+    (ClojureMap. func-fields spec) out-fields)))
 
 (defn aggregate [#^Pipe previous in-fields out-fields
                  start aggregate complete]
