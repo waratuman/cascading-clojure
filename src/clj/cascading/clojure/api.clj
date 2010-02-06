@@ -11,7 +11,8 @@
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
            (java.util Properties Map)
-           (cascading.clojure ClojureFilter ClojureMapcat ClojureMap)
+           (cascading.clojure ClojureFilter ClojureMapcat ClojureMap
+                              ClojureAggregator)
            (clojure.lang Var)))
 
 (defn- fields
@@ -19,7 +20,7 @@
   [names]
   (Fields. (into-array names)))
 
-(defn- ns-var-pair [v]
+(defn- ns-fn-pair [v]
   (let [m (meta v)]
     [(str (:ns m)) (str (:name m))]))
 
@@ -30,19 +31,30 @@
   (Each. previous (fields [name]) (RegexFilter. pattern)))
 
 (defn filter [#^Pipe previous in-fields #^Var pred]
-  (let [[ns-str var-str] (ns-var-pair pred)]
+  (let [[ns-str var-str] (ns-fn-pair pred)]
     (Each. previous (fields in-fields)
       (ClojureFilter. ns-str var-str))))
 
 (defn mapcat [#^Pipe previous in-fields out-fields #^Var f]
-  (let [[ns-str var-str] (ns-var-pair f)
+  (let [[ns-str var-str] (ns-fn-pair f)
         func (ClojureMapcat. (fields out-fields) ns-str var-str)]
     (Each. previous (fields in-fields) func)))
 
 (defn map [#^Pipe previous in-fields out-fields #^Var f]
-  (let [[ns-str var-str] (ns-var-pair f)
+  (let [[ns-str var-str] (ns-fn-pair f)
         func (ClojureMap. (fields out-fields) ns-str var-str)]
     (Each. previous (fields in-fields) func)))
+
+(defn aggregate [#^Pipe previous in-fields out-fields
+                 #^Var start #^Var aggregate #^Var complete]
+  (let [[start-ns-str     start-fn-str]     (ns-fn-pair start)
+        [aggregate-ns-str aggregate-fn-str] (ns-fn-pair aggregate)
+        [complete-ns-str  complete-fn-str]  (ns-fn-pair complete)]
+    (Every. previous (fields in-fields)
+      (ClojureAggregator. (fields out-fields)
+        start-ns-str     start-fn-str
+        aggregate-ns-str aggregate-fn-str
+        complete-ns-str  complete-fn-str))))
 
 (defn word-split [#^Pipe previous in-field out-field]
   (let [func (RegexGenerator. (fields [out-field])
