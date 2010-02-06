@@ -17,7 +17,7 @@
 
 
 
-(defn- ns-fn-name-pair [v]
+(defn ns-fn-name-pair [v]
   (let [m (meta v)]
     [(str (:ns m)) (str (:name m))]))
 
@@ -57,16 +57,11 @@
         aggregate-ns-str aggregate-fn-str
         complete-ns-str  complete-fn-str))))
 
-(defn word-split [#^Pipe previous in-field out-field]
-  (let [func (RegexGenerator. (fields [out-field])
-               "(?<!\\pL)(?=\\pL)[^ ]*(?<=\\pL)(?!\\pL)")]
-    (Each. previous (fields [in-field]) func)))
-
 (defn group-by [#^Pipe previous group-field]
   (GroupBy. previous (fields [group-field])))
 
-(defn count [#^Pipe previous #^String count-field]
-  (Every. previous (Count. (fields [count-field]))))
+(defn count [#^Pipe previous #^String count-fields]
+  (Every. previous (Count. (fields count-fields))))
 
 (defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))

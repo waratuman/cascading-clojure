@@ -12,14 +12,14 @@
 
 (def phrase-reader
   (-> (c/named-pipe "phrase-reader")
-    (c/mapcat ["line"] ["word"] #'split-words)
-    (c/filter ["word"] #'starts-with-b?)
+    (c/mapcat "line" "word" #'split-words)
+    (c/filter "word" #'starts-with-b?)
     (c/group-by "word")
     (c/count "count")))
 
 (def white-reader
   (-> (c/named-pipe "white-reader")
-    (c/word-split "line" "white")))
+    (c/mapcat "line" "white" #'split-words)))
 
 (def joined
   (-> [phrase-reader white-reader]
@@ -29,7 +29,7 @@
 
 (defn run-example
   [jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path]
-  (let [source-scheme  (c/text-line-scheme ["line"])
+  (let [source-scheme  (c/text-line-scheme "line")
         sink-scheme    (c/text-line-scheme ["upword" "count"])
         phrase-source  (c/hfs-tap source-scheme in-phrase-dir-path)
         white-source   (c/hfs-tap source-scheme in-white-dir-path)
