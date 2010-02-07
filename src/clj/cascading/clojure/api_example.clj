@@ -1,34 +1,31 @@
 (ns cascading.clojure.api-example
+  (:import (cascading.tuple Fields))
   (:require (cascading.clojure [api :as c])))
 
 (defn starts-with-b? [word]
   (re-find #"^b.*" word))
 
 (defn split-words 
-  {:fields "word2"}
+  {:fields "word"}
   [line]
   (re-seq #"\w+" line))
 
 (defn uppercase [word]
   (.toUpperCase word))
 
-(def phrase-reader
-  (-> (c/pipe "phrase-reader")
-    (c/mapcat "line" ["word" #'split-words])
-    (c/filter "word" #'starts-with-b?)
-    (c/group-by "word")
-    (c/count "count")))
-    
+(c/defassembly my-distinct [pipe]
+  (pipe (c/group-by Fields/ALL) (c/c-first)))
 
-(def white-reader
-  (-> (c/pipe "white-reader")
-    (c/mapcat "line" ["white" #'split-words])))
-
-(def joined
-  (-> [phrase-reader white-reader]
-    (c/inner-join ["word" "white"])
-    (c/select ["word" "count"])
-    (c/map ["word"] [["upword"] #'uppercase] ["upword" "count"])))
+(c/defassembly example-assembly [phrase white]
+  [phrase (phrase (c/mapcat "line" #'split-words)
+                  (c/filter #'starts-with-b?)
+                  (c/group-by "word")
+                  (c/count "count"))
+   white (white (c/mapcat "line" ["white" #'split-words]))]
+   ([phrase white] (c/inner-join "word" "white")
+                           (c/select ["word" "count"])
+                           (c/map ["word"] [["upword"] #'uppercase] ["upword" "count"])))
+                           
 
 (defn run-example
   [jar-path dot-path in-phrase-dir-path in-white-dir-path out-dir-path]
@@ -43,7 +40,7 @@
                          {"phrase-reader" phrase-source
                           "white-reader"  white-source}
                          sink
-                         joined)]
+                         (example-assembly (c/pipe "phrase-reader") (c/pipe "white-reader")))]
 ;;     (c/write-dot flow dot-path)
     (c/complete flow)))
 

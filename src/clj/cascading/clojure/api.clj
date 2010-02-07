@@ -6,7 +6,7 @@
            (cascading.flow Flow FlowConnector)
            (cascading.operation Identity)
            (cascading.operation.regex RegexGenerator RegexFilter)
-           (cascading.operation.aggregator Count)
+           (cascading.operation.aggregator Count First)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
            (cascading.pipe.cogroup InnerJoin)
            (cascading.scheme Scheme)
@@ -48,7 +48,7 @@
   (if (or (nil? obj) (instance? Fields obj))
       obj
       (Fields. (into-array String (collectify obj)))))
-      
+
 (defn- fields-obj? [obj]
   "True is string, array of strings, or a fields obj"
   (or 
@@ -78,7 +78,7 @@
 (defn- parse-args 
   ([arr] (parse-args arr Fields/RESULTS))
   ([arr defaultout]
-  (let 
+  (let
     [i (idx-of-first arr #(not (fields-obj? %)))
      infields (if (> i 0) (fields (first arr)) Fields/ALL)
      [func-fields spec] (parse-func (nth arr i))
@@ -97,38 +97,76 @@
   ([#^String name]
    (Pipe. name)))
 
-(defn filter [#^Pipe previous & args]
-  (let [[in-fields _ spec _] (parse-args args)]
-    (Each. previous in-fields 
-      (ClojureFilter. spec))))
+(defn filter [& args]
+  (fn [previous]
+    (let [[in-fields _ spec _] (parse-args args)]
+      (Each. previous in-fields 
+        (ClojureFilter. spec)))))
 
-(defn mapcat [#^Pipe previous & args]
-  (let [[in-fields func-fields spec out-fields] (parse-args args)]
-  (Each. previous in-fields
-    (ClojureMapcat. func-fields spec) out-fields)))
+(defn mapcat [& args]
+  (fn [previous]
+    (let [[in-fields func-fields spec out-fields] (parse-args args)]
+    (Each. previous in-fields
+      (ClojureMapcat. func-fields spec) out-fields))))
 
-(defn map [#^Pipe previous & args]
-  (let [[in-fields func-fields spec out-fields] (parse-args args)]
-  (Each. previous in-fields
-    (ClojureMap. func-fields spec) out-fields)))
+(defn map [& args]
+  (fn [previous]
+    (let [[in-fields func-fields spec out-fields] (parse-args args)]
+    (Each. previous in-fields
+      (ClojureMap. func-fields spec) out-fields))))
 
-(defn aggregate [#^Pipe previous in-fields out-fields
+(defn aggregate [in-fields out-fields
                  start aggregate complete]
-  (Every. previous (fields in-fields)
-    (ClojureAggregator. (fields out-fields)
-      (fn-spec start) (fn-spec aggregate) (fn-spec complete))))
+  (fn [previous]
+    (Every. previous (fields in-fields)
+      (ClojureAggregator. (fields out-fields)
+        (fn-spec start) (fn-spec aggregate) (fn-spec complete)))))
 
-(defn group-by [#^Pipe previous group-fields]
-  (GroupBy. previous (fields group-fields)))
+(defn group-by [group-fields]
+  (fn [previous]
+    (GroupBy. previous (fields group-fields))))
 
-(defn count [#^Pipe previous #^String count-fields]
-  (Every. previous (Count. (fields count-fields))))
+(defn count [#^String count-fields]
+  (fn [previous]
+    (Every. previous (Count. (fields count-fields)))))
+    
+(defn c-first []
+  (fn [previous]
+    (Every. previous (First.))))
+    
+(defn select [keep-fields]
+  (fn [previous]
+    (Each. previous (fields keep-fields) (Identity.))))
 
-(defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
-  (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
+(defn inner-join [lhs-fields rhs-fields]
+  (fn [lhs rhs]
+    (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.))))
 
-(defn select [#^Pipe previous keep-fields]
-  (Each. previous (fields keep-fields) (Identity.)))
+
+(defn assemble
+  ([x] x)
+  ([x form] (apply form (collectify x)))
+  ([x form & more] (apply assemble (assemble x form) more)))
+    
+(defmacro assembly 
+  ([args return]
+    (assembly args [] return))
+  ([args bindings return]
+    (let [pipify (fn [forms] (if (or (not (sequential? forms))
+                                     (vector? forms))
+                              forms
+                              (cons 'cascading.clojure.api/assemble forms)))
+          return (pipify return)
+          bindings (vec (clojure.core/map #(%1 %2) (cycle [identity pipify]) bindings))]
+      `(fn ~args
+          (let ~bindings
+            ~return)))))
+            
+(defmacro defassembly
+  ([name args return]
+    (defassembly name args [] return))
+  ([name args bindings return]
+    `(def ~name (cascading.clojure.api/assembly ~args ~bindings ~return))))
 
 (defn text-line-scheme [field-names]
   (TextLine. (fields field-names) (fields field-names)))
@@ -149,4 +187,4 @@
   (.writeDOT flow path))
 
 (defn complete [#^Flow flow]
- (.complete flow))
+  (.complete flow))
