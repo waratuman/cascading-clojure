@@ -3,7 +3,7 @@
         (clojure.contrib [def :only (defvar-)]))
   (:import (cascading.tuple Fields Tuple TupleEntry TupleEntryCollector)
            (cascading.pipe Pipe)
-           (cascading.operation ConcreteCall FunctionCall)
+           (cascading.operation ConcreteCall)
            (cascading.flow FlowProcess)
            (cascading.clojure ClojureFilter ClojureMap ClojureMapcat
                               ClojureAggregator Util)
@@ -77,38 +77,98 @@
       (.cleanup fil fp-null op-call)
       rem)))
 
-(deftest test-clojure-filter
-  (let [fil (ClojureFilter. (c/fn-spec #'odd?))]
-    (is (= false (invoke-filter fil [1])))
-    (is (= true  (invoke-filter fil [2])))))
-
 (defn- output-collector [out-atom]
   (proxy [TupleEntryCollector] []
     (add [tuple]
       (swap! out-atom conj (Util/coerceFromTuple tuple)))))
 
-(defn- function-call [arg-coll]
-  (let [out-atom (atom [])]
-    (proxy [FunctionCall IPersistentCollection] []
+(defn- op-call []
+  (let [args-atom    (atom nil)
+        out-atom     (atom [])
+        context-atom (atom nil)]
+    (proxy [ConcreteCall IPersistentCollection] []
+      (setArguments [tuple]
+        (swap! args-atom (constantly tuple)))
       (getArguments []
-        (TupleEntry. (Util/coerceToTuple arg-coll)))
+         @args-atom)
       (getOutputCollector []
         (output-collector out-atom))
+      (setContext [context]
+        (swap! context-atom (constantly context)))
+      (getContext []
+        @context-atom)
       (seq []
         (seq @out-atom)))))
 
 (defn- op-call-results [func-call]
   (.seq func-call))
 
-(defn- invoke-map [m coll]
+(defn- invoke-function [m coll]
   (let [m         (roundtrip m)
-        func-call (function-call coll)
+        func-call (op-call)
         fp-null   FlowProcess/NULL]
+    (.setArguments func-call (TupleEntry. (Util/coerceToTuple coll)))
     (.prepare m fp-null func-call)
     (.operate m fp-null func-call)
     (.cleanup m fp-null func-call)
     (op-call-results func-call)))
 
-(deftest test-clojure-map
-  (let [m (ClojureMap. (c/fields "num") (c/fn-spec #'inc))]
-    (is (= [[2]] (invoke-map m [1])))))
+(defn- invoke-aggregator [a colls]
+  (let [a       (roundtrip a)
+        ag-call (op-call)
+        fp-null FlowProcess/NULL]
+    (.prepare a fp-null ag-call)
+    (.start a fp-null ag-call)
+    (doseq [coll colls]
+      (.setArguments ag-call (TupleEntry. (Util/coerceToTuple coll)))
+      (.aggregate a fp-null ag-call))
+    (.complete a fp-null ag-call)
+    (.cleanup  a fp-null ag-call)
+    (op-call-results ag-call)))
+
+(deftest test-clojure-filter
+  (let [fil (ClojureFilter. (c/fn-spec #'odd?))]
+    (is (= false (invoke-filter fil [1])))
+    (is (= true  (invoke-filter fil [2])))))
+
+(defn inc-wrapped [num]
+  [(inc num)])
+
+(defn inc-both [num1 num2]
+  [(inc num1) (inc num2)])
+
+(deftest test-clojure-map-one-field
+  (let [m1 (ClojureMap. (c/fields "num") (c/fn-spec #'inc-wrapped))
+        m2 (ClojureMap. (c/fields "num") (c/fn-spec #'inc))]
+    (are [m] (= [[2]] (invoke-function m [1])) m1 m2)))
+
+(deftest test-clojure-map-multiple-fields
+  (let [m (ClojureMap. (c/fields ["num1" "num2"]) (c/fn-spec #'inc-both))]
+    (is (= [[2 3]] (invoke-function m [1 2])))))
+
+(defn iterate-inc-wrapped [num]
+  (list [(+ num 1)] [(+ num 2)] [(+ num 3)]))
+
+(defn iterate-inc [num]
+  (list (+ num 1) (+ num 2) (+ num 3)))
+
+(deftest test-clojure-mapcat-one-field
+  (let [m1 (ClojureMapcat. (c/fields "num") (c/fn-spec #'iterate-inc-wrapped))
+        m2 (ClojureMapcat. (c/fields "num") (c/fn-spec #'iterate-inc))]
+    (are [m] (= [[2] [3] [4]] (invoke-function m [1])) m1 m2)))
+
+(defn sum-start []
+  0)
+
+(defn sum-aggregate [mem v]
+  (+ mem v))
+
+(defn sum-complete [mem]
+  [mem])
+
+(deftest test-clojure-aggregator
+  (let [a (ClojureAggregator. (c/fields "sum")
+            (c/fn-spec #'sum-start)
+            (c/fn-spec #'sum-aggregate)
+            (c/fn-spec #'sum-complete))]
+    (is (= [[6]] (invoke-aggregator a [[1] [2] [3]])))))
