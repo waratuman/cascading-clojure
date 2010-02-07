@@ -1,4 +1,4 @@
-(ns cascading.clojure.join-tests
+(ns cascading.clojure.flow-test
   (:use clojure.test)
   (:use cascading.clojure.io)
   (:import (cascading.tuple Fields)
