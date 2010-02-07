@@ -46,45 +46,43 @@
   {:tag Fields}
   [obj]
   (if (or (nil? obj) (instance? Fields obj))
-      obj
-      (Fields. (into-array String (collectify obj)))))
+    obj
+    (Fields. (into-array String (collectify obj)))))
 
 (defn- fields-obj? [obj]
-  "True is string, array of strings, or a fields obj"
+  "Returns true for a Fileds instance, a string, or an array of strings."
   (or
     (instance? Fields obj)
     (string? obj)
     (and (sequential? obj) (every? string? obj))))
 
-(defn- idx-of-first [aseq pred]
-  (first (find-first #(pred (last %)) (indexed aseq))))
+(defn- idx-of-first [coll pred]
+  (first (find-first #(pred (last %)) (indexed coll))))
 
 (defn- parse-func [obj]
-  "
-  #'func
-  [#'func]
-  [overridefields #'func]
-  [#'func params...]
-  [overridefields #'func params...]
-  "
-  (let
-    [obj (collectify obj)
-     i (idx-of-first obj var?)
-     spec (fn-spec (drop i obj))
-     funcvar (nth obj i)
-     func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))]
+  "obj =>
+   #'func
+   [#'func]
+   [overridefields #'func]
+   [#'func params...]
+   [overridefields #'func params...]"
+  (let [obj         (collectify obj)
+        i           (idx-of-first obj var?)
+        spec        (fn-spec (drop i obj))
+        funcvar     (nth obj i)
+        func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))]
     [func-fields spec]))
 
 (defn- parse-args
-  ([arr] (parse-args arr Fields/RESULTS))
+  ([arr]
+   (parse-args arr Fields/RESULTS))
   ([arr defaultout]
-  (let
-    [i (idx-of-first arr #(not (fields-obj? %)))
-     infields (if (> i 0) (fields (first arr)) Fields/ALL)
-     [func-fields spec] (parse-func (nth arr i))
-     outfields (if (< i (dec (clojure.core/count arr)))
-                        (fields (last arr)) defaultout)]
-    [infields func-fields spec outfields] )))
+   (let [i                  (idx-of-first arr #(not (fields-obj? %)))
+         infields           (if (> i 0) (fields (first arr)) Fields/ALL)
+         [func-fields spec] (parse-func (nth arr i))
+         outfields          (if (< i (dec (clojure.core/count arr)))
+                              (fields (last arr)) defaultout)]
+     [infields func-fields spec outfields])))
 
 (defn- uuid []
   (str (UUID/randomUUID)))
@@ -104,13 +102,13 @@
 
 (defn mapcat [#^Pipe previous & args]
   (let [[in-fields func-fields spec out-fields] (parse-args args)]
-  (Each. previous in-fields
-    (ClojureMapcat. func-fields spec) out-fields)))
+    (Each. previous in-fields
+      (ClojureMapcat. func-fields spec) out-fields)))
 
 (defn map [#^Pipe previous & args]
   (let [[in-fields func-fields spec out-fields] (parse-args args)]
-  (Each. previous in-fields
-    (ClojureMap. func-fields spec) out-fields)))
+    (Each. previous in-fields
+      (ClojureMap. func-fields spec) out-fields)))
 
 (defn aggregate [#^Pipe previous in-fields out-fields
                  start aggregate complete]
@@ -122,23 +120,28 @@
   (GroupBy. previous (fields group-fields)))
 
 (defn count [#^Pipe previous #^String count-fields]
-  (Every. previous (Count. (fields count-fields))))
+  (Every. previous
+    (Count. (fields count-fields))))
 
 (defn inner-join
   ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
-  (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
+   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields)
+     (InnerJoin.)))
   ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields] declared-fields]
-  (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (fields declared-fields) (InnerJoin.))))
+   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields)
+     (fields declared-fields) (InnerJoin.))))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))
 
 (defn text-line
- ([] (TextLine. Fields/FIRST))
+ ([]
+  (TextLine. Fields/FIRST))
  ([field-names]
   (TextLine. (fields field-names) (fields field-names))))
 
-(defn path [x] (if (string? x) x (.getAbsolutePath x)))
+(defn path [x]
+  (if (string? x) x (.getAbsolutePath x)))
 
 (defn hfs-tap [#^Scheme scheme path-or-file]
   (Hfs. scheme (path path-or-file)))
@@ -147,24 +150,25 @@
   (Lfs. scheme (path path-or-file)))
 
 (defn flow
-([#^Map source-map #^Tap sink #^Pipe pipe]
+  ([#^Map source-map #^Tap sink #^Pipe pipe]
    (flow nil {} source-map sink pipe))
-([jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
-  (let [props (Properties.)]
-    (when jar-path
-      (FlowConnector/setApplicationJarPath props jar-path))
-    (doseq [[k v] config]
-      (.setProperty props k v))
-    (let [flow-connector (FlowConnector. props)]
-      (.connect flow-connector source-map sink pipe)))))
+  ([jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
+   (let [props (Properties.)]
+     (when jar-path
+       (FlowConnector/setApplicationJarPath props jar-path))
+     (doseq [[k v] config]
+       (.setProperty props k v))
+     (let [flow-connector (FlowConnector. props)]
+       (.connect flow-connector source-map sink pipe)))))
 
 (defn write-dot [#^Flow flow #^String path]
   (.writeDOT flow path))
 
 (defn exec [#^Flow flow]
   (try
-   (doto flow .start .complete)
-   (catch cascading.flow.PlannerException e
-     (.writeDOT e "exception.dot")
-     (throw (RuntimeException. "see exception.dot to visualize your broken plan." e)))))
+    (doto flow .start .complete)
+    (catch cascading.flow.PlannerException e
+      (.writeDOT e "exception.dot")
+      (throw (RuntimeException.
+        "see exception.dot to visualize your broken plan." e)))))
 

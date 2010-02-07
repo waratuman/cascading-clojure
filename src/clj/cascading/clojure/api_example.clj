@@ -5,7 +5,7 @@
   (re-find #"^b.*" word))
 
 (defn split-words
-  {:fields "word2"}
+  {:fields "word"}
   [line]
   (re-seq #"\w+" line))
 
@@ -18,7 +18,6 @@
     (c/filter "word" #'starts-with-b?)
     (c/group-by "word")
     (c/count "count")))
-
 
 (def white-reader
   (-> (c/pipe "white-reader")
@@ -44,31 +43,5 @@
                           "white-reader"  white-source}
                          sink
                          joined)]
-;;     (c/write-dot flow dot-path)
+   ;(c/write-dot flow dot-path)
     (c/complete flow)))
-
-
-
-(comment
-  (use 'cascading.clojure.api-example)
-  (def root "/Users/mmcgrana/remote/cascading-clojure/")
-  (def example-args
-    [(str root "cascading-clojure-standalone.jar")
-     (str root "data/api-example.dot")
-     (str root "data/phrases")
-     (str root "data/white")
-     (str root "data/output")])
-  (apply run-example example-args)
-)
-
-(comment
-  (use 'cascading.clojure.api-example)
-  (def root "/Users/marz/opensource/cascading-clojure/")
-  (def example-args
-    [(str root "cascading-clojure-standalone.jar")
-     (str root "data/api-example.dot")
-     (str root "data/phrases")
-     (str root "data/white")
-     (str root "data/output")])
-  (apply run-example example-args)
-)
