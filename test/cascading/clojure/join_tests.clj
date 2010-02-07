@@ -6,21 +6,16 @@
            (cascading.clojure Util ClojureMap))
   (:require (cascading.clojure [api :as c])))
 
-(def get-name (comp :name read-string))
+(def get-name
+  (comp :name read-string))
 
-;;TODO: this is some funky shit - surely there is a better way.
 (defn as-vector
   [entry]
-  (into []
-	(.split
-	 (second
-	  (iterator-seq
-	   (.iterator (.getTuple entry))))
-	 "\t")))
+  (vec (.split (second (.getTuple entry)) "\t")))
 
 (deftest map-test
  (with-tmp-files [source (temp-dir "source")
-		  sink (temp-path "sink")]
+		              sink   (temp-path "sink")]
  (let [lines [{:name "foo" :a 1} {:name "bar" :b 2}]
        _ (write-lines-in source "source.data" lines)
        extract (c/map (c/pipe "m") ["name" #'get-name] ["name" "val"])
