@@ -158,6 +158,7 @@
        (FlowConnector/setApplicationJarPath props jar-path))
      (doseq [[k v] config]
        (.setProperty props k v))
+     (.setProperty props "mapred.used.genericoptionsparser" "true")
      (let [flow-connector (FlowConnector. props)]
        (.connect flow-connector source-map sink pipe)))))
 

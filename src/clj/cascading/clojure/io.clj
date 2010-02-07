@@ -1,7 +1,8 @@
 (ns cascading.clojure.io
-  (:import java.io.File)
-  (:use clojure.contrib.java-utils)
-  (:use clojure.contrib.duck-streams))
+  (:import (java.io File)
+           (org.apache.log4j Logger Level))
+  (:use clojure.contrib.java-utils
+        clojure.contrib.duck-streams))
 
 (defn temp-path [sub-path]
    (file (System/getProperty "java.io.tmpdir") sub-path))
@@ -33,3 +34,20 @@
 (defn write-lines-in [root filename lines]
   (write-lines
     (file (.getAbsolutePath root) filename) lines))
+
+(def log-levels
+  {:fatal Level/FATAL
+   :warn  Level/WARN
+   :info  Level/INFO
+   :debug Level/DEBUG
+   :off   Level/OFF})
+
+(defmacro with-log-level [level & body]
+  `(let [with-lev#  (log-levels ~level)
+         logger#    (Logger/getRootLogger)
+         prev-lev#  (.getLevel logger#)]
+     (try
+       (.setLevel logger# with-lev#)
+       ~@body
+       (finally
+         (.setLevel logger# prev-lev#)))))
