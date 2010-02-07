@@ -9,12 +9,12 @@
 (def get-name (comp :name read-string))
 
 ;;TODO: this is some funky shit - surely there is a better way.
-(defn as-vector 
-  [entry] 
-  (into [] 
-	(.split 
-	 (second 
-	  (iterator-seq 
+(defn as-vector
+  [entry]
+  (into []
+	(.split
+	 (second
+	  (iterator-seq
 	   (.iterator (.getTuple entry))))
 	 "\t")))
 
@@ -47,13 +47,13 @@
 	  _ (write-lines-in lhs "lhs.data" lhs-lines)
 	  lhs-extract (c/map (c/pipe "lhs") ["name" #'get-name] ["name" "val"])
 	  rhs-extract (c/map (c/pipe "rhs") ["name" #'get-name] ["name" "val"])
-	  join-pipe (c/inner-join 
+	  join-pipe (c/inner-join
 		     [lhs-extract rhs-extract]
-		     [["name"] ["name"]] 
+		     [["name"] ["name"]]
 		     ["name1" "val1" "name2" "val2"])
-	  keep-only (c/select join-pipe ["val1" "val2"])      
+	  keep-only (c/select join-pipe ["val1" "val2"])
 	  join-flow (c/flow
-			    {"rhs" (c/lfs-tap (c/text-line ["val"]) rhs) 
+			    {"rhs" (c/lfs-tap (c/text-line ["val"]) rhs)
 			     "lhs" (c/lfs-tap (c/text-line ["val"]) lhs)}
 			    (c/lfs-tap (c/text-line ["val1" "val2"]) sink)
 			    join-pipe)
