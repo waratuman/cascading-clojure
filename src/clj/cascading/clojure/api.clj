@@ -4,6 +4,7 @@
   (:import (cascading.tuple Fields)
            (cascading.scheme TextLine)
            (cascading.flow Flow FlowConnector)
+           (cascading.cascade Cascades)
            (cascading.operation Identity)
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator Count First)
@@ -174,6 +175,23 @@
 (defn hfs-tap [#^Scheme scheme #^String path]
   (Hfs. scheme path))
 
+
+(defn taps-map [pipes taps]
+  (Cascades/tapsMap (into-array Pipe pipes) (into-array Tap taps)))
+    
+(defn mk-flow [sources sinks assembly]
+  (let
+    [sources (collectify sources)
+     sinks (collectify sinks)
+     source-pipes (clojure.core/map #(Pipe. (str "spipe" %2)) sources (iterate inc 0))
+     tail-pipes (clojure.core/map #(Pipe. (str "tpipe" %2) %1) 
+                    (collectify (apply assembly source-pipes)) (iterate inc 0))]
+     (.connect (FlowConnector.) 
+        (taps-map source-pipes sources) 
+        (taps-map tail-pipes sinks) 
+        (into-array Pipe tail-pipes))))
+
+;; need this?
 (defn flow [jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
   (let [props (Properties.)]
     (when jar-path
