@@ -33,8 +33,8 @@ public class ClojureMapcat extends BaseOperation implements Function {
       ISeq result_seq = RT.seq(this.fn.applyTo(fn_args_seq));
       TupleEntryCollector collector = fn_call.getOutputCollector();
       while (result_seq != null) {
-        Collection coll = (Collection) result_seq.first();
-        collector.add(Util.coerceToTuple(coll));
+        Object obj = result_seq.first();
+        collector.add(Util.coerceToTuple(obj));
         result_seq = result_seq.next();
       }
     } catch (Exception e) {

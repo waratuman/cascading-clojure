@@ -29,8 +29,8 @@ public class ClojureMap extends BaseOperation implements Function {
   public void operate(FlowProcess flow_process, FunctionCall fn_call) {
     ISeq fn_args_seq = Util.coerceFromTuple(fn_call.getArguments().getTuple());
     try {
-      Collection coll = (Collection) this.fn.applyTo(fn_args_seq);
-      fn_call.getOutputCollector().add(Util.coerceToTuple(coll));
+      Object res = this.fn.applyTo(fn_args_seq);
+      fn_call.getOutputCollector().add(Util.coerceToTuple(res));
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
