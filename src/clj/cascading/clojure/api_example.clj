@@ -4,7 +4,7 @@
 (defn starts-with-b? [word]
   (re-find #"^b.*" word))
 
-(defn split-words 
+(defn split-words
   {:fields "word2"}
   [line]
   (re-seq #"\w+" line))
@@ -18,7 +18,7 @@
     (c/filter "word" #'starts-with-b?)
     (c/group-by "word")
     (c/count "count")))
-    
+
 
 (def white-reader
   (-> (c/pipe "white-reader")

@@ -48,10 +48,10 @@
   (if (or (nil? obj) (instance? Fields obj))
       obj
       (Fields. (into-array String (collectify obj)))))
-      
+
 (defn- fields-obj? [obj]
   "True is string, array of strings, or a fields obj"
-  (or 
+  (or
     (instance? Fields obj)
     (string? obj)
     (and (sequential? obj) (every? string? obj))))
@@ -67,7 +67,7 @@
   [#'func params...]
   [overridefields #'func params...]
   "
-  (let 
+  (let
     [obj (collectify obj)
      i (idx-of-first obj var?)
      spec (fn-spec (drop i obj))
@@ -75,14 +75,14 @@
      func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))]
     [func-fields spec]))
 
-(defn- parse-args 
+(defn- parse-args
   ([arr] (parse-args arr Fields/RESULTS))
   ([arr defaultout]
-  (let 
+  (let
     [i (idx-of-first arr #(not (fields-obj? %)))
      infields (if (> i 0) (fields (first arr)) Fields/ALL)
      [func-fields spec] (parse-func (nth arr i))
-     outfields (if (< i (dec (clojure.core/count arr))) 
+     outfields (if (< i (dec (clojure.core/count arr)))
                         (fields (last arr)) defaultout)]
     [infields func-fields spec outfields] )))
 
@@ -99,7 +99,7 @@
 
 (defn filter [#^Pipe previous & args]
   (let [[in-fields _ spec _] (parse-args args)]
-    (Each. previous in-fields 
+    (Each. previous in-fields
       (ClojureFilter. spec))))
 
 (defn mapcat [#^Pipe previous & args]
@@ -124,7 +124,7 @@
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous (Count. (fields count-fields))))
 
-(defn inner-join 
+(defn inner-join
   ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
   ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields] declared-fields]
@@ -146,8 +146,8 @@
 (defn lfs-tap [#^Scheme scheme path-or-file]
   (Lfs. scheme (path path-or-file)))
 
-(defn flow 
-([#^Map source-map #^Tap sink #^Pipe pipe] 
+(defn flow
+([#^Map source-map #^Tap sink #^Pipe pipe]
    (flow nil {} source-map sink pipe))
 ([jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
   (let [props (Properties.)]
@@ -162,7 +162,7 @@
   (.writeDOT flow path))
 
 (defn exec [#^Flow flow]
-  (try 
+  (try
    (doto flow .start .complete)
    (catch cascading.flow.PlannerException e
      (.writeDOT e "exception.dot")
