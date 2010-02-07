@@ -5,9 +5,7 @@
   (re-find #"^b.*" word))
 
 (defn split-words 
-  #^{
-    :fields "word2"
-  }
+  {:fields "word2"}
   [line]
   (re-seq #"\w+" line))
 

@@ -39,7 +39,7 @@
     :else
       (throw (IllegalArgumentException. (str v-or-coll)))))
 
-(defn collectify [obj]
+(defn- collectify [obj]
   (if (sequential? obj) obj [obj]))
 
 (defn fields
@@ -49,12 +49,12 @@
       obj
       (Fields. (into-array String (collectify obj)))))
       
-(defn- is-fields-obj? [obj]
+(defn- fields-obj? [obj]
   "True is string, array of strings, or a fields obj"
   (or 
     (instance? Fields obj)
     (string? obj)
-    (and (sequential? obj) (every? #(string? %) obj))))
+    (and (sequential? obj) (every? string? obj))))
 
 (defn- idx-of-first [aseq pred]
   (first (find-first #(pred (last %)) (indexed aseq))))
@@ -72,18 +72,18 @@
      i (idx-of-first obj var?)
      spec (fn-spec (drop i obj))
      funcvar (nth obj i)
-     func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))
-    ]
-    [func-fields spec] ))
+     func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))]
+    [func-fields spec]))
 
-(defn parse-args 
+(defn- parse-args 
   ([arr] (parse-args arr Fields/RESULTS))
   ([arr defaultout]
   (let 
-    [i (idx-of-first arr #(not (is-fields-obj? %)))
+    [i (idx-of-first arr #(not (fields-obj? %)))
      infields (if (> i 0) (fields (first arr)) Fields/ALL)
      [func-fields spec] (parse-func (nth arr i))
-     outfields (if (< i (dec (clojure.core/count arr))) (fields (last arr)) defaultout)]
+     outfields (if (< i (dec (clojure.core/count arr))) 
+                        (fields (last arr)) defaultout)]
     [infields func-fields spec outfields] )))
 
 (defn- uuid []
@@ -99,8 +99,8 @@
 
 (defn filter [#^Pipe previous & args]
   (let [[in-fields _ spec _] (parse-args args)]
-  (Each. previous in-fields
-    (ClojureFilter. spec))))
+    (Each. previous in-fields 
+      (ClojureFilter. spec))))
 
 (defn mapcat [#^Pipe previous & args]
   (let [[in-fields func-fields spec out-fields] (parse-args args)]
