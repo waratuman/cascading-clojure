@@ -11,11 +11,11 @@
            (cascading.pipe.cogroup InnerJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
-           (java.util Properties Map)
+           (java.util Properties Map UUID)
            (cascading.clojure ClojureFilter ClojureMapcat ClojureMap
                               ClojureAggregator)
            (clojure.lang Var)
-           (java.util UUID)))
+           (java.lang RuntimeException)))
 
 (defn ns-fn-name-pair [v]
   (let [m (meta v)]
@@ -124,29 +124,47 @@
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous (Count. (fields count-fields))))
 
-(defn inner-join [[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
+(defn inner-join 
+  ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (InnerJoin.)))
+  ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields] declared-fields]
+  (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields) (fields declared-fields) (InnerJoin.))))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))
 
-(defn text-line-scheme [field-names]
-  (TextLine. (fields field-names) (fields field-names)))
+(defn text-line
+ ([] (TextLine. Fields/FIRST))
+ ([field-names]
+  (TextLine. (fields field-names) (fields field-names))))
 
-(defn hfs-tap [#^Scheme scheme #^String path]
-  (Hfs. scheme path))
+(defn path [x] (if (string? x) x (.getAbsolutePath x)))
 
-(defn flow [jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
+(defn hfs-tap [#^Scheme scheme path-or-file]
+  (Hfs. scheme (path path-or-file)))
+
+(defn lfs-tap [#^Scheme scheme path-or-file]
+  (Lfs. scheme (path path-or-file)))
+
+(defn flow 
+([#^Map source-map #^Tap sink #^Pipe pipe] 
+   (flow nil {} source-map sink pipe))
+([jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
   (let [props (Properties.)]
     (when jar-path
       (FlowConnector/setApplicationJarPath props jar-path))
     (doseq [[k v] config]
       (.setProperty props k v))
     (let [flow-connector (FlowConnector. props)]
-      (.connect flow-connector source-map sink pipe))))
+      (.connect flow-connector source-map sink pipe)))))
 
 (defn write-dot [#^Flow flow #^String path]
   (.writeDOT flow path))
 
-(defn complete [#^Flow flow]
- (.complete flow))
+(defn exec [#^Flow flow]
+  (try 
+   (doto flow .start .complete)
+   (catch cascading.flow.PlannerException e
+     (.writeDOT e "exception.dot")
+     (throw (RuntimeException. "see exception.dot to visualize your broken plan." e)))))
+
