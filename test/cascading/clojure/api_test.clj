@@ -1,8 +1,13 @@
 (ns cascading.clojure.api-test
-  (:use clojure.test)
-  (:import (cascading.tuple Fields)
+  (:use clojure.test
+        (clojure.contrib [def :only (defvar-)]))
+  (:import (cascading.tuple Fields Tuple TupleEntry TupleEntryCollector)
            (cascading.pipe Pipe)
-           (cascading.clojure Util ClojureMap))
+           (cascading.operation ConcreteCall FunctionCall)
+           (cascading.flow FlowProcess)
+           (cascading.clojure ClojureFilter ClojureMap ClojureMapcat
+                              ClojureAggregator Util)
+           (clojure.lang IPersistentCollection))
   (:require (cascading.clojure [api :as c])))
 
 (deftest test-ns-fn-name-pair
@@ -57,3 +62,53 @@
   (let [spec (into-array Object '("cascading.clojure.api-test" "incn" 3))
         f    (Util/bootFn spec)]
   (is (= [4] (f 1)))))
+
+(defn- roundtrip [obj]
+  (cascading.util.Util/deserializeBase64
+    (cascading.util.Util/serializeBase64 obj)))
+
+(defn- invoke-filter [fil coll]
+  (let [fil     (roundtrip fil)
+        op-call (ConcreteCall.)
+        fp-null FlowProcess/NULL]
+    (.setArguments op-call (TupleEntry. (Util/coerceToTuple coll)))
+    (.prepare fil fp-null op-call)
+    (let [rem (.isRemove fil fp-null op-call)]
+      (.cleanup fil fp-null op-call)
+      rem)))
+
+(deftest test-clojure-filter
+  (let [fil (ClojureFilter. (c/fn-spec #'odd?))]
+    (is (= false (invoke-filter fil [1])))
+    (is (= true  (invoke-filter fil [2])))))
+
+(defn- output-collector [out-atom]
+  (proxy [TupleEntryCollector] []
+    (add [tuple]
+      (swap! out-atom conj (Util/coerceFromTuple tuple)))))
+
+(defn- function-call [arg-coll]
+  (let [out-atom (atom [])]
+    (proxy [FunctionCall IPersistentCollection] []
+      (getArguments []
+        (TupleEntry. (Util/coerceToTuple arg-coll)))
+      (getOutputCollector []
+        (output-collector out-atom))
+      (seq []
+        (seq @out-atom)))))
+
+(defn- op-call-results [func-call]
+  (.seq func-call))
+
+(defn- invoke-map [m coll]
+  (let [m         (roundtrip m)
+        func-call (function-call coll)
+        fp-null   FlowProcess/NULL]
+    (.prepare m fp-null func-call)
+    (.operate m fp-null func-call)
+    (.cleanup m fp-null func-call)
+    (op-call-results func-call)))
+
+(deftest test-clojure-map
+  (let [m (ClojureMap. (c/fields "num") (c/fn-spec #'inc))]
+    (is (= [[2]] (invoke-map m [1])))))
