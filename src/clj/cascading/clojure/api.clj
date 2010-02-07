@@ -52,7 +52,7 @@
 
 (defn- fields-obj? [obj]
   "True is string, array of strings, or a fields obj"
-  (or 
+  (or
     (instance? Fields obj)
     (string? obj)
     (and (sequential? obj) (every? string? obj))))
@@ -68,7 +68,7 @@
   [#'func params...]
   [overridefields #'func params...]
   "
-  (let 
+  (let
     [obj (collectify obj)
      i (idx-of-first obj var?)
      spec (fn-spec (drop i obj))
@@ -76,14 +76,14 @@
      func-fields (fields (if (> i 0) (first obj) ((meta funcvar) :fields)))]
     [func-fields spec]))
 
-(defn- parse-args 
+(defn- parse-args
   ([arr] (parse-args arr Fields/RESULTS))
   ([arr defaultout]
   (let
     [i (idx-of-first arr #(not (fields-obj? %)))
      infields (if (> i 0) (fields (first arr)) Fields/ALL)
      [func-fields spec] (parse-func (nth arr i))
-     outfields (if (< i (dec (clojure.core/count arr))) 
+     outfields (if (< i (dec (clojure.core/count arr)))
                         (fields (last arr)) defaultout)]
     [infields func-fields spec outfields] )))
 
@@ -101,7 +101,7 @@
 (defn filter [& args]
   (fn [previous]
     (let [[in-fields _ spec _] (parse-args args)]
-      (Each. previous in-fields 
+      (Each. previous in-fields
         (ClojureFilter. spec)))))
 
 (defn mapcat [& args]
@@ -130,11 +130,11 @@
 (defn count [#^String count-fields]
   (fn [previous]
     (Every. previous (Count. (fields count-fields)))))
-    
+
 (defn c-first []
   (fn [previous]
     (Every. previous (First.))))
-    
+
 (defn select [keep-fields]
   (fn [previous]
     (Each. previous (fields keep-fields) (Identity.))))
@@ -148,8 +148,8 @@
   ([x] x)
   ([x form] (apply form (collectify x)))
   ([x form & more] (apply assemble (assemble x form) more)))
-    
-(defmacro assembly 
+
+(defmacro assembly
   ([args return]
     (assembly args [] return))
   ([args bindings return]
@@ -162,7 +162,7 @@
       `(fn ~args
           (let ~bindings
             ~return)))))
-            
+
 (defmacro defassembly
   ([name args return]
     (defassembly name args [] return))
@@ -175,23 +175,22 @@
 (defn hfs-tap [#^Scheme scheme #^String path]
   (Hfs. scheme path))
 
-
 (defn taps-map [pipes taps]
   (Cascades/tapsMap (into-array Pipe pipes) (into-array Tap taps)))
-    
+
 (defn mk-flow [sources sinks assembly]
   (let
     [sources (collectify sources)
      sinks (collectify sinks)
      source-pipes (clojure.core/map #(Pipe. (str "spipe" %2)) sources (iterate inc 0))
-     tail-pipes (clojure.core/map #(Pipe. (str "tpipe" %2) %1) 
+     tail-pipes (clojure.core/map #(Pipe. (str "tpipe" %2) %1)
                     (collectify (apply assembly source-pipes)) (iterate inc 0))]
-     (.connect (FlowConnector.) 
-        (taps-map source-pipes sources) 
-        (taps-map tail-pipes sinks) 
+     (.connect (FlowConnector.)
+        (taps-map source-pipes sources)
+        (taps-map tail-pipes sinks)
         (into-array Pipe tail-pipes))))
 
-;; need this?
+;; need this anymore?
 (defn flow [jar-path config #^Map source-map #^Tap sink #^Pipe pipe]
   (let [props (Properties.)]
     (when jar-path

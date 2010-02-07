@@ -10,7 +10,7 @@
 (defn starts-with-b? [word]
   (re-find #"^b.*" word))
 
-(defn split-words 
+(defn split-words
   {:fields "word"}
   [line]
   (re-seq #"\w+" line))
@@ -25,9 +25,9 @@
                   (c/count "count"))
    white (white (c/mapcat "line" ["white" #'split-words]))]
    ([phrase white] (c/inner-join "word" "white")
-                           (c/select ["word" "count"])
-                           (c/map ["word"] ["upword" #'uppercase] ["upword" "count"])))
-                           
+                   (c/select ["word" "count"])
+                   (c/map "word" ["upword" #'uppercase] ["upword" "count"])))
+
 
 (defn run-example
   [in-phrase-dir-path in-white-dir-path out-dir-path]
