@@ -115,3 +115,19 @@
           ["name1" "val1" "name2" "val2" "name3" "val3"])
         (c/select ["val1" "val2" "val3"])))
     [[6 2 8] [5 1 7]]))
+
+(deftest multi-pipe-multi-field-inner-join-test
+  (test-flow
+    {"p1" ["x" "y" "num"]
+	       "p2" ["x" "y" "num"]
+	       "p3" ["x" "y" "num"]}
+    {"p1" [[0 1 5] [2 1 6]]
+	       "p2" [[0 1 1] [2 1 2]]
+	       "p3" [[2 1 7] [0 1 8]]}
+   (fn [{p1 "p1" p2 "p2" p3 "p3"}]
+     (-> [p1 p2 p3]
+	 (c/inner-join
+          [["x" "y"]["x" "y"]["x" "y"]]
+          ["x1" "y1" "val1" "x2" "y2" "val2" "x3" "y3" "val3"])
+	 (c/select ["val1" "val2" "val3"])))
+   [[5 1 8] [6 2 7]]))

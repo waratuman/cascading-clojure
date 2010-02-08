@@ -157,10 +157,10 @@
   ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
    (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields)
      (InnerJoin.)))
-  ([pipes fields declared-fields]
+  ([pipes-seq fields-seq declared-fields]
    (CoGroup.
-	     (fields-array fields) 
-	     (pipes-array pipes)
+	     (pipes-array pipes-seq)
+	     (fields-array fields-seq) 
 	     (fields declared-fields) 
 	     (InnerJoin.))))
 
