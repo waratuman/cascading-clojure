@@ -1,5 +1,6 @@
 (ns cascading.clojure.io
   (:import (java.io File)
+           (java.util UUID)
            (org.apache.log4j Logger Level))
   (:use clojure.contrib.java-utils
         clojure.contrib.duck-streams))
@@ -31,9 +32,15 @@
      (try ~@body
        (finally (delete-all ~bindings)))))
 
-(defn write-lines-in [root filename lines]
-  (write-lines
-    (file (.getAbsolutePath root) filename) lines))
+(defn- uuid []
+  (str (UUID/randomUUID)))
+
+(defn write-lines-in
+  ([root lines]
+   (write-lines-in root (str (uuid) ".data") lines))
+  ([root filename lines]
+   (write-lines
+     (file (.getAbsolutePath root) filename) lines)))
 
 (def log-levels
   {:fatal Level/FATAL

@@ -1,62 +1,109 @@
 (ns cascading.clojure.flow-test
-  (:use clojure.test)
-  (:use cascading.clojure.io)
+  (:use clojure.test
+        clojure.contrib.java-utils
+        cascading.clojure.io)
   (:import (cascading.tuple Fields)
            (cascading.pipe Pipe)
            (cascading.clojure Util ClojureMap))
   (:require (cascading.clojure [api :as c])))
 
-(def get-name
-  (comp :name read-string))
+(defn- deserialize-tuple [line]
+  (read-string line))
 
-(defn as-vector
-  [entry]
-  (vec (.split (second (.getTuple entry)) "\t")))
+(defn- serialize-tuple
+  {:fields "line"}
+  [tuple]
+  (pr-str tuple))
 
-(deftest map-test
+(defn- serialize-vals
+  {:fields "line"}
+  [& vals]
+  (pr-str (vec vals)))
+
+(defn- line-sink-seq [tuple-entry-iterator]
+  (map #(read-string (first (.getTuple %)))
+       (iterator-seq tuple-entry-iterator)))
+
+(defn- mash [f coll]
+  (into {} (map f coll)))
+
+(defn- test-flow [in-fields in-tuples assembler expected-out-tuples]
   (with-log-level :warn
     (with-tmp-files [source (temp-dir "source")
-                    sink    (temp-path "sink")]
-      (let [lines    [{:name "foo" :a 1} {:name "bar" :b 2}]
-            _        (write-lines-in source "source.data" lines)
-            extract  (c/map (c/pipe "m") ["name" #'get-name] ["name" "val"])
-            map-flow (c/flow
-                       {"m" (c/lfs-tap (c/text-line ["val"]) source)}
-                       (c/lfs-tap (c/text-line ["name" "val"]) sink)
-                       extract)
-            out      (.openSink (c/exec map-flow))]
-        (is (= ["foo" (pr-str {:name "foo" :a 1})]
-          (as-vector (.next out))))
-        (is (= ["bar" (pr-str {:name "bar" :b 2})]
-          (as-vector (.next out))))
-        (is (not (.hasNext out)))))))
+                     sink   (temp-path "sink")]
+      (write-lines-in source (map serialize-tuple in-tuples))
+      (let [in         (c/pipe "in")
+            assembly   (-> in
+                         (c/map [in-fields #'deserialize-tuple])
+                         assembler
+                         (c/map #'serialize-vals))
+            flow       (c/flow
+                         {"in" (c/lfs-tap (c/text-line "line") source)}
+                         (c/lfs-tap (c/text-line "line") sink)
+                         assembly)
+            out-tuples (line-sink-seq (.openSink (c/exec flow)))]
+        (is (= expected-out-tuples out-tuples))))))
 
-; taps-map requires named pipes to be the same as key names identifying pipes
-; must be a way to encapsulated all this plumbing.
-(deftest inner-join-test
+(defn- test-flow* [in-fields-map in-tuples-map assembler expected-out-tuples]
   (with-log-level :warn
-    (with-tmp-files [rhs  (temp-dir "rhs")
-                     lhs  (temp-dir "lhs")
-                     sink (temp-path "sink")]
-      (let [rhs-lines   [{:name "foo" :a 1} {:name "bar" :b 2}]
-            lhs-lines   [{:name "foo" :a 5} {:name "bar" :b 6}]
-            _           (write-lines-in rhs "rhs.data" rhs-lines)
-            _           (write-lines-in lhs "lhs.data" lhs-lines)
-            lhs-extract (c/map (c/pipe "lhs") ["name" #'get-name] ["name" "val"])
-            rhs-extract (c/map (c/pipe "rhs") ["name" #'get-name] ["name" "val"])
-            join-pipe   (c/inner-join
-                          [lhs-extract rhs-extract]
-                          [["name"] ["name"]]
-                          ["name1" "val1" "name2" "val2"])
-            keep-only (c/select join-pipe ["val1" "val2"])
-            join-flow (c/flow
-                        {"rhs" (c/lfs-tap (c/text-line ["val"]) rhs)
-                         "lhs" (c/lfs-tap (c/text-line ["val"]) lhs)}
-                        (c/lfs-tap (c/text-line ["val1" "val2"]) sink)
-                        join-pipe)
-            out       (.openSink (c/exec join-flow))]
-       (is (= [(pr-str {:name "bar" :b 6}) (pr-str {:name "bar" :b 2})]
-         (as-vector (.next out))))
-       (is (= [(pr-str {:name "foo" :a 5}) (pr-str {:name "foo" :a 1})]
-         (as-vector (.next out))))
-       (is (not (.hasNext out)))))))
+    (with-tmp-files [source-dir-path (temp-dir  "source")
+                     sink-path       (temp-path "sink")]
+      (doseq [[in-label in-tuples] in-tuples-map]
+        (write-lines-in source-dir-path in-label
+          (map serialize-tuple in-tuples)))
+      (let [in-pipes-map  (mash (fn [[in-label in-tuples]]
+                                  [in-label
+                                     (-> (c/pipe in-label)
+                                       (c/map [(in-fields-map in-label)
+                                               #'deserialize-tuple]))])
+                                in-tuples-map)
+            assembly   (-> in-pipes-map
+                         assembler
+                         (c/map #'serialize-vals))
+            source-tap-map (mash (fn [[in-label _]]
+                                   [in-label
+                                    (c/lfs-tap (c/text-line "line")
+                                      (file source-dir-path in-label))])
+                                 in-tuples-map)
+            sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
+            flow           (c/flow source-tap-map sink-tap assembly)
+            out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
+        (is (= expected-out-tuples out-tuples))))))
+
+(defn uppercase
+  {:fields "upword"}
+  [word]
+  (.toUpperCase word))
+
+(deftest map-test
+  (test-flow
+    "word"
+    [["foo"] ["bar"]]
+    (fn [in] (-> in (c/map #'uppercase)))
+    [["FOO"] ["BAR"]]))
+
+(defn extract-key
+  {:fields "key"}
+  [val]
+  (second (re-find #".*\((.*)\).*" val)))
+
+(deftest extract-test
+  (test-flow
+    ["val" "num"]
+    [["foo(bar)bat" 1] ["biz(ban)hat" 2]]
+    (fn [in] (-> in (c/map "val" #'extract-key ["key" "num"])))
+    [["bar" 1] ["ban" 2]]))
+
+(deftest inner-join-test
+  (test-flow*
+    {"lhs" ["name" "num"]
+     "rhs" ["name" "num"]}
+    {"lhs" [["foo" 5] ["bar" 6]]
+     "rhs" [["foo" 1] ["bar" 2]]}
+    (fn [{lhs "lhs" rhs "rhs"}]
+      (-> [lhs rhs]
+        (c/inner-join
+          ["name" "name"]
+          ["name1" "val1" "nam2" "val2"])
+        (c/select ["val1" "val2"])))
+    [[6 2] [5 1]]))
