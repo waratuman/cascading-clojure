@@ -49,6 +49,14 @@
     obj
     (Fields. (into-array String (collectify obj)))))
 
+(defn fields-array 
+  [fields-seq]
+  (into-array Fields (clojure.core/map fields fields-seq))) 
+
+(defn pipes-array 
+  [pipes]
+  (into-array Pipe pipes))
+
 (defn- fields-obj? [obj]
   "Returns true for a Fileds instance, a string, or an array of strings."
   (or
@@ -149,9 +157,12 @@
   ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
    (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields)
      (InnerJoin.)))
-  ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields] declared-fields]
-   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields)
-     (fields declared-fields) (InnerJoin.))))
+  ([pipes fields declared-fields]
+   (CoGroup.
+	     (fields-array fields) 
+	     (pipes-array pipes)
+	     (fields declared-fields) 
+	     (InnerJoin.))))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))

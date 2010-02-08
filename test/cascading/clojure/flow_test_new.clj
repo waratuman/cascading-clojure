@@ -95,7 +95,23 @@
     (fn [{lhs "lhs" rhs "rhs"}]
       (-> [lhs rhs]
         (c/inner-join
-          ["name" "name"]
+          [["name"] ["name"]]
           ["name1" "val1" "nam2" "val2"])
         (c/select ["val1" "val2"])))
     [[6 2] [5 1]]))
+
+(deftest multi-pipe-inner-join-test
+  (test-flow
+    {"p1" ["name" "num"]
+     "p2" ["name" "num"]
+     "p3" ["name" "num"]}
+    {"p1" [["foo" 5] ["bar" 6]]
+     "p2" [["foo" 1] ["bar" 2]]
+     "p3" [["foo" 7] ["bar" 8]]}
+    (fn [{p1 "p1" p2 "p2" p3 "p3"}]
+      (-> [p1 p2 p3]
+        (c/inner-join
+          [["name"] ["name"] ["name"]]
+          ["name1" "val1" "name2" "val2" "name3" "val3"])
+        (c/select ["val1" "val2" "val3"])))
+    [[6 2 8] [5 1 7]]))
