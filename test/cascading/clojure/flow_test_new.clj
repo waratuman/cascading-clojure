@@ -48,21 +48,21 @@
   (with-log-level :warn
     (with-tmp-files [source-dir-path (temp-dir  "source")
                      sink-path       (temp-path "sink")]
-        (doseq [[in-label in-tuples] in-tuples-spec]
-          (write-lines-in source-dir-path in-label
-            (map serialize-tuple in-tuples)))
-        (let [assembly   (-> in-pipes-spec
+      (doseq [[in-label in-tuples] in-tuples-spec]
+	(write-lines-in source-dir-path in-label
+			(map serialize-tuple in-tuples)))
+      (let [assembly   (-> in-pipes-spec
                            assembler
                            (c/map #'serialize-vals))
-              source-tap-map (mash (fn [[in-label _]]
-                                     [in-label
-                                      (c/lfs-tap (c/text-line "line")
-                                        (file source-dir-path in-label))])
-                                   in-tuples-spec)
-              sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
-              flow           (c/flow source-tap-map sink-tap assembly)
-              out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
-          (is (= expected-out-tuples out-tuples))))))
+	    source-tap-map (mash (fn [[in-label _]]
+				   [in-label
+				    (c/lfs-tap (c/text-line "line")
+					       (file source-dir-path in-label))])
+				 in-tuples-spec)
+	    sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
+	    flow           (c/flow source-tap-map sink-tap assembly)
+	    out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
+	(is (= expected-out-tuples out-tuples))))))
 
 (defn uppercase
   {:fields "upword"}
@@ -133,3 +133,19 @@
           ["x1" "y1" "val1" "x2" "y2" "val2" "x3" "y3" "val3"])
 	 (c/select ["val1" "val2" "val3"])))
    [[5 1 8] [6 2 7]]))
+
+(deftest multi-pipe-outer-join-test
+  (test-flow
+   (in-pipes {"p1" ["name" "num"]
+	      "p2" ["name" "num"]
+	      "p3" ["name" "num"]})
+   (in-tuples {"p1" [["foo" 5] ["bar" 6]]
+	       "p2" [["baz" 1] ["foo" 2]]
+	       "p3" [["bar" 7] ["baz" 8]]})
+   (fn [{p1 "p1" p2 "p2" p3 "p3"}]
+     (-> [p1 p2 p3]
+	 (c/outer-join
+          [["name"] ["name"] ["name"]]
+          ["name1" "val1" "name2" "val2" "name3" "val3"])
+	 (c/select ["val1" "val2" "val3"])))
+   [[6 nil 7] [nil 1 8] [5 2 nil]]))

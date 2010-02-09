@@ -8,7 +8,7 @@
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
-           (cascading.pipe.cogroup InnerJoin)
+           (cascading.pipe.cogroup InnerJoin OuterJoin LeftJoin RightJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
            (java.util Properties Map UUID)
@@ -153,16 +153,28 @@
   (Every. previous
     (Count. (fields count-fields))))
 
-(defn inner-join
-  ([[#^Pipe lhs #^Pipe rhs] [lhs-fields rhs-fields]]
-   (CoGroup. lhs (fields lhs-fields) rhs (fields rhs-fields)
-     (InnerJoin.)))
-  ([pipes-seq fields-seq declared-fields]
+(defn cogroup
+  [pipes-seq fields-seq declared-fields joiner]
    (CoGroup.
 	     (pipes-array pipes-seq)
 	     (fields-array fields-seq) 
 	     (fields declared-fields) 
-	     (InnerJoin.))))
+	     joiner))
+
+;;TODO create join abstractions. http://en.wikipedia.org/wiki/Join_(SQL)
+;;"join and drop" is called a natural join - inner join, followed by select to remove duplicate join keys.
+
+;;another kind of join and dop is to drop all the join keys - for example, when you have extracted a specil join key jsut for grouping, you typicly want to get rid of it after the group operation.
+
+;;another kind of "join and drop" is an outer-join followed by dropping the nils
+
+(defn inner-join
+  [pipes-seq fields-seq declared-fields]
+  (cogroup pipes-seq fields-seq declared-fields (InnerJoin.)))
+
+(defn outer-join 
+  [pipes-seq fields-seq declared-fields]
+  (cogroup pipes-seq fields-seq declared-fields (OuterJoin.)))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))
