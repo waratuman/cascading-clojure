@@ -1,7 +1,8 @@
 (ns cascading.clojure.api
   (:refer-clojure :exclude (count first filter mapcat map))
   (:use [clojure.contrib.seq-utils :only [find-first indexed]])
-  (:import (cascading.tuple Fields)
+  (:require [clj-json :as json])
+  (:import (cascading.tuple Tuple TupleEntry Fields)
            (cascading.scheme TextLine)
            (cascading.flow Flow FlowConnector)
            (cascading.operation Identity)
@@ -11,10 +12,14 @@
            (cascading.pipe.cogroup InnerJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
+           (org.apache.hadoop.io Text)
+           (org.apache.hadoop.mapred TextInputFormat TextOutputFormat
+                                     OutputCollector JobConf)
            (java.util Properties Map UUID)
            (cascading.clojure ClojureFilter ClojureMapcat ClojureMap
-                              ClojureAggregator)
+                              ClojureAggregator Util)
            (clojure.lang Var)
+           (java.io File)
            (java.lang RuntimeException)))
 
 (defn ns-fn-name-pair [v]
@@ -115,17 +120,17 @@
    (Pipe. name)))
 
 (defn filter [#^Pipe previous & args]
-  (let [[in-fields _ spec _] (parse-args args)]
+  (let [[#^Fields in-fields _ spec _] (parse-args args)]
     (Each. previous in-fields
       (ClojureFilter. spec))))
 
 (defn mapcat [#^Pipe previous & args]
-  (let [[in-fields func-fields spec out-fields] (parse-args args)]
+  (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
     (Each. previous in-fields
       (ClojureMapcat. func-fields spec) out-fields)))
 
 (defn map [#^Pipe previous & args]
-  (let [[in-fields func-fields spec out-fields] (parse-args args)]
+  (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
     (Each. previous in-fields
       (ClojureMap. func-fields spec) out-fields)))
 
@@ -162,8 +167,34 @@
  ([field-names]
   (TextLine. (fields field-names) (fields field-names))))
 
-(defn path [x]
-  (if (string? x) x (.getAbsolutePath x)))
+(defn json-map-line
+  [json-keys]
+  (let [json-keys-arr (into-array json-keys)
+        scheme-fields (fields json-keys)]
+    (proxy [Scheme] [scheme-fields scheme-fields]
+      (sourceInit [tap #^JobConf conf]
+        (.setInputFormat conf TextInputFormat))
+      (sinkInit [tap #^JobConf conf]
+        (doto conf
+          (.setOutputKeyClass Text)
+          (.setOutputValueClass Text)
+          (.setOutputFormat TextOutputFormat)))
+      (source [_ #^Text json-text]
+        (let [json-map  (json/parse-string (.toString json-text))
+              json-vals (clojure.core/map json-map json-keys-arr)]
+          (Util/coerceToTuple json-vals)))
+      (sink [#^TupleEntry tuple-entry #^OutputCollector output-collector]
+        (let [tuple     (.selectTuple tuple-entry scheme-fields)
+              json-map  (areduce json-keys-arr i mem {}
+                          (assoc mem (aget json-keys-arr i)
+                                     (.get tuple i)))
+              json-str  (json/generate-string json-map)]
+          (.collect output-collector nil (Tuple. json-str)))))))
+
+(defn path
+  {:tag String}
+  [x]
+  (if (string? x) x (.getAbsolutePath #^File x)))
 
 (defn hfs-tap [#^Scheme scheme path-or-file]
   (Hfs. scheme (path path-or-file)))
