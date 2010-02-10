@@ -1,14 +1,13 @@
 (ns cascading.clojure.api-test
-  (:use clojure.test
-        (clojure.contrib [def :only (defvar-)]))
+  (:use clojure.test)
+  (:require (cascading.clojure [api :as c]))
   (:import (cascading.tuple Fields Tuple TupleEntry TupleEntryCollector)
            (cascading.pipe Pipe)
            (cascading.operation ConcreteCall)
            (cascading.flow FlowProcess)
            (cascading.clojure ClojureFilter ClojureMap ClojureMapcat
                               ClojureAggregator Util)
-           (clojure.lang IPersistentCollection))
-  (:require (cascading.clojure [api :as c])))
+           (clojure.lang IPersistentCollection)))
 
 (deftest test-ns-fn-name-pair
   (let [[ns-name fn-name] (c/ns-fn-name-pair #'str)]
