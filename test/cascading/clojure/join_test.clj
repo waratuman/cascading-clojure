@@ -1,4 +1,4 @@
-(ns cascading.clojure.flow-test-new
+(ns cascading.clojure.join-test
   (:use clojure.test
         clojure.contrib.java-utils
         cascading.clojure.testing)
