@@ -2,10 +2,76 @@
   (:use clojure.test
         clojure.contrib.java-utils
         cascading.clojure.io)
-  (:import (cascading.tuple Fields)
+  (:import (cascading.tuple Fields Tuple TupleEntry TupleEntryCollector)
            (cascading.pipe Pipe)
-           (cascading.clojure Util ClojureMap))
+           (cascading.operation ConcreteCall)
+           (cascading.flow FlowProcess)
+           (cascading.clojure Util ClojureMap)
+           (clojure.lang IPersistentCollection))
   (:require (cascading.clojure [api :as c])))
+
+(defn- roundtrip [obj]
+  (cascading.util.Util/deserializeBase64
+    (cascading.util.Util/serializeBase64 obj)))
+
+(defn invoke-filter [fil coll]
+  (let [fil     (roundtrip fil)
+        op-call (ConcreteCall.)
+        fp-null FlowProcess/NULL]
+    (.setArguments op-call (TupleEntry. (Util/coerceToTuple coll)))
+    (.prepare fil fp-null op-call)
+    (let [rem (.isRemove fil fp-null op-call)]
+      (.cleanup fil fp-null op-call)
+      rem)))
+
+(defn- output-collector [out-atom]
+  (proxy [TupleEntryCollector] []
+    (add [tuple]
+      (swap! out-atom conj (Util/coerceFromTuple tuple)))))
+
+(defn- op-call []
+  (let [args-atom    (atom nil)
+        out-atom     (atom [])
+        context-atom (atom nil)]
+    (proxy [ConcreteCall IPersistentCollection] []
+      (setArguments [tuple]
+        (swap! args-atom (constantly tuple)))
+      (getArguments []
+         @args-atom)
+      (getOutputCollector []
+        (output-collector out-atom))
+      (setContext [context]
+        (swap! context-atom (constantly context)))
+      (getContext []
+        @context-atom)
+      (seq []
+        (seq @out-atom)))))
+
+(defn- op-call-results [func-call]
+  (.seq func-call))
+
+(defn invoke-function [m coll]
+  (let [m         (roundtrip m)
+        func-call (op-call)
+        fp-null   FlowProcess/NULL]
+    (.setArguments func-call (TupleEntry. (Util/coerceToTuple coll)))
+    (.prepare m fp-null func-call)
+    (.operate m fp-null func-call)
+    (.cleanup m fp-null func-call)
+    (op-call-results func-call)))
+
+(defn invoke-aggregator [a colls]
+  (let [a       (roundtrip a)
+        ag-call (op-call)
+        fp-null FlowProcess/NULL]
+    (.prepare a fp-null ag-call)
+    (.start a fp-null ag-call)
+    (doseq [coll colls]
+      (.setArguments ag-call (TupleEntry. (Util/coerceToTuple coll)))
+      (.aggregate a fp-null ag-call))
+    (.complete a fp-null ag-call)
+    (.cleanup  a fp-null ag-call)
+    (op-call-results ag-call)))
 
 (defn- deserialize-tuple [line]
   (read-string line))

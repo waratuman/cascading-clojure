@@ -9,7 +9,8 @@
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
-           (cascading.pipe.cogroup InnerJoin OuterJoin LeftJoin RightJoin)
+           (cascading.pipe.cogroup 
+	    InnerJoin OuterJoin LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
            (org.apache.hadoop.io Text)
@@ -142,11 +143,10 @@
     (Each. previous in-fields
       (ClojureMap. func-fields spec) out-fields)))
 
-(defn aggregate [#^Pipe previous in-fields out-fields
-                 start aggregate complete]
-  (Every. previous (fields in-fields)
-    (ClojureAggregator. (fields out-fields)
-      (fn-spec start) (fn-spec aggregate) (fn-spec complete))))
+(defn aggregate [#^Pipe previous & args]
+  (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
+    (Every. previous in-fields
+      (ClojureAggregator. func-fields specs) out-fields)))
 
 (defn group-by [#^Pipe previous group-fields]
   (GroupBy. previous (fields group-fields)))
@@ -158,13 +158,13 @@
   (Every. previous
     (Count. (fields count-fields))))
 
-(defn cogroup
+(defn co-group
   [pipes-seq fields-seq declared-fields joiner]
-   (CoGroup.
-	     (pipes-array pipes-seq)
-	     (fields-array fields-seq) 
-	     (fields declared-fields) 
-	     joiner))
+  (CoGroup.
+	  (pipes-array pipes-seq)
+	  (fields-array fields-seq)
+	  (fields declared-fields)
+	  joiner))
 
 ;;TODO create join abstractions. http://en.wikipedia.org/wiki/Join_(SQL)
 ;;"join and drop" is called a natural join - inner join, followed by select to remove duplicate join keys.
@@ -175,11 +175,33 @@
 
 (defn inner-join
   [pipes-seq fields-seq declared-fields]
-  (cogroup pipes-seq fields-seq declared-fields (InnerJoin.)))
+  (co-group pipes-seq fields-seq declared-fields (InnerJoin.)))
 
-(defn outer-join 
+(defn outer-join
   [pipes-seq fields-seq declared-fields]
-  (cogroup pipes-seq fields-seq declared-fields (OuterJoin.)))
+  (co-group pipes-seq fields-seq declared-fields (OuterJoin.)))
+
+(defn left-join 
+  [pipes-seq fields-seq declared-fields]
+  (co-group pipes-seq fields-seq declared-fields (LeftJoin.)))
+
+(defn right-join
+  [pipes-seq fields-seq declared-fields]
+  (co-group pipes-seq fields-seq declared-fields (RightJoin.)))
+
+(defn mixed-join
+  [pipes-seq fields-seq declared-fields inner-bools]
+  (co-group pipes-seq fields-seq declared-fields 
+	    (MixedJoin. (into-array Boolean inner-bools))))
+
+(defn join-into
+  "outer-joins all pipes into the leftmost pipe"
+  [pipes-seq fields-seq declared-fields]
+  (co-group pipes-seq fields-seq declared-fields 
+	    (MixedJoin. 
+	     (boolean-array (cons true
+			       (repeat (- (clojure.core/count pipes-seq)
+					  1) false))))))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))

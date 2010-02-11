@@ -44,6 +44,23 @@
    (fn [in] (-> in (c/map "val" #'extract-key ["key" "num"])))
    [["bar" 1] ["ban" 2]]))
 
+(defn sum
+  ([]
+   0)
+  ([mem v]
+   (+ mem v))
+  ([mem]
+   [mem]))
+
+(deftest aggreate-test
+  (test-flow
+    (in-pipes ["word" "subcount"])
+    (in-tuples [["bar" 1] ["bat" 2] ["bar" 3] ["bar" 2] ["bat" 1]])
+    (fn [in] (-> in
+               (c/group-by "word")
+               (c/aggregate ["subcount"] ["count" #'sum] ["word" "count"])))
+    [["bar" 6] ["bat" 3]]))
+
 (defn transform
   {:fields ["up-name" "inc-age"]}
   [name age]

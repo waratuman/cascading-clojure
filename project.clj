@@ -8,4 +8,5 @@
                    :exclusions [javax.mail/mail janino/janino]]
                  [clj-json "0.1.0-SNAPSHOT"]]
   :dev-dependencies [[lein-javac "0.0.2-SNAPSHOT"]]
-  :namespaces [cascading.clojure.api])
+  :namespaces [cascading.clojure.api
+               cascading.clojure.testing])
