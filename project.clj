@@ -3,7 +3,7 @@
   :java-source-path "src/jvm"
   :java-fork "true"
   :dependencies [[org.clojure/clojure "1.1.0"]
-                 [org.clojure/clojure-contrib "1.1.0"]
+                 [org.clojure/clojure-contrib "1.1.0-master-SNAPSHOT"]
                  [cascading/cascading "1.0.17-SNAPSHOT"
                    :exclusions [javax.mail/mail janino/janino]]
                  [clj-json "0.1.0-SNAPSHOT"]]
