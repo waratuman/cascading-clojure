@@ -3,6 +3,7 @@ target
 out
 lib
 pom.xml
+
 # use glob syntax.
 syntax: glob
 *.ser
@@ -10,6 +11,7 @@ syntax: glob
 *.jar
 *~
 *.bak
+*.jar
 *.off
 *.old
 .DS_Store
