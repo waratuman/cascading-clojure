@@ -4,7 +4,7 @@
 
 
 (c/defassembly c-distinct [pipe]
-  (pipe (c/group-by Fields/ALL) (c/c-first)))
+  (pipe (c/group-by Fields/ALL) (c/first)))
 
 
 (defn starts-with-b? [word]
@@ -24,20 +24,24 @@
                   (c/group-by "word")
                   (c/count "count"))
    white (white (c/mapcat "line" ["white" #'split-words]))]
-   ([phrase white] (c/inner-join "word" "white")
+   ([phrase white] (c/inner-join ["word" "white"] ["word" "count" "white"])
                    (c/select ["word" "count"])
                    (c/map "word" ["upword" #'uppercase] ["upword" "count"])))
 
 
+
+(c/defassembly simple-assembly [word]
+  (word (c/map ["word" #'uppercase])))
+
 (defn run-example
   [in-phrase-dir-path in-white-dir-path out-dir-path]
-  (let [source-scheme  (c/text-line-scheme "line")
-        sink-scheme    (c/text-line-scheme ["upword" "count"])
+  (let [source-scheme  (c/text-line "line")
+        sink-scheme    (c/text-line ["upword" "count"])
         phrase-source  (c/hfs-tap source-scheme in-phrase-dir-path)
         white-source   (c/hfs-tap source-scheme in-white-dir-path)
         sink           (c/hfs-tap sink-scheme out-dir-path)
         flow           (c/mk-flow [phrase-source white-source] sink example-assembly)]
-    (c/complete flow)))
+    (c/exec flow)))
 
 
 

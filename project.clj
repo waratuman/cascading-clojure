@@ -5,10 +5,9 @@
   :dependencies [[org.clojure/clojure "1.1.0"]
                  [org.clojure/clojure-contrib "1.1.0"]
                  [cascading/cascading "1.0.17-SNAPSHOT"
-                   :exclusions [javax.mail/mail janino/janino]]]
+                   :exclusions [javax.mail/mail janino/janino]]
+                 [clj-json "0.1.0-SNAPSHOT"]]
   :dev-dependencies [[lein-javac "0.0.2-SNAPSHOT"]]
-  :repositories [["clojars" "http://clojars.org/repo"]]
-  
   :namespaces [cascading.clojure.api
                cascading.clojure.api-example
-               cascading.clojure.aggregator-example])
+               cascading.clojure.testing])
