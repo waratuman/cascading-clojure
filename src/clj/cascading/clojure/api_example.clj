@@ -3,7 +3,7 @@
   (:require (cascading.clojure [api :as c])))
 
 
-(c/defassembly my-distinct [pipe]
+(c/defassembly c-distinct [pipe]
   (pipe (c/group-by Fields/ALL) (c/c-first)))
 
 
