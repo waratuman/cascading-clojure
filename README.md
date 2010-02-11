@@ -11,4 +11,4 @@ Get [Leiningen](http://github.com/technomancy/leiningen) 1.1.0.
     $ lein compile
     $ lein test
 
-See `src/clj/cascading/clojure/api_example.clj` for an example of how to run a Cascading flow.
+Note that if you edit either `api.clj` or `testing.clj`, you should `lein compile` before running again.
