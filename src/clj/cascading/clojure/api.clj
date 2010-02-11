@@ -142,11 +142,10 @@
     (Each. previous in-fields
       (ClojureMap. func-fields spec) out-fields)))
 
-(defn aggregate [#^Pipe previous in-fields out-fields
-                 start aggregate complete]
-  (Every. previous (fields in-fields)
-    (ClojureAggregator. (fields out-fields)
-      (fn-spec start) (fn-spec aggregate) (fn-spec complete))))
+(defn aggregate [#^Pipe previous & args]
+  (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
+    (Every. previous in-fields
+      (ClojureAggregator. func-fields specs) out-fields)))
 
 (defn group-by [#^Pipe previous group-fields]
   (GroupBy. previous (fields group-fields)))
@@ -158,13 +157,13 @@
   (Every. previous
     (Count. (fields count-fields))))
 
-(defn cogroup
+(defn co-group
   [pipes-seq fields-seq declared-fields joiner]
-   (CoGroup.
-	     (pipes-array pipes-seq)
-	     (fields-array fields-seq) 
-	     (fields declared-fields) 
-	     joiner))
+  (CoGroup.
+	  (pipes-array pipes-seq)
+	  (fields-array fields-seq)
+	  (fields declared-fields)
+	  joiner))
 
 ;;TODO create join abstractions. http://en.wikipedia.org/wiki/Join_(SQL)
 ;;"join and drop" is called a natural join - inner join, followed by select to remove duplicate join keys.
@@ -175,11 +174,11 @@
 
 (defn inner-join
   [pipes-seq fields-seq declared-fields]
-  (cogroup pipes-seq fields-seq declared-fields (InnerJoin.)))
+  (co-group pipes-seq fields-seq declared-fields (InnerJoin.)))
 
-(defn outer-join 
+(defn outer-join
   [pipes-seq fields-seq declared-fields]
-  (cogroup pipes-seq fields-seq declared-fields (OuterJoin.)))
+  (co-group pipes-seq fields-seq declared-fields (OuterJoin.)))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))
