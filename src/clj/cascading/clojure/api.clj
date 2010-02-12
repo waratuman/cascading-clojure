@@ -9,7 +9,8 @@
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
-           (cascading.pipe.cogroup InnerJoin OuterJoin LeftJoin RightJoin)
+           (cascading.pipe.cogroup 
+	    InnerJoin OuterJoin LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
            (org.apache.hadoop.io Text)
@@ -179,6 +180,28 @@
 (defn outer-join
   [pipes-seq fields-seq declared-fields]
   (co-group pipes-seq fields-seq declared-fields (OuterJoin.)))
+
+(defn left-join 
+  [pipes-seq fields-seq declared-fields]
+  (co-group pipes-seq fields-seq declared-fields (LeftJoin.)))
+
+(defn right-join
+  [pipes-seq fields-seq declared-fields]
+  (co-group pipes-seq fields-seq declared-fields (RightJoin.)))
+
+(defn mixed-join
+  [pipes-seq fields-seq declared-fields inner-bools]
+  (co-group pipes-seq fields-seq declared-fields 
+	    (MixedJoin. (into-array Boolean inner-bools))))
+
+(defn join-into
+  "outer-joins all pipes into the leftmost pipe"
+  [pipes-seq fields-seq declared-fields]
+  (co-group pipes-seq fields-seq declared-fields 
+	    (MixedJoin. 
+	     (boolean-array (cons true
+			       (repeat (- (clojure.core/count pipes-seq)
+					  1) false))))))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))

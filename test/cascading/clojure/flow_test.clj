@@ -23,6 +23,14 @@
    (fn [in] (-> in (c/map #'uppercase)))
    [["FOO"] ["BAR"]]))
 
+(deftest map-without-defaults
+  (test-flow
+   (in-pipes ["x" "y" "foo"])
+   (in-tuples [[2 3 "blah"] [7 3 "blah"]])
+   (fn [in] (-> in (c/map ["x" "y"] 
+			  ["sum" #'+]
+			  ["sum"])))
+   [[5] [10]]))
 
 (defn extract-key
   {:fields "key"}
@@ -35,7 +43,6 @@
    (in-tuples [["foo(bar)bat" 1] ["biz(ban)hat" 2]])
    (fn [in] (-> in (c/map "val" #'extract-key ["key" "num"])))
    [["bar" 1] ["ban" 2]]))
-
 
 (defn sum
   ([]
@@ -53,7 +60,6 @@
                (c/group-by "word")
                (c/aggregate ["subcount"] ["count" #'sum] ["word" "count"])))
     [["bar" 6] ["bat" 3]]))
-
 
 (defn transform
   {:fields ["up-name" "inc-age"]}
