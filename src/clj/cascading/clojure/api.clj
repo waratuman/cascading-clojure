@@ -9,7 +9,7 @@
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
-           (cascading.pipe.cogroup 
+           (cascading.pipe.cogroup
 	    InnerJoin OuterJoin LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
@@ -55,11 +55,11 @@
     obj
     (Fields. (into-array String (collectify obj)))))
 
-(defn fields-array 
+(defn fields-array
   [fields-seq]
-  (into-array Fields (clojure.core/map fields fields-seq))) 
+  (into-array Fields (clojure.core/map fields fields-seq)))
 
-(defn pipes-array 
+(defn pipes-array
   [pipes]
   (into-array Pipe pipes))
 
@@ -181,7 +181,7 @@
   [pipes-seq fields-seq declared-fields]
   (co-group pipes-seq fields-seq declared-fields (OuterJoin.)))
 
-(defn left-join 
+(defn left-join
   [pipes-seq fields-seq declared-fields]
   (co-group pipes-seq fields-seq declared-fields (LeftJoin.)))
 
@@ -191,14 +191,14 @@
 
 (defn mixed-join
   [pipes-seq fields-seq declared-fields inner-bools]
-  (co-group pipes-seq fields-seq declared-fields 
+  (co-group pipes-seq fields-seq declared-fields
 	    (MixedJoin. (into-array Boolean inner-bools))))
 
 (defn join-into
   "outer-joins all pipes into the leftmost pipe"
   [pipes-seq fields-seq declared-fields]
-  (co-group pipes-seq fields-seq declared-fields 
-	    (MixedJoin. 
+  (co-group pipes-seq fields-seq declared-fields
+	    (MixedJoin.
 	     (boolean-array (cons true
 			       (repeat (- (clojure.core/count pipes-seq)
 					  1) false))))))
