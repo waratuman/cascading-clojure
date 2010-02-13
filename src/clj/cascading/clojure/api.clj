@@ -9,7 +9,7 @@
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
-           (cascading.pipe.cogroup 
+           (cascading.pipe.cogroup
 	    InnerJoin OuterJoin LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
@@ -55,11 +55,11 @@
     obj
     (Fields. (into-array String (collectify obj)))))
 
-(defn fields-array 
+(defn fields-array
   [fields-seq]
-  (into-array Fields (clojure.core/map fields fields-seq))) 
+  (into-array Fields (clojure.core/map fields fields-seq)))
 
-(defn pipes-array 
+(defn pipes-array
   [pipes]
   (into-array Pipe pipes))
 
@@ -151,8 +151,8 @@
 (defn group-by [#^Pipe previous group-fields]
   (GroupBy. previous (fields group-fields)))
 
-(defn first [#^Pipe previous]
-  (Every. previous (First.)))
+(defn first [#^Pipe previous in-fields]
+  (Every. previous (fields in-fields) (First.)))
 
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous
@@ -181,7 +181,7 @@
   [pipes-seq fields-seq declared-fields]
   (co-group pipes-seq fields-seq declared-fields (OuterJoin.)))
 
-(defn left-join 
+(defn left-join
   [pipes-seq fields-seq declared-fields]
   (co-group pipes-seq fields-seq declared-fields (LeftJoin.)))
 
@@ -191,14 +191,14 @@
 
 (defn mixed-join
   [pipes-seq fields-seq declared-fields inner-bools]
-  (co-group pipes-seq fields-seq declared-fields 
+  (co-group pipes-seq fields-seq declared-fields
 	    (MixedJoin. (into-array Boolean inner-bools))))
 
 (defn join-into
   "outer-joins all pipes into the leftmost pipe"
   [pipes-seq fields-seq declared-fields]
-  (co-group pipes-seq fields-seq declared-fields 
-	    (MixedJoin. 
+  (co-group pipes-seq fields-seq declared-fields
+	    (MixedJoin.
 	     (boolean-array (cons true
 			       (repeat (- (clojure.core/count pipes-seq)
 					  1) false))))))
@@ -229,10 +229,14 @@
               json-vals (clojure.core/map json-map json-keys-arr)]
           (Util/coerceToTuple json-vals)))
       (sink [#^TupleEntry tuple-entry #^OutputCollector output-collector]
-        (let [tuple     (.selectTuple tuple-entry scheme-fields)
-              json-map  (areduce json-keys-arr i mem {}
-                          (assoc mem (aget json-keys-arr i)
-                                     (.get tuple i)))
+        (let [elems     (Util/coerceArrayFromTuple
+                          (.selectTuple tuple-entry scheme-fields))
+              json-map  (reduce
+                          (fn [m i]
+                            (assoc m (aget json-keys-arr i)
+                                     (aget elems i)))
+                          {}
+                          (range (alength json-keys-arr)))
               json-str  (json/generate-string json-map)]
           (.collect output-collector nil (Tuple. json-str)))))))
 
@@ -257,6 +261,8 @@
      (doseq [[k v] config]
        (.setProperty props k v))
      (.setProperty props "mapred.used.genericoptionsparser" "true")
+     (.setProperty props "cascading.serialization.tokens"
+                         "130=cascading.clojure.ClojureWrapper")
      (let [flow-connector (FlowConnector. props)]
        (try
          (.connect flow-connector source-map sink pipe)

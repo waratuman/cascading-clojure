@@ -45,6 +45,10 @@
         f    (Util/bootFn spec)]
   (is (= [4] (f 1)))))
 
+(deftest test-flexible-tuples
+  (let [elems [1 "two" :three [4 5 6] {7 "eight"} `(9 10 11)]]
+    (is (= elems (Util/coerceFromTuple (Util/coerceToTuple elems))))))
+
 (deftest test-1-field
   (let [f1 (c/fields "foo")]
     (is (instance? Fields f1))
