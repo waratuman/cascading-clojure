@@ -52,3 +52,17 @@
 				"x3" "y3" "num3"])]
 	 (c/select joined ["num1" "num2" "num3"])))
    [[5 1 8] [7 1 8] [6 2 7] [9 nil nil]]))
+
+;; (deftest group-and-aggregate-with-pred
+;;   "group on x.
+;;  pred ensures we have data for y.
+;;  max on num."
+;;   (test-flow
+;;    (in-pipes {"p1" ["x" "y" "num"]})
+;;    (in-tuples {"p1" [[0 1 5] [2 1 6] [0 nil 7]
+;; 		     [0 1 1] [2 1 2] [2 nil 7] [0 nil 8]]})
+;;    (fn [{p1 "p1"}]
+;;      (let [grouped (c/group-by p1 ["x"])]
+;;        (c/aggregate grouped
+;; 		    ["x" "y" "num"] [["maxx" "maxy" "max"] #'predicated-max] ["maxx" "maxy" "max"])))
+;;        [[0 5] [2 6]]))

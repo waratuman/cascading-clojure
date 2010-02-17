@@ -73,6 +73,17 @@
     (.cleanup  a fp-null ag-call)
     (op-call-results ag-call)))
 
+(defn invoke-buffer [a colls]
+  (let [a       (roundtrip a)
+        ag-call (op-call)
+        fp-null FlowProcess/NULL]
+    (.prepare a fp-null ag-call)
+    (doseq [coll colls]
+      (.setArguments ag-call (TupleEntry. (Util/coerceToTuple coll)))
+      (.operate a fp-null ag-call))
+    (.cleanup  a fp-null ag-call)
+    (op-call-results ag-call)))
+
 (defn- deserialize-tuple [line]
   (read-string line))
 

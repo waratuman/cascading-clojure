@@ -4,7 +4,7 @@
   (:import (cascading.tuple Fields)
            (cascading.pipe Pipe)
            (cascading.clojure ClojureFilter ClojureMap ClojureMapcat
-                              ClojureAggregator Util)))
+                              ClojureAggregator ClojureBuffer Util)))
 
 (deftest test-ns-fn-name-pair
   (let [[ns-name fn-name] (c/ns-fn-name-pair #'str)]
@@ -90,14 +90,22 @@
         m2 (ClojureMapcat. (c/fields "num") (c/fn-spec #'iterate-inc))]
     (are [m] (= [[2] [3] [4]] (t/invoke-function m [1])) m1 m2)))
 
-(defn sum
-  ([]
-   0)
-  ([mem v]
-   (+ mem v))
-  ([mem]
-   [mem]))
+(defn agg [f init] 
+  (fn ([] init)
+    ([x] [x])
+    ([x y] (f x y))))
 
+(def sum (agg + 0))
+
+(defn buff [it]
+  (for [x (iterator-seq it)
+  	:let [t (Util/coerceFromTuple (.getTuple x))]]
+    (apply + 1 t)))
+       
 (deftest test-clojure-aggregator
   (let [a (ClojureAggregator. (c/fields "sum") (c/fn-spec #'sum))]
     (is (= [[6]] (t/invoke-aggregator a [[1] [2] [3]])))))
+
+(deftest test-clojure-buffer
+  (let [a (ClojureBuffer. (c/fields "sum") (c/fn-spec #'buff))]
+    (is (= [[2][3][4]] (t/invoke-buffer a [[1] [2] [3]])))))
