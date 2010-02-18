@@ -18,7 +18,7 @@
                                      OutputCollector JobConf)
            (java.util Properties Map UUID)
            (cascading.clojure ClojureFilter ClojureMapcat ClojureMap
-                              ClojureAggregator Util)
+                              ClojureAggregator ClojureBuffer Util)
            (clojure.lang Var)
            (java.io File)
            (java.lang RuntimeException)))
@@ -143,10 +143,26 @@
     (Each. previous in-fields
       (ClojureMap. func-fields spec) out-fields)))
 
+(defn agg [f init] 
+"a combinator that takes a fn and an init value and returns a reduce aggregator."
+  (fn ([] init)
+    ([x] [x])
+    ([x y] (f x y))))
+
 (defn aggregate [#^Pipe previous & args]
   (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
     (Every. previous in-fields
       (ClojureAggregator. func-fields specs) out-fields)))
+
+(defn buffer [#^Pipe previous & args]
+  (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
+    (Every. previous in-fields
+      (ClojureBuffer. func-fields specs) out-fields)))
+
+(defn tuple-seq [it]
+"takes Iterator<TupleEntry> and returns seq of tuples coerced to vectors."
+  (clojure.core/map #(Util/coerceFromTuple (.getTuple %)) 
+       (iterator-seq it)))
 
 (defn group-by [#^Pipe previous group-fields]
   (GroupBy. previous (fields group-fields)))

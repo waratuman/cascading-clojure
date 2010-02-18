@@ -44,13 +44,7 @@
    (fn [in] (-> in (c/map "val" #'extract-key ["key" "num"])))
    [["bar" 1] ["ban" 2]]))
 
-(defn sum
-  ([]
-   0)
-  ([mem v]
-   (+ mem v))
-  ([mem]
-   [mem]))
+(def sum (c/agg + 0))
 
 (deftest aggreate-test
   (test-flow

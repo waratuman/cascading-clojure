@@ -90,21 +90,15 @@
         m2 (ClojureMapcat. (c/fields "num") (c/fn-spec #'iterate-inc))]
     (are [m] (= [[2] [3] [4]] (t/invoke-function m [1])) m1 m2)))
 
-(defn agg [f init] 
-  (fn ([] init)
-    ([x] [x])
-    ([x y] (f x y))))
-
-(def sum (agg + 0))
-
-(defn buff [it]
-  (for [x (iterator-seq it)
-  	:let [t (Util/coerceFromTuple (.getTuple x))]]
-    [(apply + 1 t)]))
+(def sum (c/agg + 0))
        
 (deftest test-clojure-aggregator
   (let [a (ClojureAggregator. (c/fields "sum") (c/fn-spec #'sum))]
     (is (= [[6]] (t/invoke-aggregator a [[1] [2] [3]])))))
+
+(defn buff [it]
+  (for [x (c/tuple-seq it)]
+    [(apply + 1 x)]))
 
 ;;TODO: notice Buffer exects a fn that takes an iterator and returns a seq of tuples.  if we want to return only a single tuple, then we need to wrap the tuple in a seq.
 (deftest test-clojure-buffer
