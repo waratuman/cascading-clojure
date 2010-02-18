@@ -106,6 +106,7 @@
   (let [a (ClojureAggregator. (c/fields "sum") (c/fn-spec #'sum))]
     (is (= [[6]] (t/invoke-aggregator a [[1] [2] [3]])))))
 
+;;TODO: notice Buffer exects a fn that takes an iterator and returns a seq of tuples.  if we want to return only a single tuple, then we need to wrap the tuple in a seq.
 (deftest test-clojure-buffer
   (let [a (ClojureBuffer. (c/fields "sum") (c/fn-spec #'buff))]
     (is (= [[2][3][4]] (t/invoke-buffer a [[1] [2] [3]])))))
