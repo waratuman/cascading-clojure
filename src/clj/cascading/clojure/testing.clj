@@ -78,9 +78,9 @@
         ag-call (op-call)
         fp-null FlowProcess/NULL]
     (.prepare a fp-null ag-call)
-    (doseq [coll colls]
-      (.setArguments ag-call (TupleEntry. (Util/coerceToTuple coll)))
-      (.operate a fp-null ag-call))
+    (.setArgumentsIterator ag-call (.iterator 
+				    (map #(TupleEntry. (Util/coerceToTuple %)) colls)))
+    (.operate a fp-null ag-call)
     (.cleanup  a fp-null ag-call)
     (op-call-results ag-call)))
 

@@ -100,7 +100,7 @@
 (defn buff [it]
   (for [x (iterator-seq it)
   	:let [t (Util/coerceFromTuple (.getTuple x))]]
-    (apply + 1 t)))
+    [(apply + 1 t)]))
        
 (deftest test-clojure-aggregator
   (let [a (ClojureAggregator. (c/fields "sum") (c/fn-spec #'sum))]
