@@ -15,7 +15,7 @@ import clojure.lang.ISeq;
 import java.util.Collection;
 
 public class ClojureBuffer extends BaseOperation<Object>
-                               implements Buffer<Object> {
+                           implements Buffer<Object> {
   private Object[] fn_spec;
   private IFn fn;
 
@@ -30,10 +30,10 @@ public class ClojureBuffer extends BaseOperation<Object>
 
   public void operate(FlowProcess flow_process, BufferCall<Object> buff_call) {
     try {
-	Collection coll = (Collection) this.fn.invoke(buff_call.getArgumentsIterator());
-	for (Object tup : coll) {
-	    buff_call.getOutputCollector().add(Util.coerceToTuple(tup));
-	}
+      Collection coll = (Collection) this.fn.invoke(buff_call.getArgumentsIterator());
+      for (Object tup : coll) {
+        buff_call.getOutputCollector().add(Util.coerceToTuple(tup));
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

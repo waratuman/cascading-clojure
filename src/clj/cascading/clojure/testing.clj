@@ -30,20 +30,10 @@
       (swap! out-atom conj (Util/coerceFromTuple tuple)))))
 
 (defn- op-call []
-  (let [args-atom    (atom nil)
-        out-atom     (atom [])
-        context-atom (atom nil)]
+  (let [out-atom (atom [])]
     (proxy [ConcreteCall IPersistentCollection] []
-      (setArguments [tuple]
-        (swap! args-atom (constantly tuple)))
-      (getArguments []
-         @args-atom)
       (getOutputCollector []
         (output-collector out-atom))
-      (setContext [context]
-        (swap! context-atom (constantly context)))
-      (getContext []
-        @context-atom)
       (seq []
         (seq @out-atom)))))
 
@@ -78,10 +68,10 @@
         ag-call (op-call)
         fp-null FlowProcess/NULL]
     (.prepare a fp-null ag-call)
-    (.setArgumentsIterator ag-call (.iterator 
-				    (map #(TupleEntry. (Util/coerceToTuple %)) colls)))
+    (.setArgumentsIterator ag-call
+      (.iterator (map #(TupleEntry. (Util/coerceToTuple %)) colls)))
     (.operate a fp-null ag-call)
-    (.cleanup  a fp-null ag-call)
+    (.cleanup a fp-null ag-call)
     (op-call-results ag-call)))
 
 (defn- deserialize-tuple [line]
@@ -107,17 +97,17 @@
 (defn in-pipe [in-label in-fields]
   (-> (c/pipe in-label)
       (c/map [in-fields
-	      #'deserialize-tuple])))
+        #'deserialize-tuple])))
 
 (defn in-pipes [fields-spec]
   (if (not (map? fields-spec))
     (in-pipe "in" fields-spec)
     (mash (fn [[in-label one-in-fields]]
-	    [in-label (in-pipe in-label one-in-fields)])
-	  fields-spec)))              
+      [in-label (in-pipe in-label one-in-fields)])
+    fields-spec)))
 
 (defn in-tuples [tuples-spec]
-  (if (map? tuples-spec) 
+  (if (map? tuples-spec)
     tuples-spec
     {"in" tuples-spec}))
 
@@ -126,17 +116,17 @@
     (with-tmp-files [source-dir-path (temp-dir  "source")
                      sink-path       (temp-path "sink")]
       (doseq [[in-label in-tuples] in-tuples-spec]
-	(write-lines-in source-dir-path in-label
-			(map serialize-tuple in-tuples)))
+  (write-lines-in source-dir-path in-label
+      (map serialize-tuple in-tuples)))
       (let [assembly   (-> in-pipes-spec
                            assembler
                            (c/map #'serialize-vals))
-	    source-tap-map (mash (fn [[in-label _]]
-				   [in-label
-				    (c/lfs-tap (c/text-line "line")
-					       (file source-dir-path in-label))])
-				 in-tuples-spec)
-	    sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
-	    flow           (c/flow source-tap-map sink-tap assembly)
-	    out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
-	(is (= expected-out-tuples out-tuples))))))
+      source-tap-map (mash (fn [[in-label _]]
+           [in-label
+            (c/lfs-tap (c/text-line "line")
+                 (file source-dir-path in-label))])
+         in-tuples-spec)
+      sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
+      flow           (c/flow source-tap-map sink-tap assembly)
+      out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
+  (is (= expected-out-tuples out-tuples))))))

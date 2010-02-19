@@ -27,9 +27,9 @@
   (test-flow
    (in-pipes ["x" "y" "foo"])
    (in-tuples [[2 3 "blah"] [7 3 "blah"]])
-   (fn [in] (-> in (c/map ["x" "y"] 
-			  ["sum" #'+]
-			  ["sum"])))
+   (fn [in] (-> in (c/map ["x" "y"]
+              ["sum" #'+]
+              ["sum"])))
    [[5] [10]]))
 
 (defn extract-key
