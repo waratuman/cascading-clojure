@@ -19,7 +19,7 @@
 			    next-tuple))]
   [(reduce maxer (c/tuple-seq it))]))
 
-(deftest buffer-test
+(deftest buffer-max-for-each-group
   (test-flow
     (in-pipes ["word" "subcount"])
     (in-tuples [["bar" 1] ["bat" 7] ["bar" 3] ["bar" 2] ["bat" 4]])
@@ -44,7 +44,7 @@
 		    (flatten (cons x biggest)))]
 	pairs))
 
-(deftest buffer-test
+(deftest buffer-max-and-pair
   (test-flow
     (in-pipes ["word" "subcount"])
     (in-tuples [["bar" 1] ["bat" 7] ["bar" 3] ["bar" 2] ["bat" 4]])
@@ -53,5 +53,6 @@
 	       
                (c/buffer [["word1" "subcount1" "maxword" "maxsubcount"]
 			  #'maxpairs])))
-    [["bar" 1 "bar" 3] ["bar" 2 "bar" 3]
+    [["bar" 1 "bar" 3]
+     ["bar" 2 "bar" 3]
      ["bat" 4 "bat" 7]]))
