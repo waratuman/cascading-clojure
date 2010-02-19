@@ -26,8 +26,7 @@
     (fn [in] (-> in
                (c/group-by "word")
 	       
-               (c/buffer ["word" "subcount"] [["word1" "subcount1"] #'maxbuff]
-			 ["word1" "subcount1"])))
+               (c/buffer [["word1" "subcount1"] #'maxbuff])))
     [["bar" 3] ["bat" 7]]))
 
 ;;Note that you can not walk the tuple iterator more than once
