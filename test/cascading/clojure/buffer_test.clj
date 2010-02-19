@@ -26,7 +26,7 @@
     (fn [in] (-> in
                (c/group-by "word")
 	       
-               (c/buffer [["word1" "subcount1"] #'maxbuff])))
+               (c/buffer #'maxbuff)))
     [["bar" 3] ["bat" 7]]))
 
 ;;Note that you can not walk the tuple iterator more than once
@@ -49,8 +49,7 @@
     (in-tuples [["bar" 1] ["bat" 7] ["bar" 3] ["bar" 2] ["bat" 4]])
     (fn [in] (-> in
                (c/group-by "word")
-	       
-               (c/buffer [["word1" "subcount1" "maxword" "maxsubcount"]
+               (c/buffer [["word" "subcount" "maxword" "maxsubcount"]
 			  #'maxpairs])))
     [["bar" 1 "bar" 3]
      ["bar" 2 "bar" 3]

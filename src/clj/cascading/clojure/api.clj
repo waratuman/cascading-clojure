@@ -81,6 +81,7 @@
 ; out-fields: subset of (union in-fields func-fields) that flow out of the pipe
 ;   defaults to func-fields
 
+;;regarding the operation's fields declarations, if you resort to Fields/UNKNOWN, you will lose all your field names. you should deafult the fields declarations to Fields/ARGS.  This means you emit the same fields that you take in via the input selector - a common scenario. If you want to add new fields or change them, you must explicitly declare them.  Regarding iput selectors, Fields/All is the logical default.  Chris says that - regarding the outputselector - we might tend to use Fields/Results more for each and Fields/All more for every, but perhaps fields/RESULTS is the best fit for out way of thinking.
 (defn- parse-func [func-obj]
   "func-obj =>
    #'func
@@ -94,10 +95,9 @@
     (let [spec        (fn-spec (drop i func-obj))
           func-var    (nth func-obj i)
           func-fields (or (and (= i 1) (clojure.core/first func-obj))
-                          ((meta func-var) :fields))]
-      (when-not func-fields
-        (throw (Exception. (str "no fields assocaiated with " func-obj))))
-      [(fields func-fields) spec])))
+                          ((meta func-var) :fields))
+	  function-fields (if func-fields (fields func-fields) Fields/ARGS)]
+      [function-fields spec])))
 
 (defn- parse-args
   "arr =>
