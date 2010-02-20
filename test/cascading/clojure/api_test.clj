@@ -4,7 +4,7 @@
   (:import (cascading.tuple Fields)
            (cascading.pipe Pipe)
            (cascading.clojure ClojureFilter ClojureMap ClojureMapcat
-                              ClojureAggregator Util)))
+                              ClojureAggregator ClojureBuffer Util)))
 
 (deftest test-ns-fn-name-pair
   (let [[ns-name fn-name] (c/ns-fn-name-pair #'str)]
@@ -94,14 +94,19 @@
         m2 (ClojureMapcat. (c/fields "num") (c/fn-spec #'iterate-inc))]
     (are [m] (= [[2] [3] [4]] (t/invoke-function m [1])) m1 m2)))
 
-(defn sum
-  ([]
-   0)
-  ([mem v]
-   (+ mem v))
-  ([mem]
-   [mem]))
+(def sum (c/agg + 0))
 
 (deftest test-clojure-aggregator
   (let [a (ClojureAggregator. (c/fields "sum") (c/fn-spec #'sum))]
     (is (= [[6]] (t/invoke-aggregator a [[1] [2] [3]])))))
+
+(defn buff [it]
+  (for [x (c/tuple-seq it)]
+    [(apply + 1 x)]))
+
+; TODO: notice Buffer exects a fn that takes an iterator and returns a seq of
+; tuples. if we want to return only a single tuple, then we need to wrap the
+; tuple in a seq.
+(deftest test-clojure-buffer
+  (let [a (ClojureBuffer. (c/fields "sum") (c/fn-spec #'buff))]
+    (is (= [[2][3][4]] (t/invoke-buffer a [[1] [2] [3]])))))

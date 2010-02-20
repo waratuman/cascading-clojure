@@ -9,8 +9,8 @@
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
-           (cascading.pipe.cogroup
-	    InnerJoin OuterJoin LeftJoin RightJoin MixedJoin)
+           (cascading.pipe.cogroup InnerJoin OuterJoin
+                                   LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
            (org.apache.hadoop.io Text)
@@ -18,7 +18,7 @@
                                      OutputCollector JobConf)
            (java.util Properties Map UUID)
            (cascading.clojure ClojureFilter ClojureMapcat ClojureMap
-                              ClojureAggregator Util)
+                              ClojureAggregator ClojureBuffer Util)
            (clojure.lang Var)
            (java.io File)
            (java.lang RuntimeException)))
@@ -74,13 +74,21 @@
   (clojure.core/first (find-first #(pred (last %)) (indexed coll))))
 
 ; in-fields: subset of fields from incoming pipe that are passed to function
-;   defaults to all
+;   defaults to Fields/ALL
 ; func-fields: fields declared to be returned by the function
-;   must be given in meta data or as [override-fields #'func-var]
-;   no default, error if missing
+;   defaults to Fields/ARGS
 ; out-fields: subset of (union in-fields func-fields) that flow out of the pipe
-;   defaults to func-fields
+;   defaults to Fields/RESULTS
 
+; Regarding the operation's fields declarations, if you resort to
+; Fields/UNKNOWN, you will lose all your field names. You should deafult the
+; fields declarations to Fields/ARGS. This means you emit the same fields that
+; you take in via the input selector - a common scenario. If you want to add new
+; fields or change them, you must explicitly declare them. Regarding input
+; selectors, Fields/All is the logical default. Chris says that - regarding the
+; outputselector - we might tend to use Fields/RESULTS more for each and
+; Fields/All more for every, but perhaps fields/RESULTS is the best fit for out
+; way of thinking.
 (defn- parse-func [func-obj]
   "func-obj =>
    #'func
@@ -94,10 +102,9 @@
     (let [spec        (fn-spec (drop i func-obj))
           func-var    (nth func-obj i)
           func-fields (or (and (= i 1) (clojure.core/first func-obj))
-                          ((meta func-var) :fields))]
-      (when-not func-fields
-        (throw (Exception. (str "no fields assocaiated with " func-obj))))
-      [(fields func-fields) spec])))
+                          ((meta func-var) :fields))
+    function-fields (if func-fields (fields func-fields) Fields/ARGS)]
+      [function-fields spec])))
 
 (defn- parse-args
   "arr =>
@@ -143,10 +150,25 @@
     (Each. previous in-fields
       (ClojureMap. func-fields spec) out-fields)))
 
+(defn agg [f init]
+  "A combinator that takes a fn and an init value and returns a reduce aggregator."
+  (fn ([] init)
+    ([x] [x])
+    ([x y] (f x y))))
+
 (defn aggregate [#^Pipe previous & args]
   (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
     (Every. previous in-fields
       (ClojureAggregator. func-fields specs) out-fields)))
+
+(defn buffer [#^Pipe previous & args]
+  (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
+    (Every. previous in-fields
+      (ClojureBuffer. func-fields specs) out-fields)))
+
+(defn tuple-seq [it]
+  "Takes Iterator<TupleEntry> and returns seq of tuples coerced to vectors."
+  (clojure.core/map #(Util/coerceFromTuple (.getTuple %)) (iterator-seq it)))
 
 (defn group-by [#^Pipe previous group-fields]
   (GroupBy. previous (fields group-fields)))
@@ -161,17 +183,21 @@
 (defn co-group
   [pipes-seq fields-seq declared-fields joiner]
   (CoGroup.
-	  (pipes-array pipes-seq)
-	  (fields-array fields-seq)
-	  (fields declared-fields)
-	  joiner))
+    (pipes-array pipes-seq)
+    (fields-array fields-seq)
+    (fields declared-fields)
+    joiner))
 
-;;TODO create join abstractions. http://en.wikipedia.org/wiki/Join_(SQL)
-;;"join and drop" is called a natural join - inner join, followed by select to remove duplicate join keys.
+; TODO: create join abstractions. http://en.wikipedia.org/wiki/Join_(SQL)
 
-;;another kind of join and dop is to drop all the join keys - for example, when you have extracted a specil join key jsut for grouping, you typicly want to get rid of it after the group operation.
+; "join and drop" is called a natural join - inner join, followed by select to
+; remove duplicate join keys.
 
-;;another kind of "join and drop" is an outer-join followed by dropping the nils
+; another kind of join and dop is to drop all the join keys - for example, when
+; you have extracted a specil join key jsut for grouping, you typicly want to get
+; rid of it after the group operation.
+
+; another kind of "join and drop" is an outer-join followed by dropping the nils
 
 (defn inner-join
   [pipes-seq fields-seq declared-fields]
@@ -192,16 +218,16 @@
 (defn mixed-join
   [pipes-seq fields-seq declared-fields inner-bools]
   (co-group pipes-seq fields-seq declared-fields
-	    (MixedJoin. (into-array Boolean inner-bools))))
+      (MixedJoin. (into-array Boolean inner-bools))))
 
 (defn join-into
   "outer-joins all pipes into the leftmost pipe"
   [pipes-seq fields-seq declared-fields]
   (co-group pipes-seq fields-seq declared-fields
-	    (MixedJoin.
-	     (boolean-array (cons true
-			       (repeat (- (clojure.core/count pipes-seq)
-					  1) false))))))
+      (MixedJoin.
+       (boolean-array (cons true
+             (repeat (- (clojure.core/count pipes-seq)
+            1) false))))))
 
 (defn select [#^Pipe previous keep-fields]
   (Each. previous (fields keep-fields) (Identity.)))
