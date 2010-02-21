@@ -1,7 +1,7 @@
 (ns cascading.clojure.api
   (:refer-clojure :exclude (count first filter mapcat map))
   (:use [clojure.contrib.seq-utils :only [find-first indexed]])
-  (:require [clj-json :as json])
+  (:require (clj-json [core :as json]))
   (:import (cascading.tuple Tuple TupleEntry Fields)
            (cascading.scheme TextLine)
            (cascading.flow Flow FlowConnector)
