@@ -6,7 +6,7 @@
   (:import (cascading.tuple Fields)
            (cascading.pipe Pipe)
            (cascading.clojure Util ClojureMap))
-  (:require [clj-json :as json])
+  (:require (clj-json [core :as json]))
   (:require [clojure.contrib.duck-streams :as ds])
   (:require [clojure.contrib.java-utils :as ju])
   (:require (cascading.clojure [api :as c])))
