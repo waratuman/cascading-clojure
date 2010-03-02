@@ -1,3 +1,0 @@
-Example Usage from command line:
-
-~/hadoop-0.20.1/bin/hadoop jar build/jobs.jar -in file:///home/bradford/cascading-clojure/sample/data/ -out file:///home/bradford/cascading-clojure/sample/out/ -wf cascading.clojure.sample/groupby-with-fields

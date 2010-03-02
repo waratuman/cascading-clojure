@@ -1,5 +1,0 @@
-hadoop jar build/jobs.jar -in file:///Users/Admin/projects/cascading-clojure/sample/data/ -out file:///Users/Admin/projects/cascading-clojure/sample/out/ -wf cascading.clojure.sample/test-with-fields
-
-hadoop jar build/jobs.jar -in file:///Users/Admin/projects/cascading-clojure/sample/data/ -out file:///Users/Admin/projects/cascading-clojure/sample/out/ -wf cascading.clojure.sample/groupby-with-fields
-
-hadoop jar build/jobs.jar -in file:///Users/Admin/projects/cascading-clojure/sample/data/,file:///Users/Admin/projects/cascading-clojure/sample/data/ -out file:///Users/Admin/projects/cascading-clojure/sample/out/ -wf cascading.clojure.sample/sample-join
