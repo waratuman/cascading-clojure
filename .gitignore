@@ -7,6 +7,7 @@ pom.xml
 syntax: glob
 *.ser
 *.class
+*.jar
 *~
 *.bak
 *.off
@@ -19,3 +20,4 @@ syntax: glob
 *.settings
 *.pyc
 *.dot
+

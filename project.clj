@@ -1,8 +1,13 @@
-(defproject cascading-clojure "1.0-SNAPSHOT"
-  :description "clojure lib for cascading"
-  :dependencies [[org.clojure/clojure-contrib "1.0-SNAPSHOT"]
-                 [commons-cli/commons-cli "1.2"]
-                 [cascading/cascading "1.0.17-SNAPSHOT"]
-		 [jline "0.9.94"]
-                 [org.danlarkin/clojure-json "1.1-SNAPSHOT"]]
-  :dev-dependencies [[org.clojure/swank-clojure "1.0"]])
+(defproject cascading-clojure "1.0.0-SNAPSHOT"
+  :source-path "src/clj"
+  :java-source-path "src/jvm"
+  :java-fork "true"
+  :dependencies [[org.clojure/clojure "1.1.0"]
+                 [org.clojure/clojure-contrib "1.1.0-master-SNAPSHOT"]
+                 [cascading/cascading "1.0.17-SNAPSHOT"
+                   :exclusions [javax.mail/mail janino/janino]]
+                 [clj-json "0.1.0-SNAPSHOT"]
+                 [clj-serializer "0.1.0-SNAPSHOT"]]
+  :dev-dependencies [[lein-javac "0.0.2-SNAPSHOT"]]
+  :namespaces [cascading.clojure.api
+               cascading.clojure.testing])
