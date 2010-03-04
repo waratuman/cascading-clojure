@@ -170,8 +170,13 @@
   "Takes Iterator<TupleEntry> and returns seq of tuples coerced to vectors."
   (clojure.core/map #(Util/coerceFromTuple (.getTuple %)) (iterator-seq it)))
 
-(defn group-by [#^Pipe previous group-fields]
-  (GroupBy. previous (fields group-fields)))
+(defn group-by 
+  ([#^Pipe previous group-fields]
+     (GroupBy. previous (fields group-fields)))
+  ([previous group-fields sort-fields]
+     (GroupBy. previous (fields group-fields) (fields sort-fields)))
+  ([previous group-fields sort-fields reverse-order]
+     (GroupBy. previous (fields group-fields) (fields sort-fields) reverse-order)))
 
 (defn first [#^Pipe previous]
   (Every. previous (First.)))
