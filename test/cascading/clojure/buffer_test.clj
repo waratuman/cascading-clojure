@@ -17,7 +17,7 @@
     (reduce maxer coll)))
 
 (defn maxbuff [it]
-  (list (max-by second (c/tuple-seq it))))
+  (list (max-by second it)))
 
 (deftest buffer-max-for-each-group
   (test-flow
@@ -31,7 +31,7 @@
 ;;Note that you can not walk the tuple iterator more than once
 ;;but you can hold on to the seq and walk that more than once.
 (defn maxpairs [it]
-  (let [tuples  (c/tuple-seq it)
+  (let [tuples it
         biggest (max-by second tuples)]
     (map #(concat % biggest) (remove #(= % biggest) tuples))))
 

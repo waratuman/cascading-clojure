@@ -179,10 +179,6 @@
     (Every. previous in-fields
       (ClojureBuffer. func-fields specs) out-fields)))
 
-(defn tuple-seq [it]
-  "Takes Iterator<TupleEntry> and returns seq of tuples coerced to vectors."
-  (clojure.core/map #(Util/coerceFromTuple (.getTuple %)) (iterator-seq it)))
-
 (defn group-by 
   ([previous group-fields]
      (GroupBy. (as-pipes previous) (fields group-fields)))

@@ -97,7 +97,7 @@
     (is (= [[6]] (t/invoke-aggregator a [[1] [2] [3]])))))
 
 (defn buff [it]
-  (for [x (c/tuple-seq it)]
+  (for [x it]
     [(apply + 1 x)]))
 
 ; TODO: notice Buffer exects a fn that takes an iterator and returns a seq of
