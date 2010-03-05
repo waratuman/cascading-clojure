@@ -6,6 +6,7 @@
            (cascading.scheme TextLine)
            (cascading.flow Flow FlowConnector)
            (cascading.operation Identity)
+           (cascading.operation.filter Limit)
            (cascading.operation.regex RegexGenerator RegexFilter)
            (cascading.operation.aggregator First Count)
            (cascading.pipe Pipe Each Every GroupBy CoGroup)
@@ -62,6 +63,12 @@
 (defn pipes-array
   [pipes]
   (into-array Pipe pipes))
+
+(defn as-pipes
+  [pipe-or-pipes]
+  (let [pipes (if (instance? Pipe pipe-or-pipes)
+		[pipe-or-pipes] pipe-or-pipes)]
+  (into-array Pipe pipes)))
 
 (defn- fields-obj? [obj]
   "Returns true for a Fileds instance, a string, or an array of strings."
@@ -150,6 +157,12 @@
     (Each. previous in-fields
       (ClojureMap. func-fields spec) out-fields)))
 
+(defn extract [#^Pipe previous & args]
+"a map operation that extracts a new field, thus returning fields/ALL."
+  (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
+    (Each. previous in-fields
+      (ClojureMap. func-fields spec) Fields/ALL)))
+
 (defn agg [f init]
   "A combinator that takes a fn and an init value and returns a reduce aggregator."
   (fn ([] init)
@@ -171,12 +184,12 @@
   (clojure.core/map #(Util/coerceFromTuple (.getTuple %)) (iterator-seq it)))
 
 (defn group-by 
-  ([#^Pipe previous group-fields]
-     (GroupBy. previous (fields group-fields)))
+  ([previous group-fields]
+     (GroupBy. (as-pipes previous) (fields group-fields)))
   ([previous group-fields sort-fields]
-     (GroupBy. previous (fields group-fields) (fields sort-fields)))
+     (GroupBy. (as-pipes previous) (fields group-fields) (fields sort-fields)))
   ([previous group-fields sort-fields reverse-order]
-     (GroupBy. previous (fields group-fields) (fields sort-fields) reverse-order)))
+     (GroupBy. (as-pipes previous) (fields group-fields) (fields sort-fields) reverse-order)))
 
 (defn first [#^Pipe previous]
   (Every. previous (First.)))
