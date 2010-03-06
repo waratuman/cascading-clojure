@@ -31,9 +31,8 @@
 ;;Note that you can not walk the tuple iterator more than once
 ;;but you can hold on to the seq and walk that more than once.
 (defn maxpairs [it]
-  (let [tuples it
-        biggest (max-by second tuples)]
-    (map #(concat % biggest) (remove #(= % biggest) tuples))))
+  (let [biggest (max-by second it)]
+    (map #(concat % biggest) (remove #(= % biggest) it))))
 
 (deftest buffer-max-and-pair
   (test-flow
