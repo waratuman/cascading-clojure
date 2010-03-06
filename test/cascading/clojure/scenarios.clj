@@ -80,8 +80,8 @@
     (in-tuples {"p1" [[0 1 5] [2 1 6] [0 1 7] [2 1 9]]
                 "p2" [[0 0 1] [2 2 1] [0 2 1] [3 0 1]]})
     (fn [{p1 "p1" p2 "p2"}]
-      (let [new-left (c/extract p1 ["dualgroup" #'x-and-y])
-	    new-right (c/extract p2 ["dualgroup" #'y-and-z])]
+      (let [new-left (c/extract p1 #'x-and-y :fn> "dualgroup")
+	    new-right (c/extract p2 #'y-and-z :fn> "dualgroup")]
 	    (c/group-by [new-left new-right]
 			       ["dualgroup"] ["z"])))
     [[0 0 1 "01"] [3 0 1 "01"] [0 1 5 "01"] [0 1 7 "01"]

@@ -27,9 +27,7 @@
   (test-flow
    (in-pipes ["x" "y" "foo"])
    (in-tuples [[2 3 "blah"] [7 3 "blah"]])
-   (fn [in] (-> in (c/map ["x" "y"]
-              ["sum" #'+]
-              ["sum"])))
+   (fn [in] (-> in (c/map #'+ ["x" "y"] :fn> "sum" :> "sum")))
    [[5] [10]]))
 
 (defn extract-key
@@ -41,7 +39,7 @@
   (test-flow
    (in-pipes ["val" "num"])
    (in-tuples [["foo(bar)bat" 1] ["biz(ban)hat" 2]])
-   (fn [in] (-> in (c/map "val" #'extract-key ["key" "num"])))
+   (fn [in] (-> in (c/map #'extract-key "val" :> ["key" "num"])))
    [["bar" 1] ["ban" 2]]))
 
 (def sum (c/agg + 0))
@@ -52,7 +50,7 @@
     (in-tuples [["bar" 1] ["bat" 2] ["bar" 3] ["bar" 2] ["bat" 1]])
     (fn [in] (-> in
                (c/group-by "word")
-               (c/aggregate ["subcount"] ["count" #'sum] ["word" "count"])))
+               (c/aggregate #'sum "subcount" :fn> "count" :> ["word" "count"])))
     [["bar" 6] ["bat" 3]]))
 
 (defn transform
@@ -66,7 +64,7 @@
                      sink   (temp-path "sink")]
       (let [lines [{"name" "foo" "age" 23} {"name" "bar" "age" 14}]]
         (write-lines-in source "source.data" (map json/generate-string lines))
-        (let [trans (-> (c/pipe "j") (c/map ["name" "age"] #'transform))
+        (let [trans (-> (c/pipe "j") (c/map #'transform ["name" "age"]))
               flow (c/flow
                      {"j" (c/lfs-tap (c/json-map-line ["name" "age"]) source)}
                      (c/lfs-tap (c/json-map-line ["up-name" "inc-age"]) sink)

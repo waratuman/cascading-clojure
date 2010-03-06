@@ -1,6 +1,7 @@
 (ns cascading.clojure.api
   (:refer-clojure :exclude (count first filter mapcat map))
   (:use [clojure.contrib.seq-utils :only [find-first indexed]])
+  (:use cascading.clojure.parse)
   (:require (clj-json [core :as json]))
   (:import (cascading.tuple Tuple TupleEntry Fields)
            (cascading.scheme TextLine)
@@ -24,42 +25,6 @@
            (java.io File)
            (java.lang RuntimeException)))
 
-(defn ns-fn-name-pair [v]
-  (let [m (meta v)]
-    [(str (:ns m)) (str (:name m))]))
-
-(defn fn-spec [v-or-coll]
-  "v-or-coll => var or [var & params]
-   Returns an Object array that is used to represent a Clojure function.
-   If the argument is a var, the array represents that function.
-   If the argument is a coll, the array represents the function returned
-   by applying the first element, which should be a var, to the rest of the
-   elements."
-  (cond
-    (var? v-or-coll)
-      (into-array Object (ns-fn-name-pair v-or-coll))
-    (coll? v-or-coll)
-      (into-array Object
-        (concat
-          (ns-fn-name-pair (clojure.core/first v-or-coll))
-          (next v-or-coll)))
-    :else
-      (throw (IllegalArgumentException. (str v-or-coll)))))
-
-(defn- collectify [obj]
-  (if (sequential? obj) obj [obj]))
-
-(defn fields
-  {:tag Fields}
-  [obj]
-  (if (or (nil? obj) (instance? Fields obj))
-    obj
-    (Fields. (into-array String (collectify obj)))))
-
-(defn fields-array
-  [fields-seq]
-  (into-array Fields (clojure.core/map fields fields-seq)))
-
 (defn pipes-array
   [pipes]
   (into-array Pipe pipes))
@@ -69,67 +34,6 @@
   (let [pipes (if (instance? Pipe pipe-or-pipes)
 		[pipe-or-pipes] pipe-or-pipes)]
   (into-array Pipe pipes)))
-
-(defn- fields-obj? [obj]
-  "Returns true for a Fileds instance, a string, or an array of strings."
-  (or
-    (instance? Fields obj)
-    (string? obj)
-    (and (sequential? obj) (every? string? obj))))
-
-(defn- idx-of-first [coll pred]
-  (clojure.core/first (find-first #(pred (last %)) (indexed coll))))
-
-; in-fields: subset of fields from incoming pipe that are passed to function
-;   defaults to Fields/ALL
-; func-fields: fields declared to be returned by the function
-;   defaults to Fields/ARGS
-; out-fields: subset of (union in-fields func-fields) that flow out of the pipe
-;   defaults to Fields/RESULTS
-
-; Regarding the operation's fields declarations, if you resort to
-; Fields/UNKNOWN, you will lose all your field names. You should deafult the
-; fields declarations to Fields/ARGS. This means you emit the same fields that
-; you take in via the input selector - a common scenario. If you want to add new
-; fields or change them, you must explicitly declare them. Regarding input
-; selectors, Fields/All is the logical default. Chris says that - regarding the
-; outputselector - we might tend to use Fields/RESULTS more for each and
-; Fields/All more for every, but perhaps fields/RESULTS is the best fit for out
-; way of thinking.
-(defn- parse-func [func-obj]
-  "func-obj =>
-   #'func
-   [#'func]
-   [override-fields #'func]
-   [#'func & params]
-   [override-fields #'func & params]"
-  (let [func-obj    (collectify func-obj)
-        i           (idx-of-first func-obj var?)]
-    (assert (<= i 1))
-    (let [spec        (fn-spec (drop i func-obj))
-          func-var    (nth func-obj i)
-          func-fields (or (and (= i 1) (clojure.core/first func-obj))
-                          ((meta func-var) :fields))
-    function-fields (if func-fields (fields func-fields) Fields/ARGS)]
-      [function-fields spec])))
-
-(defn- parse-args
-  "arr =>
-  [func-obj]
-  [in-fields func-obj]
-  [in-fields func-obj out-fields]
-  [func-obj out-fields]"
-  [arr]
-  (let [i (idx-of-first arr (complement fields-obj?))]
-    (assert (<= i 1))
-    (let [in-fields          (if (= i 1)
-                               (fields (clojure.core/first arr))
-                               Fields/ALL)
-          [func-fields spec] (parse-func (nth arr i))
-          out-fields         (if (< i (dec (clojure.core/count arr)))
-                               (fields (last arr))
-                               Fields/RESULTS)]
-    [in-fields func-fields spec out-fields])))
 
 (defn- uuid []
   (str (UUID/randomUUID)))

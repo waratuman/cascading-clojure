@@ -19,7 +19,7 @@
     (coll? v-or-coll)
       (into-array Object
         (concat
-          (ns-fn-name-pair (clojure.core/first v-or-coll))
+          (ns-fn-name-pair (first v-or-coll))
           (next v-or-coll)))
     :else
       (throw (IllegalArgumentException. (str v-or-coll)))))
@@ -36,7 +36,7 @@
 
 (defn fields-array
   [fields-seq]
-  (into-array Fields (clojure.core/map fields fields-seq)))
+  (into-array Fields (map fields fields-seq)))
 
 (defn- fields-obj? [obj]
   "Returns true for a Fileds instance, a string, or an array of strings."
@@ -46,7 +46,7 @@
     (and (sequential? obj) (every? string? obj))))
 
 (defn- idx-of-first [aseq pred]
-  (clojure.core/first (find-first #(pred (last %)) (indexed aseq))))
+  (first (find-first #(pred (last %)) (indexed aseq))))
 
 (defn parse-args
   "
@@ -57,16 +57,29 @@
   ([arr] (parse-args arr Fields/RESULTS))
   ([arr defaultout]
      (let
-       [func-args           (clojure.core/first arr)
-        varargs             (rest arr)
-        spec                (fn-spec func-args)
-        func-var            (if (var? func-args) func-args (clojure.core/first func-args))
-                              first-elem (clojure.core/first varargs)
-        [in-fields keyargs] (if (or (nil? first-elem)
-                                    (keyword? first-elem))
-                                  [Fields/ALL (apply hash-map varargs)]
-                                  [(fields (clojure.core/first varargs))
-                                   (apply hash-map (rest varargs))])
-        options             (merge {:fn> (:fields (meta func-var)) :> defaultout} keyargs)
-        result              [in-fields (fields (:fn> options)) spec (fields (:> options))]]
-        result )))
+	 [func-args           (first arr)
+	  varargs             (rest arr)
+	  spec                (fn-spec func-args)
+	  func-var            (if (var? func-args)
+				func-args
+				(first func-args))
+	  defaults   {:fn> (or 
+			    (:fields (meta func-var))
+			    Fields/ARGS)
+		      :fn spec
+		      :> defaultout}
+	  first-elem (first varargs)
+	  keyargs (if (or (nil? first-elem)
+			  (keyword? first-elem))
+		    (apply hash-map 
+			   (concat [:in Fields/ALL]
+				   varargs))
+		    (apply hash-map
+			   (concat [:in (first varargs)]
+                                   (rest varargs))))
+	  options             (merge defaults keyargs)
+	  fieldsized (into {} (for [[k v] options]
+				(if (= k :fn)
+				  [k v]
+				  [k (fields v)])))]
+       (vals fieldsized))))

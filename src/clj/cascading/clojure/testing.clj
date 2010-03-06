@@ -96,8 +96,7 @@
 
 (defn in-pipe [in-label in-fields]
   (-> (c/pipe in-label)
-      (c/map [in-fields
-        #'deserialize-tuple])))
+      (c/map #'deserialize-tuple :fn> in-fields)))
 
 (defn in-pipes [fields-spec]
   (if (not (map? fields-spec))

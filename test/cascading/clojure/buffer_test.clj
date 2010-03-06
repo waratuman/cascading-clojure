@@ -40,8 +40,8 @@
     (in-tuples [["bar" 1] ["bat" 7] ["bar" 3] ["bar" 2] ["bat" 4]])
     (fn [in] (-> in
                (c/group-by "word")
-               (c/buffer [["word" "subcount" "maxword" "maxsubcount"]
-                          #'maxpairs])))
+               (c/buffer #'maxpairs
+			 :fn> ["word" "subcount" "maxword" "maxsubcount"])))
     [["bar" 1 "bar" 3]
      ["bar" 2 "bar" 3]
      ["bat" 4 "bat" 7]]))

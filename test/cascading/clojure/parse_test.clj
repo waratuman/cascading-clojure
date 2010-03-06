@@ -1,7 +1,7 @@
 (ns cascading.clojure.parse-test
   (:use clojure.test)
   (:import (cascading.tuple Fields))
-  (:use cascading.clojure.parse))
+  (:use [cascading.clojure parse testing]))
 
 (defn example [x] x)
 
@@ -16,11 +16,20 @@
 
 (deftest parse-everything
   (is (= [(fields ["foo"])
-	  (fields ["bar"]) 
+	  (fields ["bar"])
 	  ["cascading.clojure.parse-test" "example"]
 	  (fields ["baz"])]
 	 (extract-obj-array
 	  (parse-args [#'example "foo" :fn> "bar" :> "baz"])))))
+
+(deftest parse-everything-multiple-ins
+  (is (= [(fields ["foo" "bat"])
+	  (fields ["bar"])
+	  ["cascading.clojure.parse-test" "example"]
+	  (fields ["baz"])]
+	 (extract-obj-array
+	  (parse-args [#'example ["foo" "bat"] 
+		       :fn> "bar" :> "baz"])))))
 
 (deftest parse-no-input-selectors
   (is (= [Fields/ALL
@@ -40,7 +49,7 @@
 
 (deftest parse-no-input-or-output-or-fn-selectors
   (is (= [Fields/ALL
-	  nil
+	  Fields/ARGS
 	  ["cascading.clojure.parse-test" "example"]
 	  Fields/RESULTS]
 	 (extract-obj-array
