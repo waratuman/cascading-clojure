@@ -18,9 +18,9 @@ public class ClojureMapcat extends BaseOperation implements Function {
   private Object[] fn_spec;
   private IFn fn;
   
-  public ClojureMapcat(Fields out_fields, Object[] fn_spec) {
-    super(out_fields);
-    this.fn_spec = fn_spec;
+  public ClojureMapcat(Fields fn_fields, Collection fn_spec) {
+    super(fn_fields);
+    this.fn_spec = fn_spec.toArray();
   }
   
   public void prepare(FlowProcess flow_process, OperationCall op_call) {

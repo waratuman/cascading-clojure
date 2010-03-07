@@ -48,25 +48,25 @@
    (Pipe. name)))
 
 (defn filter [#^Pipe previous & args]
-  (let [[#^Fields in-fields _ spec _] (parse-args args)]
-    (Each. previous in-fields
-      (ClojureFilter. spec))))
+  (let [opts (parse-args args)]
+    (Each. previous (:< opts)
+      (ClojureFilter. (:fn-spec opts)))))
 
 (defn mapcat [#^Pipe previous & args]
-  (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
-    (Each. previous in-fields
-      (ClojureMapcat. func-fields spec) out-fields)))
+  (let [opts (parse-args args)]
+    (Each. previous (:< opts)
+      (ClojureMapcat. (:fn> opts) (:fn-spec opts)) (:> opts))))
 
 (defn map [#^Pipe previous & args]
-  (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
-    (Each. previous in-fields
-      (ClojureMap. func-fields spec) out-fields)))
+  (let [opts (parse-args args)]
+    (Each. previous (:< opts)
+      (ClojureMap. (:fn> opts) (:fn-spec opts)) (:> opts))))
 
 (defn extract [#^Pipe previous & args]
   "A map operation that extracts a new field, thus returning Fields/ALL."
-  (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
-    (Each. previous in-fields
-      (ClojureMap. func-fields spec) Fields/ALL)))
+  (let [opts (parse-args args)]
+    (Each. previous (:< opts)
+      (ClojureMap. (:fn> opts) (:fn-spec opts)) Fields/ALL)))
 
 (defn agg [f init]
   "A combinator that takes a fn and an init value and returns a reduce aggregator."
@@ -75,14 +75,14 @@
     ([x y] (f x y))))
 
 (defn aggregate [#^Pipe previous & args]
-  (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
-    (Every. previous in-fields
-      (ClojureAggregator. func-fields specs) out-fields)))
+  (let [opts (parse-args args)]
+    (Every. previous (:< opts)
+      (ClojureAggregator. (:fn> opts) (:fn-spec opts)) (:> opts))))
 
 (defn buffer [#^Pipe previous & args]
-  (let [[#^Fields in-fields func-fields specs #^Fields out-fields] (parse-args args)]
-    (Every. previous in-fields
-      (ClojureBuffer. func-fields specs) out-fields)))
+  (let [opts (parse-args args)]
+    (Every. previous (:< opts)
+      (ClojureBuffer. (:fn> opts) (:fn-spec opts)) (:> opts))))
 
 (defn group-by
   ([previous group-fields]
@@ -98,6 +98,10 @@
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous
     (Count. (fields count-fields))))
+
+(defn- fields-array
+  [fields-seq]
+  (into-array Fields (clojure.core/map fields fields-seq)))
 
 (defn co-group
   [pipes-seq fields-seq declared-fields joiner]

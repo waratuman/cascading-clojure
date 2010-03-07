@@ -78,12 +78,12 @@
   (read-string line))
 
 (defn- serialize-tuple
-  {:fields "line"}
+  {:fn> "line"}
   [tuple]
   (pr-str tuple))
 
 (defn- serialize-vals
-  {:fields "line"}
+  {:fn> "line"}
   [& vals]
   (pr-str (vec vals)))
 

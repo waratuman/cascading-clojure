@@ -19,9 +19,9 @@ public class ClojureAggregator extends BaseOperation<Object>
   private Object[] fn_spec;
   private IFn fn;
 
-  public ClojureAggregator(Fields out_fields, Object[] fn_spec) {
-    super(out_fields);
-    this.fn_spec = fn_spec;
+  public ClojureAggregator(Fields fn_fields, Collection fn_spec) {
+    super(fn_fields);
+    this.fn_spec = fn_spec.toArray();
   }
   
   public void prepare(FlowProcess flow_process, OperationCall<Object> op_call) {

@@ -4,10 +4,9 @@
   (:import (cascading.tuple Fields)
            (cascading.pipe Pipe)
            (cascading.clojure Util ClojureMap))
-  (:require (clj-json [core :as json]))
-  (:require [clojure.contrib.duck-streams :as ds])
-  (:require [clojure.contrib.java-utils :as ju])
-  (:require (cascading.clojure [api :as c])))
+  (:require [clj-json.core :as json]
+            (clojure.contrib [duck-streams :as ds] [java-utils :as ju])
+            [cascading.clojure.api :as c]))
 
 (defn- max-by [keyfn coll]
   (let [maxer (fn [max-elem next-elem]
@@ -41,7 +40,7 @@
     (fn [in] (-> in
                (c/group-by "word")
                (c/buffer #'maxpairs
-			 :fn> ["word" "subcount" "maxword" "maxsubcount"])))
+                 :fn> ["word" "subcount" "maxword" "maxsubcount"])))
     [["bar" 1 "bar" 3]
      ["bar" 2 "bar" 3]
      ["bat" 4 "bat" 7]]))

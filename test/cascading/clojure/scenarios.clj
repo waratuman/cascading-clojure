@@ -58,8 +58,8 @@
     (in-tuples {"p1" [[0 1 5] [2 1 6] [0 1 7] [1 7 9]]
                 "p2" [[0 1 7] [2 1 5] [0 1 6] [1 7 9]]})
     (fn [{p1 "p1" p2 "p2"}]
-      (let [groups-left (c/group-by p1 ["x"] ["num"])
-	    groups-right (c/group-by p2 ["y"] ["num"])
+      (let [groups-left  (c/group-by p1 ["x"] ["num"])
+	          groups-right (c/group-by p2 ["y"] ["num"])
             joined (c/join-into [groups-left groups-right]
                      [["x"]["y"]]
                      ["x1" "y1" "num1"
@@ -80,9 +80,8 @@
     (in-tuples {"p1" [[0 1 5] [2 1 6] [0 1 7] [2 1 9]]
                 "p2" [[0 0 1] [2 2 1] [0 2 1] [3 0 1]]})
     (fn [{p1 "p1" p2 "p2"}]
-      (let [new-left (c/extract p1 #'x-and-y :fn> "dualgroup")
-	    new-right (c/extract p2 #'y-and-z :fn> "dualgroup")]
-	    (c/group-by [new-left new-right]
-			       ["dualgroup"] ["z"])))
+      (let [new-left  (-> p1 (c/extract #'x-and-y :fn> "dualgroup"))
+	          new-right (-> p2 (c/extract #'y-and-z :fn> "dualgroup"))]
+	      (c/group-by [new-left new-right] ["dualgroup"] ["z"])))
     [[0 0 1 "01"] [3 0 1 "01"] [0 1 5 "01"] [0 1 7 "01"]
-      [2 2 1 "21"] [0 2 1 "21"] [2 1 6 "21"] [2 1 9 "21"]]))
+     [2 2 1 "21"] [0 2 1 "21"] [2 1 6 "21"] [2 1 9 "21"]]))
