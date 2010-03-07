@@ -49,37 +49,27 @@
   (first (find-first #(pred (last %)) (indexed aseq))))
 
 (defn parse-args
-  "
-  arr => func-spec in-fields? :fn> func-fields :> out-fields
-  
-  returns [in-fields func-fields spec out-fields]
-  "
-  ([arr] (parse-args arr Fields/RESULTS))
+  "arr => [func-spec in-fields? :fn> func-fields :> out-fields]
+  Returns [in-fields func-fields spec out-fields]"
+  ([arr]
+    (parse-args arr Fields/RESULTS))
   ([arr defaultout]
-     (let
-	 [func-args           (first arr)
-	  varargs             (rest arr)
-	  spec                (fn-spec func-args)
-	  func-var            (if (var? func-args)
-				func-args
-				(first func-args))
-	  defaults   {:fn> (or 
-			    (:fields (meta func-var))
-			    Fields/ARGS)
-		      :fn spec
-		      :> defaultout}
-	  first-elem (first varargs)
-	  keyargs (if (or (nil? first-elem)
-			  (keyword? first-elem))
-		    (apply hash-map 
-			   (concat [:in Fields/ALL]
-				   varargs))
-		    (apply hash-map
-			   (concat [:in (first varargs)]
-                                   (rest varargs))))
-	  options             (merge defaults keyargs)
-	  fieldsized (into {} (for [[k v] options]
-				(if (= k :fn)
-				  [k v]
-				  [k (fields v)])))]
+     (let [func-args   (first arr)
+	         varargs     (rest arr)
+	         spec        (fn-spec func-args)
+	         func-var    (if (var? func-args)
+				                 func-args
+				                 (first func-args))
+	         defaults    {:fn> (or (:fields (meta func-var)) Fields/ARGS)
+		                    :fn spec
+		                    :> defaultout}
+	         first-elem  (first varargs)
+	         keyargs     (if (or (nil? first-elem) (keyword? first-elem))
+		                     (apply hash-map (concat [:in Fields/ALL] varargs))
+		                     (apply hash-map (concat [:in (first varargs)] (rest varargs))))
+	         options     (merge defaults keyargs)
+	         fieldsized  (into {} (for [[k v] options]
+				                          (if (= k :fn)
+				                            [k v]
+				                            [k (fields v)])))]
        (vals fieldsized))))
