@@ -6,8 +6,8 @@
                  [org.clojure/clojure-contrib "1.1.0"]
                  [cascading/cascading "1.0.17-SNAPSHOT"
                    :exclusions [javax.mail/mail janino/janino]]
-                 [clj-json "0.2.0-SNAPSHOT"]]
-  :dev-dependencies [[lein-javac "0.0.2-SNAPSHOT"]
+                 [clj-json "0.2.0"]]
+  :dev-dependencies [[org.clojars.mmcgrana/lein-javac "0.1.0"]
                      [swank-clojure "1.1.0"]]
   :namespaces [cascading.clojure.api
                cascading.clojure.testing])
