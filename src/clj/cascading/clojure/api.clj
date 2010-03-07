@@ -199,9 +199,10 @@
    (let [props (Properties.)]
      (when jar-path
        (FlowConnector/setApplicationJarPath props jar-path))
+     (.setProperty props "mapred.used.genericoptionsparser" "true")
+     (.setProperty props "cascading.flow.job.pollinginterval" "200")
      (doseq [[k v] config]
        (.setProperty props k v))
-     (.setProperty props "mapred.used.genericoptionsparser" "true")
      (let [flow-connector (FlowConnector. props)]
        (try
          (.connect flow-connector source-map sink pipe)
