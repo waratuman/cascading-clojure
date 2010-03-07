@@ -1,10 +1,8 @@
-cascading-clojure
-=================
+# cascading-clojure
 
 A Clojure library for [Cascading](http://cascading.org).
 
-Hacking
--------
+## Hacking
 
 Get [Leiningen](http://github.com/technomancy/leiningen) 1.1.0.
 

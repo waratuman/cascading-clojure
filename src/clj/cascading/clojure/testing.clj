@@ -96,14 +96,14 @@
 
 (defn in-pipe [in-label in-fields]
   (-> (c/pipe in-label)
-      (c/map #'deserialize-tuple :fn> in-fields)))
+    (c/map #'deserialize-tuple :fn> in-fields)))
 
 (defn in-pipes [fields-spec]
   (if (not (map? fields-spec))
     (in-pipe "in" fields-spec)
     (mash (fn [[in-label one-in-fields]]
-      [in-label (in-pipe in-label one-in-fields)])
-    fields-spec)))
+            [in-label (in-pipe in-label one-in-fields)])
+          fields-spec)))
 
 (defn in-tuples [tuples-spec]
   (if (map? tuples-spec)
@@ -115,17 +115,17 @@
     (with-tmp-files [source-dir-path (temp-dir  "source")
                      sink-path       (temp-path "sink")]
       (doseq [[in-label in-tuples] in-tuples-spec]
-  (write-lines-in source-dir-path in-label
-      (map serialize-tuple in-tuples)))
-      (let [assembly   (-> in-pipes-spec
-                           assembler
-                           (c/map #'serialize-vals))
-      source-tap-map (mash (fn [[in-label _]]
-           [in-label
-            (c/lfs-tap (c/text-line "line")
-                 (file source-dir-path in-label))])
-         in-tuples-spec)
-      sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
-      flow           (c/flow source-tap-map sink-tap assembly)
-      out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
+        (write-lines-in source-dir-path in-label
+          (map serialize-tuple in-tuples)))
+      (let [assembly       (-> in-pipes-spec
+                             assembler
+                             (c/map #'serialize-vals))
+            source-tap-map (mash (fn [[in-label _]]
+                                   [in-label
+                                    (c/lfs-tap (c/text-line "line")
+                                      (file source-dir-path in-label))])
+                                 in-tuples-spec)
+            sink-tap       (c/lfs-tap (c/text-line "line") sink-path)
+            flow           (c/flow source-tap-map sink-tap assembly)
+            out-tuples     (line-sink-seq (.openSink (c/exec flow)))]
   (is (= expected-out-tuples out-tuples))))))

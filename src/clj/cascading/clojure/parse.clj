@@ -24,7 +24,7 @@
     :else
       (throw (IllegalArgumentException. (str v-or-coll)))))
 
-(defn- collectify [obj]
+(defn collectify [obj]
   (if (sequential? obj) obj [obj]))
 
 (defn fields

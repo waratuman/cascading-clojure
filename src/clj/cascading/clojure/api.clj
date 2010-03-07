@@ -1,8 +1,8 @@
 (ns cascading.clojure.api
   (:refer-clojure :exclude (count first filter mapcat map))
-  (:use [clojure.contrib.seq-utils :only [find-first indexed]])
-  (:use cascading.clojure.parse)
-  (:require (clj-json [core :as json]))
+  (:use [clojure.contrib.seq-utils :only (find-first indexed)]
+        (cascading.clojure parse))
+  (:require [clj-json.core :as json])
   (:import (cascading.tuple Tuple TupleEntry Fields)
            (cascading.scheme TextLine)
            (cascading.flow Flow FlowConnector)
@@ -31,9 +31,10 @@
 
 (defn as-pipes
   [pipe-or-pipes]
-  (let [pipes (if (instance? Pipe pipe-or-pipes)
-		[pipe-or-pipes] pipe-or-pipes)]
-  (into-array Pipe pipes)))
+  (pipes-array
+    (if (instance? Pipe pipe-or-pipes)
+      [pipe-or-pipes]
+      pipe-or-pipes)))
 
 (defn- uuid []
   (str (UUID/randomUUID)))
@@ -62,7 +63,7 @@
       (ClojureMap. func-fields spec) out-fields)))
 
 (defn extract [#^Pipe previous & args]
-"a map operation that extracts a new field, thus returning fields/ALL."
+  "A map operation that extracts a new field, thus returning Fields/ALL."
   (let [[#^Fields in-fields func-fields spec #^Fields out-fields] (parse-args args)]
     (Each. previous in-fields
       (ClojureMap. func-fields spec) Fields/ALL)))
@@ -83,7 +84,7 @@
     (Every. previous in-fields
       (ClojureBuffer. func-fields specs) out-fields)))
 
-(defn group-by 
+(defn group-by
   ([previous group-fields]
      (GroupBy. (as-pipes previous) (fields group-fields)))
   ([previous group-fields sort-fields]

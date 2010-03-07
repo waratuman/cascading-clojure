@@ -1,8 +1,6 @@
 (ns cascading.clojure.api-test
   (:use clojure.test)
-  (:require (cascading.clojure [api :as c]
-			       [testing :as t]
-			       [parse :as p]))
+  (:require (cascading.clojure [api :as c] [testing :as t] [parse :as p]))
   (:import (cascading.tuple Fields)
            (cascading.pipe Pipe)
            (cascading.clojure ClojureFilter ClojureMap ClojureMapcat
