@@ -7,6 +7,7 @@ import clojure.lang.IPersistentCollection;
 import clojure.lang.IteratorSeq;
 import clojure.lang.ArraySeq;
 import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 import cascading.operation.OperationCall;
 import java.util.Collection;
 
@@ -53,6 +54,10 @@ public class Util {
   
   public static ISeq coerceFromTuple(Tuple tuple) {
     return ArraySeq.create(coerceArrayFromTuple(tuple));
+  }
+
+  public static ISeq coerceFromTuple(TupleEntry tuple) {
+    return coerceFromTuple(tuple.getTuple());
   }
 
   public static Tuple coerceToTuple(Object obj) {

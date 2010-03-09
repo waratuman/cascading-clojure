@@ -51,16 +51,37 @@
     (c/select joined ["num1" "num2" "num3"])))
     [[5 1 8] [7 1 8] [6 2 7] [9 nil nil]]))
 
-;; (deftest group-and-aggregate-with-pred
-;;   "group on x.
-;;  pred ensures we have data for y.
-;;  max on num."
-;;   (test-flow
-;;    (in-pipes {"p1" ["x" "y" "num"]})
-;;    (in-tuples {"p1" [[0 1 5] [2 1 6] [0 nil 7]
-;;         [0 1 1] [2 1 2] [2 nil 7] [0 nil 8]]})
-;;    (fn [{p1 "p1"}]
-;;      (let [grouped (c/group-by p1 ["x"])]
-;;        (c/aggregate grouped
-;;        ["x" "y" "num"] [["maxx" "maxy" "max"] #'predicated-max] ["maxx" "maxy" "max"])))
-;;        [[0 5] [2 6]]))
+(deftest groupyby-with-sorting
+  (test-flow
+    (in-pipes {"p1" ["x" "y" "num"]
+               "p2" ["x" "y" "num"]})
+    (in-tuples {"p1" [[0 1 5] [2 1 6] [0 1 7] [1 7 9]]
+                "p2" [[0 1 7] [2 1 5] [0 1 6] [1 7 9]]})
+    (fn [{p1 "p1" p2 "p2"}]
+      (let [groups-left  (c/group-by p1 ["x"] ["num"])
+	          groups-right (c/group-by p2 ["y"] ["num"])
+            joined (c/join-into [groups-left groups-right]
+                     [["x"]["y"]]
+                     ["x1" "y1" "num1"
+                      "x2" "y2" "num2"])]
+    (c/select joined ["num1" "num2"])))
+    [[5 nil] [7 nil] [9 5] [9 6] [9 7] [6 nil]]))
+
+(defn x-and-y [x y z]
+  (str x y))
+
+(defn y-and-z [x y z]
+  (str y z))
+
+(deftest merging-different-groups
+  (test-flow
+    (in-pipes {"p1" ["x" "y" "z"]
+               "p2" ["x" "y" "z"]})
+    (in-tuples {"p1" [[0 1 5] [2 1 6] [0 1 7] [2 1 9]]
+                "p2" [[0 0 1] [2 2 1] [0 2 1] [3 0 1]]})
+    (fn [{p1 "p1" p2 "p2"}]
+      (let [new-left  (-> p1 (c/extract #'x-and-y :fn> "dualgroup"))
+	          new-right (-> p2 (c/extract #'y-and-z :fn> "dualgroup"))]
+	      (c/group-by [new-left new-right] ["dualgroup"] ["z"])))
+    [[0 0 1 "01"] [3 0 1 "01"] [0 1 5 "01"] [0 1 7 "01"]
+     [2 2 1 "21"] [0 2 1 "21"] [2 1 6 "21"] [2 1 9 "21"]]))

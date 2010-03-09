@@ -10,13 +10,14 @@ import cascading.tuple.Tuple;
 import cascading.tuple.Fields;
 import clojure.lang.IFn;
 import clojure.lang.ISeq;
+import java.util.Collection;
 
 public class ClojureFilter extends BaseOperation implements Filter {
   private Object[] fn_spec;
   private IFn fn;
   
-  public ClojureFilter(Object[] fn_spec) {
-    this.fn_spec = fn_spec;
+  public ClojureFilter(Collection fn_spec) {
+    this.fn_spec = fn_spec.toArray();
   }
   
   public void prepare(FlowProcess flow_process, OperationCall op_call) {
