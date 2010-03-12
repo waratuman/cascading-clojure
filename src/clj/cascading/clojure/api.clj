@@ -92,8 +92,11 @@
   ([previous group-fields sort-fields reverse-order]
      (GroupBy. (as-pipes previous) (fields group-fields) (fields sort-fields) reverse-order)))
 
-(defn first [#^Pipe previous]
-  (Every. previous (First.)))
+(defn first
+  ([#^Pipe previous]
+   (Every. previous (First.)))
+  ([#^Pipe previous in-fields]
+   (Every. previous (fields in-fields) (First.))))
 
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous
@@ -178,10 +181,14 @@
               json-vals (clojure.core/map json-map json-keys-arr)]
           (Util/coerceToTuple json-vals)))
       (sink [#^TupleEntry tuple-entry #^OutputCollector output-collector]
-        (let [tuple     (.selectTuple tuple-entry scheme-fields)
-              json-map  (areduce json-keys-arr i mem {}
-                          (assoc mem (aget json-keys-arr i)
-                                     (.get tuple i)))
+        (let [elems     (Util/coerceArrayFromTuple
+                          (.selectTuple tuple-entry scheme-fields))
+              json-map  (reduce
+                          (fn [m i]
+                            (assoc m (aget json-keys-arr i)
+                                     (aget elems i)))
+                          {}
+                          (range (alength json-keys-arr)))
               json-str  (json/generate-string json-map)]
           (.collect output-collector nil (Tuple. json-str)))))))
 
@@ -205,6 +212,8 @@
        (FlowConnector/setApplicationJarPath props jar-path))
      (.setProperty props "mapred.used.genericoptionsparser" "true")
      (.setProperty props "cascading.flow.job.pollinginterval" "200")
+     (.setProperty props "cascading.serialization.tokens"
+                         "130=cascading.clojure.ClojureWrapper")
      (doseq [[k v] config]
        (.setProperty props k v))
      (let [flow-connector (FlowConnector. props)]
