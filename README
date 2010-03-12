@@ -1,0 +1,16 @@
+= cascading-clojure
+
+A Clojure library for [Cascading](http://cascading.org).
+
+== Installation
+
+   $ lein deps
+   $ lein compile-java
+   $ lein compile
+   $ lein test
+   $ lein install
+   
+== Usage 
+
+   (ns my.ns
+     (:require (cascading.clojure [core :as c]))
