@@ -92,8 +92,11 @@
   ([previous group-fields sort-fields reverse-order]
      (GroupBy. (as-pipes previous) (fields group-fields) (fields sort-fields) reverse-order)))
 
-(defn first [#^Pipe previous in-fields]
-  (Every. previous (fields in-fields) (First.)))
+(defn first
+  ([#^Pipe previous]
+   (Every. previous (First.)))
+  ([#^Pipe previous in-fields]
+   (Every. previous (fields in-fields) (First.))))
 
 (defn count [#^Pipe previous #^String count-fields]
   (Every. previous
@@ -209,6 +212,8 @@
        (FlowConnector/setApplicationJarPath props jar-path))
      (.setProperty props "mapred.used.genericoptionsparser" "true")
      (.setProperty props "cascading.flow.job.pollinginterval" "200")
+     (.setProperty props "cascading.serialization.tokens"
+                         "130=cascading.clojure.ClojureWrapper")
      (doseq [[k v] config]
        (.setProperty props k v))
      (let [flow-connector (FlowConnector. props)]

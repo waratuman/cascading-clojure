@@ -39,7 +39,7 @@ public class ClojureWrapper implements Comparable, Writable {
   public void write(DataOutput out) throws IOException {
     Serializer.serialize(out, this.obj);
   }
-  
+
   public void readFields(DataInput in) throws IOException {
     this.obj = Serializer.deserialize(in, EOF);
   }

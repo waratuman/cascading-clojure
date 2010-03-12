@@ -54,26 +54,27 @@
     [["bar" 6] ["bat" 3]]))
 
 (defn transform
-  {:fn> ["up-name" "inc-age"]}
-  [name age]
-  [(.toUpperCase name) (inc age)])
+  {:fn> ["up-name" "inc-age-data"]}
+  [name data]
+  [(.toUpperCase name) (update-in data ["age"] inc)])
 
 
 (deftest json-map-line-test
   (with-log-level :warn
     (with-tmp-files [source (temp-dir "source")
                      sink   (temp-path "sink")]
-      (let [lines [{"name" "foo" "age" 23} {"name" "bar" "age" 14}]]
-        (write-lines-in source "source.data" (map json/generate-string
-                                                  lines))
+      (let [lines [{"name" "foo" "age-data" {:age 23}}
+                   {"name" "bar" "age-data" {:age 14}}]]
+        (write-lines-in source "source.data" (map json/generate-string lines))
         (let [trans (-> (c/pipe "j")
-                        (c/map #'transform :< ["name" "age"]))
-              flow (c/flow {"j" (c/lfs-tap (c/json-map-line ["name" "age"]) source)}
-                           (c/lfs-tap (c/json-map-line ["up-name" "inc-age"])
-                                      sink)
-                           trans)]
-          (c/exec flow)
-          (is (= "{\"inc-age\":24,\"up-name\":\"FOO\"}\n{\"inc-age\":15,\"up-name\":\"BAR\"}\n"
-                 (ds/slurp* (ju/file sink "part-00000")))))))))
-
+                      (c/map #'transform :< ["name" "age-data"])
+                      (c/group-by "up-name")
+                      (c/first "inc-age-data"))
+              flow (c/flow
+                     {"j" (c/lfs-tap (c/json-map-line ["name" "age-data"]) source)}
+                     (c/lfs-tap (c/json-map-line ["up-name" "inc-age-data"]) sink)
+                     trans)]
+         (c/exec flow)
+         (is (= "{\"inc-age-data\":{\"age\":15},\"up-name\":\"BAR\"}\n{\"inc-age-data\":{\"age\":24},\"up-name\":\"FOO\"}\n"
+                (ds/slurp* (ju/file sink "part-00000")))))))))
 
