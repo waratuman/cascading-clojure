@@ -28,3 +28,13 @@
             {"name" "ben" "age" "32"}]
            [(Util/tupleEntryToMap (first (Util/collectionToTupleEntries coll)))
             (Util/tupleEntryToMap (last (Util/collectionToTupleEntries coll)))]))))
+
+(deftest tuple-to-seq
+  (let [tuple (Tuple. (into-array ["james" "23"]))]
+    (is (= ["james" "23"]
+           (Util/tupleToSeq tuple)))))
+
+(deftest seq-to-tuple
+  (let [tuple (Tuple. (into-array ["james" "23"]))]
+    (is (= tuple
+           (Util/collectionToTuple ["james" "23"])))))
