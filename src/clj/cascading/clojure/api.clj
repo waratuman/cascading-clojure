@@ -15,6 +15,7 @@
                                    LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
+           (cascading.cascade Cascade)
            (org.apache.hadoop.io Text)
            (org.apache.hadoop.mapred TextInputFormat TextOutputFormat
                                      OutputCollector JobConf)
@@ -235,4 +236,4 @@
     (.connect casc (into-array args))))
 
 (defn run-cascade [#^Cascade c]
-  .run c)
+  (.run c))
