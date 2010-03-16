@@ -229,3 +229,10 @@
 
 (defn exec [#^Flow flow]
   (doto flow .start .complete))
+
+(defn cascade  [& args]
+  (let [casc (cascading.cascade.CascadeConnector.)]
+    (.connect casc (into-array args))))
+
+(defn run-cascade [#^Cascade c]
+  .run c)
