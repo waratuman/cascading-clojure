@@ -1,6 +1,6 @@
 (defproject cascading-clojure "1.1.0"
   :source-path "src/clj"
-    :source-path "test"
+  :source-path "test"
   :java-source-path "src/jvm"
   :java-fork "true"
   :dependencies [[org.clojure/clojure "1.1.0"]

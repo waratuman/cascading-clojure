@@ -27,7 +27,7 @@ public class JSONMapLineFile extends Scheme {
     public static final JsonFactory jsonFactory = new JsonFactory();
     
     public JSONMapLineFile(Fields sourceFields) {
-        super(sourceFields);
+        super(sourceFields, sourceFields);
     }
 
     public JSONMapLineFile(Fields sourceFields, Fields sinkFields) {
@@ -47,7 +47,6 @@ public class JSONMapLineFile extends Scheme {
     public Tuple source(Object key, Object value) {
         try {
             JsonParser jp = jsonFactory.createJsonParser((new StringReader(value.toString())));
-            // IPersistentMap map = ((IPersistentMap)JsonExt.parse(jp, true, new Object())).persistent();
             IPersistentMap map = (IPersistentMap)JsonExt.parse(jp, true, new Object());
             
             Fields fields = this.getSourceFields();

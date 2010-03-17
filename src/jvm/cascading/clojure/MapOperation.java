@@ -1,10 +1,12 @@
 package cascading.clojure;
 
 import clojure.lang.IFn;
+import java.util.Iterator;
 import java.util.Collection;
 
 import cascading.pipe.Each;
 import cascading.pipe.Pipe;
+import cascading.tuple.Tuple;
 import cascading.tuple.Fields;
 import cascading.tuple.TupleEntry;
 import cascading.flow.FlowProcess;
@@ -38,13 +40,38 @@ public class MapOperation extends BaseOperation implements Function {
         MapOperation operation = new MapOperation(fn, outputSelector);
         return new Each(previous, argumentSelector, operation, Fields.RESULTS);
     }
-
+    
     public void operate(FlowProcess flowProcess, FunctionCall fnCall) {
         try {
             Collection result = (Collection)fn.invoke(Util.tupleEntryToMap(fnCall.getArguments()));
             TupleEntry[] emittedTuples = Util.collectionToTupleEntries(result);
-            for (TupleEntry tuple : emittedTuples) {
-                fnCall.getOutputCollector().add(tuple);
+                        
+            boolean fieldsKnown = false;
+            if (fieldDeclaration == Fields.ALL ||
+                fieldDeclaration == Fields.ARGS ||
+                fieldDeclaration == Fields.FIRST ||
+                fieldDeclaration == Fields.GROUP ||
+                fieldDeclaration == Fields.LAST ||
+                fieldDeclaration == Fields.RESULTS ||
+                fieldDeclaration == Fields.UNKNOWN ||
+                fieldDeclaration == Fields.VALUES ||
+                fieldDeclaration.size() == 0) {
+                fieldsKnown = false;
+            } else {
+                fieldsKnown = true;
+            }
+
+            for (TupleEntry tupleEntry : emittedTuples) {
+                if (fieldsKnown) {
+                    Tuple emitTuple = new Tuple();
+                    for (Object key : fieldDeclaration) {
+                        emitTuple.add(tupleEntry.get((Comparable)key));
+                    }
+                    fnCall.getOutputCollector().add(emitTuple);
+                }
+                else { 
+                    fnCall.getOutputCollector().add(tupleEntry);
+                }
             }
         }
         catch (Exception e) { throw new RuntimeException(e); }

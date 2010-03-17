@@ -78,6 +78,6 @@ public class Util {
         for (Object obj : coll) { tuple.add((Comparable)obj); }
         return tuple;
     }
-    
+
 }
 

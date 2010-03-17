@@ -53,13 +53,13 @@
                      (c/fields "name")
                      (fn [x] [{"upper-name" (.toUpperCase (get x "name"))}])
                      (c/fields "upper-name")))
-  (test-flow2 [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
-              [{"name" "james" "age" 23 "upper-name" "JAMES"} {"name" "jared" "age" 24 "upper-name" "JARED"}]
-              #(c/map %
-                      ["name" "age"]
-                      (fn [x] 
-                        [(assoc x "upper-name" (.toUpperCase (get x "name")))])
-                      ["name" "age" "upper-name"])))
+  (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
+             [{"name" "james" "age" 23 "upper-name" "JAMES"} {"name" "jared" "age" 24 "upper-name" "JARED"}]
+             #(c/map %
+                     ["name" "age"]
+                     (fn [x] 
+                       [(assoc x "upper-name" (.toUpperCase (get x "name")))])
+                     ["name" "age" "upper-name"])))
 
 (deftest flow-test
   (let [scheme (c/text-line-scheme "line")
