@@ -29,7 +29,8 @@
          (ns-fn-name-pair (first v-or-c))
          (next v-or-c))]
     :else
-      (throw (IllegalArgumentException. (str v-or-c)))))
+      (throw (IllegalArgumentException.
+               (str "Expected a var or coll, but got: " v-or-c)))))
 
 (defn parse-fn-spec
    "fn-var-or-coll => var or [var & params]
