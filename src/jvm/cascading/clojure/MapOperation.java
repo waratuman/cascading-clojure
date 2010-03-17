@@ -19,10 +19,24 @@ public class MapOperation extends BaseOperation implements Function {
         super(Fields.ALL);
         this.fn = fn;
     }
+    
+    public MapOperation(IFn fn, Fields fieldsDeclaration) {
+        super(fieldsDeclaration);
+        this.fn = fn;
+    }
 
     public static Each pipe(Pipe previous, IFn fn) {
-        MapOperation operation = new MapOperation(fn);
-        return new Each(previous, operation);
+        return new Each(previous, new MapOperation(fn));
+    }
+
+    public static Each pipe(Pipe previous, Fields argumentSelector, IFn fn) {
+        MapOperation operation = new MapOperation(fn, argumentSelector);
+        return new Each(previous, argumentSelector, operation);
+    }
+
+    public static Each pipe(Pipe previous, Fields argumentSelector, IFn fn, Fields outputSelector) {
+        MapOperation operation = new MapOperation(fn, outputSelector);
+        return new Each(previous, argumentSelector, operation, Fields.RESULTS);
     }
 
     public void operate(FlowProcess flowProcess, FunctionCall fnCall) {
