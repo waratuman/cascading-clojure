@@ -56,6 +56,12 @@
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
+                     (c/fields "name")
+                     (fn [x] [{"name" (.toUpperCase (get x "name"))}])
+                     (c/fields "name")))
+  (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
+             [{"name" "JAMES"} {"name" "JARED"}]
+             #(c/map %
                      ["name"]
                      (fn [x] [{"name" (.toUpperCase (get x "name"))}])))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
@@ -63,6 +69,12 @@
              #(c/map %
                      (c/fields "name")
                      (fn [x] [{"upper-name" (.toUpperCase (get x "name"))}])
+                     (c/fields "upper-name")))
+  (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
+             [{"upper-name" "JAMES"} {"upper-name" "JARED"}]
+             #(c/map %
+                     (c/fields "name")
+                     (fn [x] [{"upper-name" (.toUpperCase (get x "name")) "name" "none"}])
                      (c/fields "upper-name")))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "james" "age" 23 "upper-name" "JAMES"} {"name" "jared" "age" 24 "upper-name" "JARED"}]
