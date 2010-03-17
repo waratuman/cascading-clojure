@@ -37,6 +37,17 @@
   (test-flow [{"age" 1} {"age" 2} {"age" 3}]
              [{"age" 2} {"age" 3} {"age" 4}]
              #(c/map % (fn [x] [{"age" (+ 1 (get x "age"))}])))
+  (test-flow [{"age" 1} {"age" 2} {"age" 3}]
+             [{"age" 2} {"age" 3} {"age" 4}]
+             #(c/map %
+                     c/all-fields
+                     (fn [x] [{"age" (+ 1 (get x "age"))}])))
+  (test-flow [{"age" 1} {"age" 2} {"age" 3}]
+             [{"age" 2} {"age" 3} {"age" 4}]
+             #(c/map %
+                     c/all-fields
+                     (fn [x] [{"age" (+ 1 (get x "age"))}])
+                     c/all-fields))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
