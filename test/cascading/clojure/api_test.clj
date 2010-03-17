@@ -55,6 +55,12 @@
     (is (instance? Pipe np))
     (is (= "foo" (.getName np)))))
 
+(deftest test-ensure-pipe
+  (let [p (c/pipe "foo")]
+    (is (= p (c/ensure-pipe p)))
+    (is (thrown-with-msg? IllegalArgumentException #"Expected.*"
+      (c/ensure-pipe "foo")))))
+
 (deftest test-clojure-filter
   (let [fil (ClojureFilter. (p/parse-fn-spec #'odd?))]
     (is (= false (t/invoke-filter fil [1])))
