@@ -45,24 +45,9 @@ public class MapOperation extends BaseOperation implements Function {
         try {
             Collection result = (Collection)fn.invoke(Util.tupleEntryToMap(fnCall.getArguments()));
             TupleEntry[] emittedTuples = Util.collectionToTupleEntries(result);
-                        
-            boolean fieldsKnown = false;
-            if (fieldDeclaration == Fields.ALL ||
-                fieldDeclaration == Fields.ARGS ||
-                fieldDeclaration == Fields.FIRST ||
-                fieldDeclaration == Fields.GROUP ||
-                fieldDeclaration == Fields.LAST ||
-                fieldDeclaration == Fields.RESULTS ||
-                fieldDeclaration == Fields.UNKNOWN ||
-                fieldDeclaration == Fields.VALUES ||
-                fieldDeclaration.size() == 0) {
-                fieldsKnown = false;
-            } else {
-                fieldsKnown = true;
-            }
-
+            
             for (TupleEntry tupleEntry : emittedTuples) {
-                if (fieldsKnown) {
+                if (fieldDeclaration.size() != 0) {
                     Tuple emitTuple = new Tuple();
                     for (Object key : fieldDeclaration) {
                         emitTuple.add(tupleEntry.get((Comparable)key));
