@@ -26,7 +26,8 @@
     (parse-fn-spec [#'example 3]))))
 
 (deftest test-parse-fn-spec-invalid
-  (is (thrown? IllegalArgumentException (parse-fn-spec example))))
+  (is (thrown-with-msg? IllegalArgumentException #"Expected.*"
+    (parse-fn-spec example))))
 
 (deftest test-parse-args-everything
   (is (= {:fn-spec ["cascading.clojure.parse-test" "example"]

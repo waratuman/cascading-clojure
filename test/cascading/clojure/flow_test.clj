@@ -78,3 +78,22 @@
          (is (= "{\"inc-age-data\":{\"age\":15},\"up-name\":\"BAR\"}\n{\"inc-age-data\":{\"age\":24},\"up-name\":\"FOO\"}\n"
                 (ds/slurp* (ju/file sink "part-00000")))))))))
 
+(defn nested-transform
+  {:fn> ["up-bar"]}
+  [foo]
+  [(.toUpperCase (foo "bar"))])
+
+(deftest nested-json-map-line-test
+  (with-log-level :warn
+    (with-tmp-files [source (temp-dir "source")
+                     sink   (temp-path "sink")]
+    (let [lines [{"foo" {"bar" "baz"}}]]
+      (write-lines-in source "source.data" (map json/generate-string lines))
+      (let [trans (-> (c/pipe "j") (c/map #'nested-transform :< ["foo"]))
+            flow (c/flow
+                  {"j" (c/lfs-tap (c/json-map-line ["foo"]) source)}
+                  (c/lfs-tap (c/json-map-line ["up-bar"]) sink)
+                  trans)]
+        (c/exec flow)
+        (is (= "{\"up-bar\":\"BAZ\"}\n"
+               (ds/slurp* (ju/file sink "part-00000")))))))))

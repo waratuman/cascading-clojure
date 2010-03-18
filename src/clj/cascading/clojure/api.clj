@@ -15,6 +15,7 @@
                                    LeftJoin RightJoin MixedJoin)
            (cascading.scheme Scheme)
            (cascading.tap Hfs Lfs Tap)
+           (cascading.cascade Cascade)
            (org.apache.hadoop.io Text)
            (org.apache.hadoop.mapred TextInputFormat TextOutputFormat
                                      OutputCollector JobConf)
@@ -47,25 +48,39 @@
   ([#^String name]
    (Pipe. name)))
 
-(defn filter [#^Pipe previous & args]
-  (let [opts (parse-args args)]
-    (Each. previous (:< opts)
+(defn ensure-pipe
+  "Ensures that the argument is a pipe and returns it, with an appropriate
+   type hint."
+   {:tag Pipe}
+   [pipe]
+   (if (instance? Pipe pipe)
+     pipe
+     (throw (IllegalArgumentException.
+              (str "Expected a pipe but got: " pipe)))))
+
+(defn filter [previous & args]
+  (let [previous (ensure-pipe previous)
+        opts     (parse-args args)]
+    (Each. previous #^Fields (:< opts)
       (ClojureFilter. (:fn-spec opts)))))
 
-(defn mapcat [#^Pipe previous & args]
-  (let [opts (parse-args args)]
-    (Each. previous (:< opts)
-      (ClojureMapcat. (:fn> opts) (:fn-spec opts)) (:> opts))))
+(defn mapcat [previous & args]
+  (let [previous (ensure-pipe previous)
+        opts (parse-args args)]
+    (Each. previous #^Fields (:< opts)
+      (ClojureMapcat. (:fn> opts) (:fn-spec opts)) #^Fields (:> opts))))
 
-(defn map [#^Pipe previous & args]
-  (let [opts (parse-args args)]
-    (Each. previous (:< opts)
-      (ClojureMap. (:fn> opts) (:fn-spec opts)) (:> opts))))
+(defn map [previous & args]
+  (let [previous (ensure-pipe previous)
+        opts     (parse-args args)]
+    (Each. previous #^Fields (:< opts)
+      (ClojureMap. (:fn> opts) (:fn-spec opts)) #^Fields (:> opts))))
 
-(defn extract [#^Pipe previous & args]
+(defn extract [previous & args]
   "A map operation that extracts a new field, thus returning Fields/ALL."
-  (let [opts (parse-args args)]
-    (Each. previous (:< opts)
+  (let [previous (ensure-pipe previous)
+        opts     (parse-args args)]
+    (Each. previous #^Fields (:< opts)
       (ClojureMap. (:fn> opts) (:fn-spec opts)) Fields/ALL)))
 
 (defn agg [f init]
@@ -74,15 +89,17 @@
     ([x] [x])
     ([x y] (f x y))))
 
-(defn aggregate [#^Pipe previous & args]
-  (let [opts (parse-args args)]
-    (Every. previous (:< opts)
-      (ClojureAggregator. (:fn> opts) (:fn-spec opts)) (:> opts))))
+(defn aggregate [previous & args]
+  (let [previous (ensure-pipe previous)
+        opts     (parse-args args)]
+    (Every. previous #^Fields (:< opts)
+      (ClojureAggregator. (:fn> opts) (:fn-spec opts)) #^Fields (:> opts))))
 
-(defn buffer [#^Pipe previous & args]
-  (let [opts (parse-args args)]
-    (Every. previous (:< opts)
-      (ClojureBuffer. (:fn> opts) (:fn-spec opts)) (:> opts))))
+(defn buffer [previous & args]
+  (let [previous (ensure-pipe previous)
+        opts     (parse-args args)]
+    (Every. previous #^Fields (:< opts)
+      (ClojureBuffer. (:fn> opts) (:fn-spec opts)) #^Fields (:> opts))))
 
 (defn group-by
   ([previous group-fields]
@@ -229,3 +246,10 @@
 
 (defn exec [#^Flow flow]
   (doto flow .start .complete))
+
+(defn cascade  [& args]
+  (let [casc (cascading.cascade.CascadeConnector.)]
+    (.connect casc (into-array args))))
+
+(defn run-cascade [#^Cascade c]
+  (.run c))
