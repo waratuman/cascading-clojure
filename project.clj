@@ -10,7 +10,7 @@
                  [clj-json "0.2.0"]
                  [org.codehaus.jackson/jackson-core-asl "1.4.0"]]
   :dev-dependencies [[lein-javac "0.0.2-SNAPSHOT"]
-                     [swank-clojure "1.1.0"]]
+                     [swank-clojure/swank-clojure "1.1.0"]]
   :namespaces [cascading.clojure.core
                cascading.clojure.io
                cascading.clojure.test

@@ -39,6 +39,12 @@
              #(c/map % (fn [x] [{"age" (+ 1 (get x "age"))}])))
   (test-flow [{"age" 1} {"age" 2} {"age" 3}]
              [{"age" 2} {"age" 3} {"age" 4}]
+             #(c/map % (fn [x] {"age" (+ 1 (get x "age"))})))
+  (test-flow [{"name" "a" "age" 1} {"name" "b" "age" 2}]
+             [{"name" "a" "age" 2} {"name" "b" "age" 3}]
+             #(c/map % (fn [x] [(assoc x "age" (+ 1 (get x "age")))])))
+  (test-flow [{"age" 1} {"age" 2} {"age" 3}]
+             [{"age" 2} {"age" 3} {"age" 4}]
              #(c/map %
                      c/all-fields
                      (fn [x] [{"age" (+ 1 (get x "age"))}])))
@@ -57,6 +63,12 @@
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
                      (c/fields "name")
+                     (fn [x] [{"name" (.toUpperCase (get x "name"))}])
+                     (c/fields "name")))
+  (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
+             [{"name" "JAMES"} {"name" "JARED"}]
+             #(c/map %
+                     c/all-fields
                      (fn [x] [{"name" (.toUpperCase (get x "name"))}])
                      (c/fields "name")))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]

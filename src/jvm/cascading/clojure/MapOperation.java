@@ -43,8 +43,15 @@ public class MapOperation extends BaseOperation implements Function {
     
     public void operate(FlowProcess flowProcess, FunctionCall fnCall) {
         try {
-            Collection result = (Collection)fn.invoke(Util.tupleEntryToMap(fnCall.getArguments()));
-            TupleEntry[] emittedTuples = Util.collectionToTupleEntries(result);
+            Object result = fn.invoke(Util.tupleEntryToMap(fnCall.getArguments()));
+            TupleEntry[] emittedTuples;
+            if (result instanceof clojure.lang.IPersistentMap) {
+                emittedTuples = new TupleEntry[1];
+                emittedTuples[0] = Util.mapToTupleEntry((java.util.Map)result);
+            }
+            else {
+                emittedTuples = Util.collectionToTupleEntries((Collection)result);
+            }
             
             for (TupleEntry tupleEntry : emittedTuples) {
                 if (fieldDeclaration.size() != 0) {
