@@ -8,7 +8,6 @@
            (cascading.scheme TextLine)
            (cascading.clojure MapOperation)))
 
-
 (defn- uuid []
   (str (java.util.UUID/randomUUID)))
 
@@ -55,7 +54,7 @@
     (.setProperty prop "mapred.used.genericoptionsparser" "true")
     (.setProperty prop "cascading.flow.job.pollinginterval" "100")
     (let [flow-connector (FlowConnector. prop)]
-      (try (.connect flow-connector sources sinks pipes)
+      (try (.connect flow-connector (uuid) sources sinks pipes)
             (catch cascading.flow.PlannerException e
               (.writeDOT e "exception.dot")
               (throw (RuntimeException. "Unable to build flow.")))))))
