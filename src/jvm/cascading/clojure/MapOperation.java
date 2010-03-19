@@ -36,6 +36,11 @@ public class MapOperation extends BaseOperation implements Function {
         return new Each(previous, argumentSelector, operation);
     }
 
+    public static Each pipe(Pipe previous, IFn fn, Fields fieldsDeclaration) {
+        MapOperation operation = new MapOperation(fn, fieldsDeclaration);
+        return new Each(previous, Fields.ALL, operation, Fields.ALL);
+    }
+
     public static Each pipe(Pipe previous, Fields argumentSelector, IFn fn, Fields outputSelector) {
         MapOperation operation = new MapOperation(fn, outputSelector);
         return new Each(previous, argumentSelector, operation, Fields.RESULTS);

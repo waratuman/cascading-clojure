@@ -33,15 +33,21 @@
 (defn map
   ([previous-pipe fn]
      (MapOperation/pipe previous-pipe fn))
-  ([previous-pipe in-fields fn]
-     (let [flds (cond (= Fields (class in-fields)) in-fields
-                      :else (apply fields in-fields))]
-       (MapOperation/pipe previous-pipe flds fn)))
+  ([previous-pipe in-fields-or-fn fn-or-arg-fields]
+     (if (fn? fn-or-arg-fields)
+       (let [flds (cond (= Fields (class in-fields-or-fn)) in-fields-or-fn
+                        :else (apply fields in-fields-or-fn))]
+         (MapOperation/pipe previous-pipe flds fn-or-arg-fields))
+       (let [flds (cond (= Fields (class fn-or-arg-fields)) fn-or-arg-fields
+                        :else (apply fields fn-or-arg-fields))]
+         (MapOperation/pipe previous-pipe in-fields-or-fn flds))))
   ([previous-pipe in-fields fn out-fields]
-     (let [inflds (cond (= Fields (class in-fields)) in-fields
-                      :else (apply fields in-fields))
-           outflds (cond (= Fields (class out-fields)) out-fields
-                      :else (apply fields out-fields))]
+     (let [inflds (if (= Fields (class in-fields))
+                      in-fields
+                      (apply fields in-fields))
+           outflds (if (= Fields (class out-fields))
+                       out-fields
+                       (apply fields out-fields))]
        (MapOperation/pipe previous-pipe inflds fn outflds))))
 
 (defn flow [sources sinks pipes]
