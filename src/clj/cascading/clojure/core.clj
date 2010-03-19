@@ -1,6 +1,6 @@
 (ns cascading.clojure.core
   (:refer-clojure :exclude (count first filter mapcat map))
-  (:import (cascading.tap Lfs)
+  (:import (cascading.tap Hfs Lfs)
            (cascading.pipe Pipe)
            (cascading.flow Flow
                            FlowConnector)
@@ -21,6 +21,9 @@
   ([] (TextLine.))
   ([field1] (TextLine. (fields field1) (fields field1)))
   ([field1 field2] (TextLine. (fields field1 field2) (fields field1 field2))))
+
+(defn tap [scheme path]
+  (Hfs. scheme path))
 
 (defn lfs-tap [scheme path]
   (Lfs. scheme path))

@@ -5,7 +5,7 @@
         cascading.clojure.io
         cascading.clojure.test)
   (:require (cascading.clojure [core :as c]))
-  (:import (cascading.tap Lfs)
+  (:import (cascading.tap Hfs Lfs)
            (cascading.pipe Pipe)
            (cascading.tuple Fields)
            (cascading.scheme TextLine)))
@@ -21,6 +21,12 @@
          (c/text-line-scheme "a-line")))
   (is (= (TextLine. (c/fields "3" "4") (c/fields "3" "4"))
          (c/text-line-scheme "3" "4"))))
+
+(deftest tap-test
+  (let [f (str "file://" (.getPath (temp-file))) 
+        scheme (c/text-line-scheme "line")]
+    (is (= (c/tap scheme f)
+           (Hfs. scheme f)))))
 
 (deftest lfs-tap-test
   (let [f (.getPath (temp-file))
