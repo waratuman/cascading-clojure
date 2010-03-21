@@ -2,8 +2,7 @@
   (:import (java.io File)
            (org.apache.log4j Logger Level))
   (:require (cascading.clojure [core :as c]))
-  (:use clojure.test
-        clojure.contrib.java-utils
+  (:use clojure.contrib.java-utils
         clojure.contrib.duck-streams))
 
 (def temp-path

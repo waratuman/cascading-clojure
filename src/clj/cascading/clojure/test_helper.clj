@@ -1,7 +1,6 @@
-(ns cascading.clojure.test
+(ns cascading.clojure.test-helper
   (:use clojure.test
-        cascading.clojure.io
-        cascading.clojure.test)
+        cascading.clojure.io)
   (:require (cascading.clojure [core :as c]))
   (:import (cascading.tap Lfs)
            (cascading.scheme SequenceFile)

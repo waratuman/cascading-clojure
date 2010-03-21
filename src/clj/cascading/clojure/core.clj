@@ -1,7 +1,8 @@
 (ns cascading.clojure.core
-  (:refer-clojure :exclude (count first filter mapcat map))
+  (:refer-clojure :exclude (filter mapcat map))
   (:import (cascading.tap Hfs Lfs)
-           (cascading.pipe Pipe)
+           (cascading.pipe Pipe Each)
+           (cascading.operation Identity)
            (cascading.flow Flow
                            FlowConnector)
            (cascading.tuple Fields)
@@ -12,7 +13,14 @@
   (str (java.util.UUID/randomUUID)))
 
 (defn fields [& args]
-  (Fields. (into-array Comparable args)))
+  (cond (and (= 1 (count args))
+             (coll? (first args)))
+        (Fields. (into-array Comparable (first args)))
+        (and (= 1 (count args))
+             (= Fields (class (first args))))
+        (first args)
+        :else
+        (Fields. (into-array Comparable args))))
 
 (def all-fields
      Fields/ALL)
@@ -32,25 +40,19 @@
   ([] (pipe (uuid)))
   ([name] (Pipe. name)))
 
+
 (defn map
   ([previous-pipe fn]
      (MapOperation/pipe previous-pipe fn))
   ([previous-pipe in-fields-or-fn fn-or-arg-fields]
      (if (fn? fn-or-arg-fields)
-       (let [flds (cond (= Fields (class in-fields-or-fn)) in-fields-or-fn
-                        :else (apply fields in-fields-or-fn))]
-         (MapOperation/pipe previous-pipe flds fn-or-arg-fields))
-       (let [flds (cond (= Fields (class fn-or-arg-fields)) fn-or-arg-fields
-                        :else (apply fields fn-or-arg-fields))]
-         (MapOperation/pipe previous-pipe in-fields-or-fn flds))))
+       (MapOperation/pipe previous-pipe (fields in-fields-or-fn) fn-or-arg-fields)
+       (MapOperation/pipe previous-pipe in-fields-or-fn (fields fn-or-arg-fields))))
   ([previous-pipe in-fields fn out-fields]
-     (let [inflds (if (= Fields (class in-fields))
-                      in-fields
-                      (apply fields in-fields))
-           outflds (if (= Fields (class out-fields))
-                       out-fields
-                       (apply fields out-fields))]
-       (MapOperation/pipe previous-pipe inflds fn outflds))))
+     (MapOperation/pipe previous-pipe (fields in-fields) fn (fields out-fields))))
+
+(defn select [in-pipe fields-to-keep]
+  (map in-pipe fields-to-keep (fn [x] x)))
 
 (defn flow [sources sinks pipes]
   (let [prop (java.util.Properties.)]

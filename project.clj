@@ -12,5 +12,5 @@
                      [swank-clojure/swank-clojure "1.1.0"]]
   :namespaces [cascading.clojure.core
                cascading.clojure.io
-               cascading.clojure.test
+               cascading.clojure.test-helper
                cascading.clojure.core-test])

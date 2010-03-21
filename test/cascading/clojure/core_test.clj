@@ -3,7 +3,7 @@
         clojure.contrib.java-utils
         clojure.contrib.duck-streams
         cascading.clojure.io
-        cascading.clojure.test)
+        cascading.clojure.test-helper)
   (:require (cascading.clojure [core :as c]))
   (:import (cascading.tap Hfs Lfs)
            (cascading.pipe Pipe)
@@ -12,7 +12,11 @@
 
 (deftest fields-test
   (is (= (Fields. (into-array ["a" "b"]))
-         (c/fields "a" "b"))))
+         (c/fields "a" "b")))
+  (is (= (Fields. (into-array ["a" "b"]))
+         (c/fields ["a" "b"])))
+  (is (= Fields/ALL
+         (c/fields c/all-fields))))
  
 (deftest text-line-scheme-test
   (is (= (TextLine.)
@@ -38,6 +42,14 @@
    (is (c/pipe))
    (is (= "test-pipe"
           (.getName (Pipe. "test-pipe")))))
+
+(deftest select-test
+  (test-flow [{"a" 1 "b" 2 "c" 3} {"a" 4 "b" 5 "c" 6}]
+             [{"a" 1} {"a" 4}]
+             #(c/select % "a"))
+  (test-flow [{"a" 1 "b" 2 "c" 3} {"a" 4 "b" 5 "c" 6}]
+             [{"a" 1} {"a" 4}]
+             #(c/select % ["a"])))
 
 (deftest map-test
   (test-flow [{"age" 1} {"age" 2} {"age" 3}]
@@ -71,20 +83,20 @@
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
-                     (c/fields "name")
+                     ["name"]
                      (fn [x] [{"name" (.toUpperCase (get x "name"))}])))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
-                     (c/fields "name")
+                     ["name"]
                      (fn [x] [{"name" (.toUpperCase (get x "name"))}])
-                     (c/fields "name")))
+                     ["name"]))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
                      c/all-fields
                      (fn [x] [{"name" (.toUpperCase (get x "name"))}])
-                     (c/fields "name")))
+                     ["name"]))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "JAMES"} {"name" "JARED"}]
              #(c/map %
@@ -93,15 +105,15 @@
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"upper-name" "JAMES"} {"upper-name" "JARED"}]
              #(c/map %
-                     (c/fields "name")
+                     ["name"]
                      (fn [x] [{"upper-name" (.toUpperCase (get x "name"))}])
-                     (c/fields "upper-name")))
+                     ["upper-name"]))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"upper-name" "JAMES"} {"upper-name" "JARED"}]
              #(c/map %
-                     (c/fields "name")
+                     ["name"]
                      (fn [x] [{"upper-name" (.toUpperCase (get x "name")) "name" "none"}])
-                     (c/fields "upper-name")))
+                     ["upper-name"]))
   (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
              [{"name" "james" "age" 23 "upper-name" "JAMES"} {"name" "jared" "age" 24 "upper-name" "JARED"}]
              #(c/map %
