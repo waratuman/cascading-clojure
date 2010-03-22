@@ -127,6 +127,11 @@
                        [(assoc x "upper-name" (.toUpperCase (get x "name")))])
                      ["name" "age" "upper-name"])))
 
+(deftest filter-test
+  (test-flow [{"name" "james" "age" 23} {"name" "jared" "age" 24}]
+             [{"name" "jared" "age" 24}]
+             #(c/filter % (fn [x] (= "jared" (get x "name"))))))
+
 (deftest flow-test
   (let [scheme (c/text-line-scheme "line")
         source (c/lfs-tap scheme (.getPath (temp-file)))

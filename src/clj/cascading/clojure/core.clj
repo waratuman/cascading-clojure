@@ -7,7 +7,8 @@
                            FlowConnector)
            (cascading.tuple Fields)
            (cascading.scheme TextLine)
-           (cascading.clojure MapOperation)
+           (cascading.clojure MapOperation
+                              FilterOperation)
            (cascading.clojure.scheme JSONMapLineFile)))
 
 (defn- uuid []
@@ -54,7 +55,6 @@
   ([] (pipe (uuid)))
   ([name] (Pipe. name)))
 
-
 (defn map
   ([previous-pipe fn]
      (MapOperation/pipe previous-pipe fn))
@@ -67,6 +67,9 @@
 
 (defn select [in-pipe fields-to-keep]
   (map in-pipe fields-to-keep (fn [x] x)))
+
+(defn filter [previous-pipe fn]
+  (FilterOperation/pipe previous-pipe fn))
 
 (defn flow [sources sinks pipes]
   (let [prop (java.util.Properties.)]
