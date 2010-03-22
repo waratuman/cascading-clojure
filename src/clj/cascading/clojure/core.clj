@@ -7,12 +7,19 @@
                            FlowConnector)
            (cascading.tuple Fields)
            (cascading.scheme TextLine)
-           (cascading.clojure MapOperation)))
+           (cascading.clojure MapOperation)
+           (cascading.clojure.scheme JSONMapLineFile)))
 
 (defn- uuid []
   (str (java.util.UUID/randomUUID)))
 
 (defn fields [& args]
+  "Returns a Fields object when given a sequence of fields names. The
+   field names must be comparable.
+   eg.  (fields \"a\" \"b\") ; <Fields 'a', 'b'>
+        (fields [\"a\" \"b\" \"c\"]) ; <Fields 'a', 'b', 'c'>
+        (fileds all-fields) ; <Fields/ALL>
+  "
   (cond (and (= 1 (count args))
              (coll? (first args)))
         (Fields. (into-array Comparable (first args)))
@@ -29,6 +36,13 @@
   ([] (TextLine.))
   ([field1] (TextLine. (fields field1) (fields field1)))
   ([field1 field2] (TextLine. (fields field1 field2) (fields field1 field2))))
+
+(defn json-map-line-scheme [map-fields]
+  "A scheme that wraps a JSON map per line of the input file. For
+   example, `(json-map-line-scheme [\"a\" \"b\" \"c\"])` will map to
+   the line \"{\"a\":1,\"b\":2,\"c\":3}\".
+   eg. (json-map-line-scheme [\"a\" \"b\" \"c\"])"
+  (JSONMapLineFile. (fields map-fields)))
 
 (defn tap [scheme path]
   (Hfs. scheme path))

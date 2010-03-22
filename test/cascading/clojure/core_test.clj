@@ -8,7 +8,8 @@
   (:import (cascading.tap Hfs Lfs)
            (cascading.pipe Pipe)
            (cascading.tuple Fields)
-           (cascading.scheme TextLine)))
+           (cascading.scheme TextLine)
+           (cascading.clojure.scheme JSONMapLineFile)))
 
 (deftest fields-test
   (is (= (Fields. (into-array ["a" "b"]))
@@ -25,6 +26,10 @@
          (c/text-line-scheme "a-line")))
   (is (= (TextLine. (c/fields "3" "4") (c/fields "3" "4"))
          (c/text-line-scheme "3" "4"))))
+
+(deftest json-map-line-scheme-test
+  (is (= (JSONMapLineFile. (c/fields "a" "b"))
+         (c/json-map-line-scheme ["a" "b"]))))
 
 (deftest tap-test
   (let [f (str "file://" (.getPath (temp-file))) 

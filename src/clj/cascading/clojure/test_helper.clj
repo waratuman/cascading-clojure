@@ -4,8 +4,7 @@
   (:require (cascading.clojure [core :as c]))
   (:import (cascading.tap Lfs)
            (cascading.scheme SequenceFile)
-           cascading.clojure.Util
-           cascading.clojure.scheme.JSONMapLineFile))
+           cascading.clojure.Util))
 
 (defn test-flow [sources outputs assembly]
   (log-with-level "warn"
